@@ -3,31 +3,19 @@ import pystray
 from PIL import Image
 import tkinter as tk
 
+def show_window():
+    print("show window")
 
-def quit_window(icon, item):
+def quit_app(icon, item):
     icon.stop()
-    window.destroy()
 
-def show_window(icon, item):
-    icon.stop()
-    window.after(0,window.deiconify)
-
-def withdraw_window():  
-    #window.withdraw()
-    image = Image.open("bat1.png")
-    menu = (item('Quit', quit_window), item('Show', show_window))
+def run_taskbar():  
+    image = Image.open("taskbar.png")
+    menu = (item('Quit', quit_app), item('Show', show_window))
     icon = pystray.Icon("name", image, "title", menu)
     icon.run()
 
-
-
 if __name__ == '__main__':
-   withdraw_window()
-   exit()
-   global root
-   window = tk.Tk()
-   window.title("Fune")
-   
-   window.protocol('WM_DELETE_WINDOW', withdraw_window)
-   window.mainloop()
-
+   show_window()
+   run_taskbar() 
+ 
