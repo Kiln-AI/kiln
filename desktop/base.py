@@ -4,23 +4,31 @@ from PIL import Image
 import os
 import tkinter as tk
 import webbrowser
+import uvicorn
+import server.main as server
+import os
+import sys
+import threading
+
 
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.dirname(__file__)
 
     return os.path.join(base_path, relative_path)
 
+def run_studio():
+    uvicorn.run(server.app, host="127.0.0.1", port=8759, log_level="warning")
+
+def run_studio_thread():
+    threading.Thread(target=run_studio, daemon=True).start()
 
 def show_studio():
-    print("show fune studio")
-    webbrowser.open("https://github.com/scosman/fune")
+    webbrowser.open("http://localhost:8759/fune")
 
 def quit_app(icon, item):
-    print("quiting fune")
-    icon.stop()
     root.destroy()
 
 def run_taskbar():  
@@ -31,11 +39,15 @@ def run_taskbar():
     # running detatched since we use tk mainloop to get events from dock icon
     icon.run_detached()
 
-# TK without a window, to get dock events
-root = tk.Tk()
-root.withdraw()
-root.createcommand('tk::mac::ReopenApplication', show_studio)
-show_studio()
-run_taskbar() 
-root.mainloop()
+if __name__ == '__main__':
+    # TK without a window, to get dock events
+    root = tk.Tk()
+    root.withdraw()
+    # Register callback for the dock icon to reopen the web app
+    root.createcommand('tk::mac::ReopenApplication', show_studio)
+    run_taskbar()
+    # start the server in a thread, show the web app, and start the taskbar
+    root.after(10, run_studio_thread)
+    root.after(1000, show_studio)
+    root.mainloop()
  
