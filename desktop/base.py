@@ -2,6 +2,8 @@ from pystray import MenuItem as item
 import pystray
 from PIL import Image
 import os
+import tkinter as tk
+import webbrowser
 
 def resource_path(relative_path):
     try:
@@ -12,19 +14,28 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-def show_window():
-    print("show window")
+def show_studio():
+    print("show fune studio")
+    webbrowser.open("https://github.com/scosman/fune")
 
 def quit_app(icon, item):
+    print("quiting fune")
     icon.stop()
+    root.destroy()
 
 def run_taskbar():  
     # TODO: resolution, dark mode, and other platforms (windows, linux)
     image = Image.open(resource_path("taskbar.png"))
-    menu = (item('Quit', quit_app), item('Show', show_window))
+    menu = (item('Open Fune Studio', show_studio), item('Quit', quit_app))
     icon = pystray.Icon("name", image, "title", menu)
-    icon.run()
+    # running detatched since we use tk mainloop to get events from dock icon
+    icon.run_detached()
 
-show_window()
+# TK without a window, to get dock events
+root = tk.Tk()
+root.withdraw()
+root.createcommand('tk::mac::ReopenApplication', show_studio)
+show_studio()
 run_taskbar() 
+root.mainloop()
  
