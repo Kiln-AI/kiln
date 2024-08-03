@@ -2,4 +2,4 @@
 
 # Should have installed via: pip install -U pyinstaller
 
-pyinstaller --windowed --onefile --icon="../icon.png" --add-data "../taskbar.png:." -n fune --noconfirm --distpath=./build/dist --workpath=./build/work --specpath=./build base.py
+pyinstaller --windowed --onefile --icon="../icon.png" --add-data "../taskbar.png:." -n fune --noconfirm --distpath=./build/dist --workpath=./build/work --specpath=./build --osx-bundle-identifier=net.scosman.fune base.py
