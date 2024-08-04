@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 
-sleep 1 && open "http://localhost:8759/studio/index.html" &
+# Needs to run from this directory
+cd "$(dirname "$0")"
+
+sleep 1 && open "http://localhost:8759/fune" &
 fastapi dev --port 8759 main.py
