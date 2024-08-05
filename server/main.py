@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import os
 import yaml
-from os.path import expanduser, isfile
+from pathlib import Path
 
 dirname = os.path.dirname(__file__)
 studio_path = os.path.join(dirname, 'studio')
@@ -13,8 +13,7 @@ studio_path = os.path.join(dirname, 'studio')
 app = FastAPI()
 
 def settings_path(create=True):
-    homedir = expanduser("~")
-    funedir = os.path.join(homedir, '.fune')
+    funedir = os.path.join(Path.home(), '.fune')
     if create and not os.path.exists(funedir):
         os.makedirs(funedir)
     return os.path.join(funedir, 'settings.yaml')
