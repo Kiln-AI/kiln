@@ -5,7 +5,6 @@ import tkinter as tk
 import webbrowser
 import uvicorn
 import server.server as server
-import os
 import sys
 import threading
 
