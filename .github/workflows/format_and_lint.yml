@@ -32,7 +32,7 @@ jobs:
         ruff check .
     - name: Format with ruff
       run: |
-        ruff format . 
+        ruff format --check .
     - name: Download go misspell
       run: go install github.com/client9/misspell/cmd/misspell@latest
     - name: Run misspell
