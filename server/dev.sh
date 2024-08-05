@@ -4,4 +4,4 @@
 cd "$(dirname "$0")"
 
 sleep 1 && open "http://localhost:8759/fune" &
-fastapi dev --port 8759 main.py
+fastapi dev --port 8759 server.py

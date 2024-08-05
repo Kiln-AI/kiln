@@ -4,7 +4,7 @@ import os
 import tkinter as tk
 import webbrowser
 import uvicorn
-import server.main as server
+import server.server as server
 import os
 import sys
 import threading

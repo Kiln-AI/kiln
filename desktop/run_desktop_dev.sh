@@ -4,4 +4,4 @@
 cd "$(dirname "$0")"
 cd ..
 
-python -m desktop.base
+python -m desktop.desktop
