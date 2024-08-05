@@ -42,7 +42,7 @@ def run_taskbar():
         pystray.MenuItem("Quit", quit_app),
     )
     icon = pystray.Icon("name", image, "title", menu)
-    # running detatched since we use tk mainloop to get events from dock icon
+    # running detached since we use tk mainloop to get events from dock icon
     icon.run_detached()
 
 
