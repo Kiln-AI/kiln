@@ -1,4 +1,3 @@
-from pystray import MenuItem as item
 import pystray
 from PIL import Image
 import os
@@ -10,6 +9,7 @@ import os
 import sys
 import threading
 
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -18,35 +18,43 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
+
 def run_studio():
     uvicorn.run(server.app, host="127.0.0.1", port=8759, log_level="warning")
+
 
 def run_studio_thread():
     threading.Thread(target=run_studio, daemon=True).start()
 
+
 def show_studio():
     webbrowser.open("http://localhost:8759/fune")
 
-def quit_app(icon, item):
+
+def quit_app():
     root.destroy()
 
-def run_taskbar():  
+
+def run_taskbar():
     # TODO: resolution, dark mode, and other platforms (windows, linux)
     image = Image.open(resource_path("taskbar.png"))
-    menu = (item('Open Fune Studio', show_studio), item('Quit', quit_app))
+    menu = (
+        pystray.MenuItem("Open Fune Studio", show_studio),
+        pystray.MenuItem("Quit", quit_app),
+    )
     icon = pystray.Icon("name", image, "title", menu)
     # running detatched since we use tk mainloop to get events from dock icon
     icon.run_detached()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
     root.withdraw()
     # Register callback for the dock icon to reopen the web app
-    root.createcommand('tk::mac::ReopenApplication', show_studio)
+    root.createcommand("tk::mac::ReopenApplication", show_studio)
     run_taskbar()
     # start the server in a thread, show the web app, and start the taskbar
     root.after(10, run_studio_thread)
     root.after(1000, show_studio)
     root.mainloop()
- 
