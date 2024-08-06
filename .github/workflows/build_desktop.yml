@@ -13,11 +13,11 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: 3.12
     - uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-        python-version: 3.9
+        python-version: 3.12
         environment-file: environment.yml
         auto-activate-base: false
         activate-environment: fune
