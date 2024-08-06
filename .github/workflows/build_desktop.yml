@@ -31,4 +31,4 @@ jobs:
     - run: sh ./desktop/build_desktop_app.sh
     - uses: actions/upload-artifact@v2
       with:
-        path: dist/*
+        path: desktop/build/dist/*
