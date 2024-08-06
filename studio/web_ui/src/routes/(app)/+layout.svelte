@@ -56,9 +56,8 @@
       <span class="footer-title opacity-80">Explore</span>
       <a class="link link-hover mb-1" href="/">Home</a>
       <a class="link link-hover mb-1" href="/">Home Again</a>
-      <a
-        class="link link-hover my-1"
-        href="https://github.com/scosman/fune">Github</a
+      <a class="link link-hover my-1" href="https://github.com/scosman/fune"
+        >Github</a
       >
     </nav>
     <aside>

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import "../app.css";
-  import { navigating } from "$app/stores";
-  import { expoOut } from "svelte/easing";
-  import { slide } from "svelte/transition";
+  import "../app.css"
+  import { navigating } from "$app/stores"
+  import { expoOut } from "svelte/easing"
+  import { slide } from "svelte/transition"
 </script>
 
 {#if $navigating}

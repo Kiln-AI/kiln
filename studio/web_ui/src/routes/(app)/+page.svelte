@@ -3,17 +3,17 @@
     WebsiteName,
     WebsiteBaseUrl,
     WebsiteDescription,
-  } from "./../../config";
+  } from "./../../config"
 
   const ldJson = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: WebsiteName,
     url: WebsiteBaseUrl,
-  };
+  }
   const jsonldScript = `<script type="application/ld+json">${
     JSON.stringify(ldJson) + "<"
-  }/script>`;
+  }/script>`
 </script>
 
 <svelte:head>
