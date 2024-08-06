@@ -61,4 +61,4 @@ def read_item(item_id: int, q: Union[str, None] = None):
 app.mount("/", StaticFiles(directory=studio_path(), html=True), name="studio")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8759)
+    uvicorn.run(app, host="127.0.0.1", port=8757)

@@ -19,7 +19,7 @@ def resource_path(relative_path):
 
 
 def run_studio():
-    uvicorn.run(server.app, host="127.0.0.1", port=8759, log_level="warning")
+    uvicorn.run(server.app, host="127.0.0.1", port=8757, log_level="warning")
 
 
 def run_studio_thread():
@@ -27,7 +27,7 @@ def run_studio_thread():
 
 
 def show_studio():
-    webbrowser.open("http://localhost:8759")
+    webbrowser.open("http://localhost:8757")
 
 
 def quit_app():

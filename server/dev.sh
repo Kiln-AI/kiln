@@ -7,5 +7,5 @@ cd ../studio/web_ui
 # Needs to run from this directory
 cd ../../server
 
-sleep 1 && open "http://localhost:8759" &
-fastapi dev --port 8759 server.py
+sleep 1 && open "http://localhost:8757" &
+fastapi dev --port 8757 server.py
