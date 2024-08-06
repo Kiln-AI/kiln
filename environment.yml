@@ -38,9 +38,6 @@ dependencies:
       - pygments==2.18.0
       - pyinstaller==6.9.0
       - pyinstaller-hooks-contrib==2024.7
-      - pyobjc-core==10.3.1
-      - pyobjc-framework-cocoa==10.3.1
-      - pyobjc-framework-quartz==10.3.1
       - pystray==0.19.5
       - python-dotenv==1.0.1
       - python-multipart==0.0.9
