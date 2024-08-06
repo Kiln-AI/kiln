@@ -1,0 +1,33 @@
+name: Format Check
+
+on: [push, pull_request]
+
+jobs:
+  webui_checks:
+    name: Code Format, Lint, Typecheck, Test, and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+
+      - name: Move to web_ui folder
+        run: cd studio/web_ui
+
+      - name: NPM install
+        run: npm install
+
+      - name: Check Code Format
+        run: npm run format_check
+
+      - name: Linting
+        run: npm run lint
+
+      - name: Typechecking
+        run: npm run check
+
+      - name: Tests
+        run: npm run test_run
+
+      - name: SvelteKit Build
+        run: npm run build

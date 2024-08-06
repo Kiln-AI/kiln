@@ -1,6 +1,11 @@
 {
+  "editor.formatOnSave": true,
   "[python]": {
-    "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "eslint.validate": ["javascript", "javascriptreact", "svelte"],
+  // Svelte, JS, TS files
+  "[javascript, typescript, svelte, json]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode",
   }
 }
