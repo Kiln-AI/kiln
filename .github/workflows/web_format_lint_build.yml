@@ -6,13 +6,12 @@ jobs:
   webui_checks:
     name: Code Format, Lint, Typecheck, Test, and Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./studio/web_ui
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-
-      - name: Move to web_ui folder
-        run: cd studio/web_ui
 
       - name: NPM install
         run: npm install .
