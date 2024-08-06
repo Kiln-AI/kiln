@@ -29,7 +29,7 @@ jobs:
         conda list
 
     - run: sh ./desktop/build_desktop_app.sh
-    - run: zip -r "fune-desktop-${{ matrix.os }}.zip" ./desktop/build/dist
     - uses: actions/upload-artifact@v4
       with:
-        path: fune-desktop-${{ matrix.os }}.zip
+        name: fune-desktop-${{ matrix.os }}
+        path: ./desktop/build/dist/*
