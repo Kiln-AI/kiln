@@ -1,4 +1,4 @@
-name: Format Check
+name: Web UI Checks
 
 on: [push, pull_request]
 
@@ -15,7 +15,7 @@ jobs:
         run: cd studio/web_ui
 
       - name: NPM install
-        run: npm install
+        run: npm install .
 
       - name: Check Code Format
         run: npm run format_check
