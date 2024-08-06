@@ -22,6 +22,7 @@ jobs:
         auto-activate-base: false
         activate-environment: fune
 
+    - run: pip install pyinstaller
     - run: |
         conda info
         conda list
