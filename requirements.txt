@@ -20,6 +20,5 @@ pyyaml==6.0.1
 ruff==0.5.6
 tomli==2.0.1
 tomlkit==0.13.0
-uvloop==0.19.0
 watchfiles==0.22.0
 websockets==12.0
