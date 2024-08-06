@@ -6,9 +6,18 @@ from fastapi.staticfiles import StaticFiles
 import os
 import yaml
 from pathlib import Path
+import sys
 
-dirname = os.path.dirname(__file__)
-studio_path = os.path.join(dirname, "studio")
+
+# TODO would rather this get passed. This class shouldn't know about desktop
+def studio_path():
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.join(os.path.dirname(__file__), "..")
+
+    return os.path.join(base_path, "studio/web_ui/build")
+
 
 app = FastAPI()
 
@@ -43,17 +52,13 @@ def read_settings():
     return settings
 
 
-@app.get("/")
-def read_root():
-    return "root"
-
-
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
 
 
-app.mount("/fune", StaticFiles(directory=studio_path, html=True), name="studio")
+# Web UI
+app.mount("/", StaticFiles(directory=studio_path(), html=True), name="studio")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8759)

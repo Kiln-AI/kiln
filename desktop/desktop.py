@@ -27,7 +27,7 @@ def run_studio_thread():
 
 
 def show_studio():
-    webbrowser.open("http://localhost:8759/fune")
+    webbrowser.open("http://localhost:8759")
 
 
 def quit_app():

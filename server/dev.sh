@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-# Needs to run from this directory
+# Build the web ui
 cd "$(dirname "$0")"
+cd ../studio/web_ui
+# npm run build
+# Needs to run from this directory
+cd ../../server
 
-sleep 1 && open "http://localhost:8759/fune" &
+sleep 1 && open "http://localhost:8759" &
 fastapi dev --port 8759 server.py
