@@ -22,11 +22,7 @@ jobs:
         auto-activate-base: false
         activate-environment: fune
 
-    - run: pip install pyinstaller
-    - run: pip install pillow
-    - run: |
-        conda info
-        conda list
+    - run: pip install -r requirements.txt
 
     - run: sh ./desktop/build_desktop_app.sh
     - uses: actions/upload-artifact@v4
