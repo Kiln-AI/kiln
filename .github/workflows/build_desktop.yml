@@ -1,5 +1,5 @@
 on:
-  push:
+  release:
 
 jobs:
   build:
@@ -7,26 +7,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
+        os: ["windows-latest", "ubuntu-latest", "macos-latest"]
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.12
-        cache: 'pip'
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        auto-update-conda: true
-        python-version: 3.12
-        environment-file: environment.yml
-        auto-activate-base: false
-        activate-environment: fune
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+          cache: "pip"
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: 3.12
+          environment-file: environment.yml
+          auto-activate-base: false
+          activate-environment: fune
 
-    - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt
 
-    - run: sh ./desktop/build_desktop_app.sh
-    - uses: actions/upload-artifact@v4
-      with:
-        name: fune-desktop-${{ matrix.os }}
-        path: ./desktop/build/dist/*
+      - run: sh ./desktop/build_desktop_app.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fune-desktop-${{ matrix.os }}
+          path: ./desktop/build/dist/*
