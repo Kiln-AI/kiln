@@ -23,6 +23,7 @@ jobs:
         activate-environment: fune
 
     - run: pip install pyinstaller
+    - run: pip install pillow
     - run: |
         conda info
         conda list
