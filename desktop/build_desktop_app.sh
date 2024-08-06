@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
-# Should have installed via: pip install -U pyinstaller
+# Should have installed via: pip install pyinstaller
 
-# Needs to run from the root of the project
+# move to the root of the repo
 cd "$(dirname "$0")"
 cd ..
+
+# build the web ui
+cd studio/web_ui
+npm run build
+cd ../..
 
 # Builds the desktop app
 # TODO: use a spec instead of long winded command line
