@@ -30,6 +30,6 @@ jobs:
 
     - run: sh ./desktop/build_desktop_app.sh
     - run: zip -r "fune-desktop-${{ matrix.os }}.zip" ./desktop/build/dist
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         path: fune-desktop-${{ matrix.os }}.zip
