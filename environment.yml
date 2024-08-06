@@ -3,8 +3,8 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - pip=24.0=py312hca03da5_0
-  - python=3.12.4=h99e199e_1
+  - pip=24.0
+  - python=3.12.4
   - pip:
       - altgraph==0.17.4
       - annotated-types==0.7.0
