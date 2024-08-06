@@ -15,7 +15,7 @@
     "format_check": "prettier --check --plugin prettier-plugin-svelte ./"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "^3.2.0",
+    "@sveltejs/adapter-static": "^3.0.2",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.1.1",
     "@tailwindcss/typography": "^0.5.13",
@@ -36,6 +36,5 @@
     "vite": "^5.0.0",
     "vitest": "^1.0.0"
   },
-  "type": "module",
-  "dependencies": {}
+  "type": "module"
 }
