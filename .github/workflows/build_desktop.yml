@@ -1,5 +1,7 @@
+name: Build Desktop Apps
+
 on:
-  release:
+  push:
 
 jobs:
   build:
@@ -7,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["windows-latest", "ubuntu-latest", "macos-latest"]
+        os: ["windows-latest", "macos-latest"]
 
     steps:
       - uses: actions/checkout@v4
