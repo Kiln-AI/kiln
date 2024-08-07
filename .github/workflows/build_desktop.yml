@@ -27,10 +27,6 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Build Web UI
-        working-directory: ./studio/web_ui
-        run: npm install . && npm run build
-
       - run: sh ./desktop/build_desktop_app.sh
       - uses: actions/upload-artifact@v4
         with:

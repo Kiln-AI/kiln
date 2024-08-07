@@ -8,21 +8,20 @@ cd ..
 
 # build the web ui
 cd studio/web_ui
+npm install
 npm run build
 cd ../..
 
-APP_STYPE="--onefile"
+APP_TYPE="--onefile"
 if [ "$(uname)" == "Darwin" ]; then
   echo "Building MacOS app"
-  APP_STYPE="--onedir"
+  APP_TYPE="--onedir"
 fi
-
-echo $APP_STYPE
 
 # Builds the desktop app
 # TODO: use a spec instead of long winded command line
-pyinstaller --windowed $APP_STYLE --icon="../icon.png" \
+pyinstaller --windowed $(printf %s "$APP_TYPE") --icon="../icon.png" \
   --add-data "../taskbar.png:." --add-data "../../studio/web_ui/build:./studio/web_ui/build" \
-  -n fune --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
-  --specpath=./desktop/build --osx-bundle-identifier=net.scosman.fune \
+  --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
+  -n fune --specpath=./desktop/build --osx-bundle-identifier=net.scosman.fune \
   --paths=. ./desktop/desktop.py
