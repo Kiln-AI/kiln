@@ -17,13 +17,6 @@ jobs:
         with:
           python-version: 3.12
           cache: "pip"
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          auto-update-conda: true
-          python-version: 3.12
-          environment-file: environment.yml
-          auto-activate-base: false
-          activate-environment: fune
 
       - run: pip install -r requirements.txt
 
