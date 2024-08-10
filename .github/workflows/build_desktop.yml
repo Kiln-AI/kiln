@@ -9,6 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # macos-latest is for arm64 build, macos-13 is for x86_64
         os: ["windows-latest", "macos-latest", "macos-13"]
 
     steps:
