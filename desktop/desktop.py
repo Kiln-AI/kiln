@@ -35,7 +35,7 @@ def quit_app():
 
 
 def run_taskbar():
-    # TODO: resolution, dark mode, and other platforms (windows, linux)
+    # TODO: resolution
     image = Image.open(resource_path("taskbar.png"))
     menu = (
         pystray.MenuItem("Open Fune Studio", show_studio),
