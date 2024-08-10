@@ -22,6 +22,7 @@ if [ "$(uname)" == "Darwin" ]; then
   echo "Building MacOS app"
   cp desktop/mac_taskbar.png desktop/build/taskbar.png
   cp desktop/mac_icon.png desktop/build/icon.png
+  # onedir launches faster, and still looks like 1 file with MacOS .app bundles
   PLATFORM_OPTS="--onedir --osx-bundle-identifier=net.scosman.fune"
   ## TODO Add this here, but need to check this python install supports universal2
   ## --target-arch=universal2 
@@ -29,6 +30,7 @@ else
   echo "Building Windows App"
   cp desktop/win_taskbar.png desktop/build/taskbar.png
   cp desktop/win_icon.png desktop/build/icon.png
+  # onefile launches slower, but compiles whole app into a single .exe
   PLATFORM_OPTS="--onefile"
 fi
 
