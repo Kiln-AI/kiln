@@ -6,11 +6,14 @@ set -e
 cd "$(dirname "$0")"
 cd ..
 
-# build the web ui
-cd studio/web_ui
-npm install
-npm run build
-cd ../..
+if [[ $* != *--skip-web* ]]; then
+  # build the web ui
+  echo "Building web UI"
+  cd studio/web_ui
+  npm install
+  npm run build
+  cd ../..
+fi
 
 mkdir -p desktop/build
 
