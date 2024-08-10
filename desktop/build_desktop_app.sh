@@ -25,7 +25,7 @@ if [ "$(uname)" == "Darwin" ]; then
   # onedir launches faster, and still looks like 1 file with MacOS .app bundles
   PLATFORM_OPTS="--onedir --osx-bundle-identifier=net.scosman.fune"
 
-  PY_PLAT=$(python -c 'import sysconfig; print(sysconfig.get_platform().split("-")[-1])')
+  PY_PLAT=$(python -c 'import platform; print(platform.machine())')
   echo "Building MacOS app for single platform ($PY_PLAT)"
 else
   echo "Building Windows App"
