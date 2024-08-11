@@ -42,3 +42,12 @@ pyinstaller --windowed $(printf %s "$PLATFORM_OPTS") --icon="./icon.png" \
   --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
   -n fune --specpath=./desktop/build \
   --paths=. ./desktop/desktop.py
+
+# MacOS apps have symlinks, and GitHub artifact upload zip will break them. Tar instead.
+if [[ $* == *--compress-mac-app* && "$(uname)" == "Darwin" ]]; then
+  echo "Compressing MacOS app"
+  cd ./desktop/build/dist
+  tar czpvf fune.app.tgz fune.app
+  rm -r fune.app
+  cd ../../..
+fi

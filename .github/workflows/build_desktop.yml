@@ -21,9 +21,8 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - run: sh ./desktop/build_desktop_app.sh
-      # MacOS apps have symlinks, and the artifact upload zip will break them. Tar instead.
-      - run: cd desktop/build/dist && tar czpvf fune.app.tgz fune.app && rm -r fune.app && echo "Ready to upload"
+      # Compress MacOS app param ignored on Windows
+      - run: sh ./desktop/build_desktop_app.sh --compress-mac-app
       - uses: actions/upload-artifact@v4
         with:
           name: fune-desktop-${{ runner.os }}-${{ runner.arch }}
