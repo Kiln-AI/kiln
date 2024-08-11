@@ -23,7 +23,7 @@ jobs:
 
       - run: sh ./desktop/build_desktop_app.sh
       # MacOS apps have symlinks, and the artifact upload zip will break them. Tar instead.
-      - run: cd build/dist && tar czpvf fune.app.tgz fune.app && rm -r fune.app && echo "Ready to upload"
+      - run: cd desktop/build/dist && tar czpvf fune.app.tgz fune.app && rm -r fune.app && echo "Ready to upload"
       - uses: actions/upload-artifact@v4
         with:
           name: fune-desktop-${{ runner.os }}-${{ runner.arch }}
