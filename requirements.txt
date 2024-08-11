@@ -3,6 +3,7 @@ backports.tarfile==1.2.0
 dill==0.3.8
 fastapi==0.111.1
 httptools==0.6.1
+importlib-metadata==8.0.0
 importlib-resources==6.4.0
 isort==5.13.2
 jaraco.text==3.12.1
