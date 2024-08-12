@@ -78,6 +78,7 @@ def close_splash():
 
 if __name__ == "__main__":
     # run the server in a thread, and shut down server when main thread exits
+    # use_colors=False to disable colored logs, as windows doesn't support them
     config = uvicorn.Config(
         server.app, host="127.0.0.1", port=8757, log_level="warning", use_colors=False
     )
@@ -86,9 +87,18 @@ if __name__ == "__main__":
     ).run_in_thread():
         # TK without a window, to get dock events
         root = tk.Tk()
-        root.withdraw()  # hide the window
-        # Register callback for the dock icon to reopen the web app
-        root.createcommand("tk::mac::ReopenApplication", show_studio)
+        root.title("fune")
+        if sys.platform == "darwin":
+            root.withdraw()  # remove the window, but will leave the dock icon
+            # Register callback for the dock icon to reopen the web app
+            root.createcommand("tk::mac::ReopenApplication", show_studio)
+        elif sys.platform == "Windows":
+            # Make the window transparent, so it does show up in the taskbar
+            root.attributes("-alpha", 0.0)
+            top = tk.Toplevel(root)
+            top.overrideredirect(1)
+            # Bind tapping the taskbar icon to show the window
+            root.bind("<Map>", show_studio)
         run_taskbar()
         root.after(10, show_studio)
         root.after(10, close_splash)
