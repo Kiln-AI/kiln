@@ -9,7 +9,6 @@ import sys
 import threading
 import contextlib
 import time
-import codecs
 
 
 class ThreadedServer(uvicorn.Server):
@@ -78,14 +77,9 @@ def close_splash():
 
 
 if __name__ == "__main__":
-    if sys.platform == "Windows":
-        if sys.stdout.encoding != "UTF-8":
-            sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
-        if sys.stderr.encoding != "UTF-8":
-            sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
     # run the server in a thread, and shut down server when main thread exits
     config = uvicorn.Config(
-        server.app, host="127.0.0.1", port=8757, log_level="warning"
+        server.app, host="127.0.0.1", port=8757, log_level="warning", use_colors=False
     )
     with ThreadedServer(
         config=config,
