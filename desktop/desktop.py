@@ -63,7 +63,8 @@ def close_splash():
 if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
-    root.withdraw()  # hide the window
+    if sys.platform == "darwin":
+        root.withdraw()  # hide the window
     # Register callback for the dock icon to reopen the web app
     root.createcommand("tk::mac::ReopenApplication", show_studio)
     run_taskbar()
