@@ -55,8 +55,11 @@ def quit_app():
     # TODO: Windows not working
     global root
     root.destroy()
-    global tray
-    tray.stop()
+
+
+def on_quit():
+    global root
+    root.after(100, quit_app)
 
 
 def run_taskbar():
@@ -64,7 +67,7 @@ def run_taskbar():
     image = Image.open(resource_path("taskbar.png"))
     menu = (
         pystray.MenuItem("Open Fune Studio", show_studio),
-        pystray.MenuItem("Quit", quit_app),
+        pystray.MenuItem("Quit", on_quit),
     )
     global tray
     tray = pystray.Icon("fune", image, "fune", menu)
