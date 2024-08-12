@@ -50,7 +50,6 @@ def run_taskbar():
 if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
-    root.overrideredirect(1)
     if platform.system() == "Windows":
         root.iconify()  # hide the window
     else:
