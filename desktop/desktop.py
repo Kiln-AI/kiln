@@ -63,10 +63,10 @@ def close_splash():
 if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
-    root.withdraw()  # hide the window
     # Register callback for the dock icon to reopen the web app
     root.createcommand("tk::mac::ReopenApplication", show_studio)
     root.protocol("WM_DELETE_WINDOW", on_win_closing)
+    root.withdraw()  # hide the window
     run_taskbar()
     # start the server in a thread, show the web app, and start the taskbar
     root.after(10, run_studio_thread)
