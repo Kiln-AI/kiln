@@ -9,6 +9,7 @@ import sys
 import threading
 import contextlib
 import time
+import signal
 
 
 class ThreadedServer(uvicorn.Server):
@@ -53,6 +54,8 @@ def show_studio():
 
 def quit_app():
     root.destroy()
+    # Windows needs a nudge
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 def run_taskbar():
@@ -85,22 +88,13 @@ if __name__ == "__main__":
     with ThreadedServer(
         config=config,
     ).run_in_thread():
-        # TK without a window, to get dock events
+        # TK without a window, to get dock events on MacOS
         root = tk.Tk()
         root.title("fune")
-        if sys.platform == "darwin":
-            root.withdraw()  # remove the window, but will leave the dock icon
-            # Register callback for the dock icon to reopen the web app
-            root.createcommand("tk::mac::ReopenApplication", show_studio)
-        elif sys.platform == "Windows":
-            # Make the window transparent, so it does show up in the taskbar
-            root.attributes("-alpha", 0.0)
-            top = tk.Toplevel(root)
-            top.overrideredirect(1)
-            # Bind tapping the taskbar icon to show the window
-            root.bind("<Map>", show_studio)
+        root.withdraw()  # remove the window
+        # Register callback for the dock icon to reopen the web app
+        root.createcommand("tk::mac::ReopenApplication", show_studio)
         run_taskbar()
         root.after(10, show_studio)
         root.after(10, close_splash)
         root.mainloop()
-        print("Stopping fune")
