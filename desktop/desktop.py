@@ -7,6 +7,7 @@ import uvicorn
 import server.server as server
 import sys
 import threading
+import platform
 
 
 def resource_path(relative_path):
@@ -49,7 +50,11 @@ def run_taskbar():
 if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
-    root.withdraw()
+    root.overrideredirect(1)
+    if platform.system() == "Windows":
+        root.iconify()  # hide the window
+    else:
+        root.withdraw()  # hide the window
     # Register callback for the dock icon to reopen the web app
     root.createcommand("tk::mac::ReopenApplication", show_studio)
     run_taskbar()
