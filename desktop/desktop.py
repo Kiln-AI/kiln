@@ -91,6 +91,7 @@ def run_taskbar():
     tray = pystray.Icon("fune", image, "fune", menu)
     # running detached since we use tk mainloop to get events from dock icon
     tray.run_detached()
+    return tray
 
 
 def close_splash():
@@ -122,7 +123,9 @@ if __name__ == "__main__":
         root.withdraw()  # remove the window
         # Register callback for the dock icon to reopen the web app
         root.createcommand("tk::mac::ReopenApplication", show_studio)
-        run_taskbar()
+        tray = run_taskbar()
         root.after(10, show_studio)
         root.after(10, close_splash)
         root.mainloop()
+        tray.stop()
+        raise SystemExit(0)
