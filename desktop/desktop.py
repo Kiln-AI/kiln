@@ -68,16 +68,19 @@ def quit_app():
     if root:
         root.destroy()
 
-    raise SystemExit(0)
+    sys.exit(0)
 
 
 def on_quit():
     global root
     # use main runloop if possible
-    if root:
-        root.after(100, quit_app)
-    else:
-        raise SystemExit(0)
+    try:
+        if root:
+            root.after(100, quit_app)
+        else:
+            sys.exit(0)
+    finally:
+        sys.exit(0)
 
 
 def run_taskbar():
@@ -116,7 +119,7 @@ if __name__ == "__main__":
         if not uni_server.running():
             # Can't start. Likely a port is already in use. Show the web app instead and exit
             show_studio()
-            exit(0)
+            sys.exit(0)
         # TK without a window, to get dock events on MacOS
         root = tk.Tk()
         root.title("fune")
@@ -128,4 +131,4 @@ if __name__ == "__main__":
         root.after(10, close_splash)
         root.mainloop()
         tray.stop()
-        raise SystemExit(0)
+        sys.exit(0)
