@@ -7,6 +7,8 @@ import uvicorn
 import server.server as server
 import sys
 import threading
+import subprocess
+import signal
 
 
 def resource_path(relative_path):
@@ -23,7 +25,9 @@ def run_studio():
 
 
 def run_studio_thread():
-    threading.Thread(target=run_studio, daemon=True).start()
+    thread = threading.Thread(target=run_studio)
+    thread.start()
+    return thread
 
 
 def show_studio():
@@ -31,6 +35,7 @@ def show_studio():
 
 
 def quit_app():
+    # TODO: broken on Windows because console is still open
     root.destroy()
 
 
@@ -63,7 +68,11 @@ if __name__ == "__main__":
     root.createcommand("tk::mac::ReopenApplication", show_studio)
     run_taskbar()
     # start the server in a thread, show the web app, and start the taskbar
-    root.after(10, run_studio_thread)
-    root.after(50, show_studio)
-    root.after(50, close_splash)
+    server_thread = run_studio_thread()
+    root.after(10, show_studio)
+    root.after(10, close_splash)
     root.mainloop()
+    print("Stopping fune")
+    # signal to stop server thread cleanly
+    os.kill(os.getpid(), signal.SIGTERM)
+    server_thread.join(timeout=5)
