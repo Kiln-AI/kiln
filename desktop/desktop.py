@@ -65,16 +65,14 @@ def show_studio():
 def quit_app():
     # TODO: Windows not working
     global root
-    root.destroy()
+    if root:
+        root.destroy()
 
 
 def on_quit():
     global root
-    try:
+    if root:
         root.after(100, quit_app)
-    except NameError:
-        # root not defined, continue as nothing to quit
-        pass
 
 
 def run_taskbar():
@@ -100,6 +98,8 @@ def close_splash():
 
 
 if __name__ == "__main__":
+    root = None
+
     # run the server in a thread, and shut down server when main thread exits
     # use_colors=False to disable colored logs, as windows doesn't support them
     config = uvicorn.Config(
@@ -112,7 +112,6 @@ if __name__ == "__main__":
             show_studio()
             exit(0)
         # TK without a window, to get dock events on MacOS
-        global root
         root = tk.Tk()
         root.title("fune")
         root.withdraw()  # remove the window
