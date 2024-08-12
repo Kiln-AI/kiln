@@ -7,7 +7,6 @@ import uvicorn
 import server.server as server
 import sys
 import threading
-import platform
 
 
 def resource_path(relative_path):
@@ -52,6 +51,15 @@ def on_win_closing():
     pass
 
 
+def close_splash():
+    try:
+        import pyi_splash  # type: ignore
+
+        pyi_splash.close()
+    except ModuleNotFoundError:
+        pass
+
+
 if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
@@ -63,4 +71,5 @@ if __name__ == "__main__":
     # start the server in a thread, show the web app, and start the taskbar
     root.after(10, run_studio_thread)
     root.after(1000, show_studio)
+    root.after(1000, close_splash)
     root.mainloop()
