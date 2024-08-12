@@ -86,8 +86,12 @@ def on_quit():
 def run_taskbar():
     # TODO: resolution
     image = Image.open(resource_path("taskbar.png"))
+    # Use default on Windows to get "left click to open" behaviour. But it looks ugle on MacOS, so don't use it there
+    make_open_studio_default = sys.platform == "Windows"
     menu = (
-        pystray.MenuItem("Open Fune Studio", show_studio, default=True),
+        pystray.MenuItem(
+            "Open Fune Studio", show_studio, default=make_open_studio_default
+        ),
         pystray.MenuItem("Quit", on_quit),
     )
     global tray
