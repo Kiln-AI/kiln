@@ -63,7 +63,7 @@ def show_studio():
 
 
 def quit_app():
-    # TODO: Windows not working
+    # TODO: Windows issue needs pyinstaller update: https://github.com/pyinstaller/pyinstaller/issues/8701
     global tray
     if tray:
         tray.stop()
@@ -87,7 +87,7 @@ def run_taskbar():
     # TODO: resolution
     image = Image.open(resource_path("taskbar.png"))
     menu = (
-        pystray.MenuItem("Open Fune Studio", show_studio),
+        pystray.MenuItem("Open Fune Studio", show_studio, default=True),
         pystray.MenuItem("Quit", on_quit),
     )
     global tray
