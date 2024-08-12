@@ -23,7 +23,7 @@ if [ "$(uname)" == "Darwin" ]; then
   cp desktop/mac_taskbar.png desktop/build/taskbar.png
   cp desktop/mac_icon.png desktop/build/icon.png
   # onedir launches faster, and still looks like 1 file with MacOS .app bundles
-  PLATFORM_OPTS="--onedir --osx-bundle-identifier=net.scosman.fune"
+  PLATFORM_OPTS="--onedir --windowed --osx-bundle-identifier=net.scosman.fune"
 
   PY_PLAT=$(python -c 'import platform; print(platform.machine())')
   echo "Building MacOS app for single platform ($PY_PLAT)"
@@ -32,12 +32,13 @@ else
   cp desktop/win_taskbar.png desktop/build/taskbar.png
   cp desktop/win_icon.png desktop/build/icon.png
   # onefile launches slower, but compiles whole app into a single .exe
+  # TODO: should use --windowed on Windows, but it doesn't work and needs debugging
   PLATFORM_OPTS="--onefile --splash=../win_splash.png"
 fi
 
 # Builds the desktop app
 # TODO: use a spec instead of long winded command line
-pyinstaller $(printf %s "$PLATFORM_OPTS") --windowed --icon="./icon.png" \
+pyinstaller $(printf %s "$PLATFORM_OPTS") --icon="./icon.png" \
   --add-data "./taskbar.png:." --add-data "../../studio/web_ui/build:./studio/web_ui/build" \
   --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
   -n fune --specpath=./desktop/build \
