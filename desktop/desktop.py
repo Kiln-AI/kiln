@@ -47,15 +47,18 @@ def run_taskbar():
     icon.run_detached()
 
 
+def on_win_closing():
+    # Don't actually kill the app, just hide it
+    return False
+
+
 if __name__ == "__main__":
     # TK without a window, to get dock events
     root = tk.Tk()
-    if platform.system() == "Windows":
-        root.iconify()  # hide the window
-    else:
-        root.withdraw()  # hide the window
+    root.withdraw()  # hide the window
     # Register callback for the dock icon to reopen the web app
     root.createcommand("tk::mac::ReopenApplication", show_studio)
+    root.protocol("WM_DELETE_WINDOW", on_win_closing)
     run_taskbar()
     # start the server in a thread, show the web app, and start the taskbar
     root.after(10, run_studio_thread)
