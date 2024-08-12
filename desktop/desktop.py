@@ -49,7 +49,7 @@ def run_taskbar():
 
 def on_win_closing():
     # Don't actually kill the app, just hide it
-    return False
+    pass
 
 
 if __name__ == "__main__":
