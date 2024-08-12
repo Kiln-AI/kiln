@@ -17,15 +17,26 @@ class ThreadedServer(uvicorn.Server):
 
     @contextlib.contextmanager
     def run_in_thread(self):
-        thread = threading.Thread(target=self.run)
+        self.stopped = False
+        thread = threading.Thread(target=self.run_safe, daemon=True)
         thread.start()
         try:
-            while not self.started:
+            while not self.started and not self.stopped:
                 time.sleep(1e-3)
             yield
         finally:
             self.should_exit = True
             thread.join()
+            on_quit()
+
+    def run_safe(self):
+        try:
+            self.run()
+        finally:
+            self.stopped = True
+
+    def running(self):
+        return self.started and not self.stopped
 
 
 def resource_path(relative_path):
@@ -54,7 +65,8 @@ def show_studio():
 def quit_app():
     # TODO: Windows not working
     global root
-    root.destroy()
+    if root:
+        root.destroy()
 
 
 def on_quit():
@@ -90,9 +102,12 @@ if __name__ == "__main__":
     config = uvicorn.Config(
         server.app, host="127.0.0.1", port=8757, log_level="warning", use_colors=False
     )
-    with ThreadedServer(
-        config=config,
-    ).run_in_thread():
+    uni_server = ThreadedServer(config=config)
+    with uni_server.run_in_thread():
+        if not uni_server.running():
+            # Can't start. Likely a port is already in use. Show the web app instead and exit
+            show_studio()
+            exit(0)
         # TK without a window, to get dock events on MacOS
         global root
         root = tk.Tk()
