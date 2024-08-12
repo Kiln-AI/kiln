@@ -55,6 +55,8 @@ def quit_app():
     # TODO: Windows not working
     global root
     root.destroy()
+    global tray
+    tray.stop()
 
 
 def run_taskbar():
@@ -64,9 +66,10 @@ def run_taskbar():
         pystray.MenuItem("Open Fune Studio", show_studio),
         pystray.MenuItem("Quit", quit_app),
     )
-    icon = pystray.Icon("name", image, "title", menu)
+    global tray
+    tray = pystray.Icon("fune", image, "fune", menu)
     # running detached since we use tk mainloop to get events from dock icon
-    icon.run_detached()
+    tray.run_detached()
 
 
 def close_splash():
