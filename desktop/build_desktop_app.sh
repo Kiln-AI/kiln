@@ -32,7 +32,7 @@ else
   cp desktop/win_taskbar.png desktop/build/taskbar.png
   cp desktop/win_icon.png desktop/build/icon.png
   # onefile launches slower, but compiles whole app into a single .exe
-  PLATFORM_OPTS="--onefile"
+  PLATFORM_OPTS="--onefile --splash=../win_splash.png"
 fi
 
 # Builds the desktop app
