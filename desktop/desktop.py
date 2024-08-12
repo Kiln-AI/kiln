@@ -65,13 +65,16 @@ def show_studio():
 def quit_app():
     # TODO: Windows not working
     global root
-    if root:
-        root.destroy()
+    root.destroy()
 
 
 def on_quit():
     global root
-    root.after(100, quit_app)
+    try:
+        root.after(100, quit_app)
+    except NameError:
+        # root not defined, continue as nothing to quit
+        pass
 
 
 def run_taskbar():
