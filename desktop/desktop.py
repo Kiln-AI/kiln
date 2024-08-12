@@ -9,7 +9,6 @@ import sys
 import threading
 import contextlib
 import time
-import signal
 
 
 class ThreadedServer(uvicorn.Server):
@@ -53,9 +52,9 @@ def show_studio():
 
 
 def quit_app():
+    # TODO: Windows not working
+    global root
     root.destroy()
-    # Windows needs a nudge
-    os.kill(os.getpid(), signal.SIGTERM)
 
 
 def run_taskbar():
@@ -89,6 +88,7 @@ if __name__ == "__main__":
         config=config,
     ).run_in_thread():
         # TK without a window, to get dock events on MacOS
+        global root
         root = tk.Tk()
         root.title("fune")
         root.withdraw()  # remove the window
