@@ -64,6 +64,9 @@ def show_studio():
 
 def quit_app():
     # TODO: Windows not working
+    global tray
+    if tray:
+        tray.stop()
     global root
     if root:
         root.destroy()
@@ -74,13 +77,10 @@ def quit_app():
 def on_quit():
     global root
     # use main runloop if possible
-    try:
-        if root:
-            root.after(100, quit_app)
-        else:
-            sys.exit(0)
-    finally:
-        sys.exit(0)
+    if root:
+        root.after(100, quit_app)
+    else:
+        quit_app()
 
 
 def run_taskbar():
@@ -108,6 +108,7 @@ def close_splash():
 
 if __name__ == "__main__":
     root = None
+    tray = None
 
     # run the server in a thread, and shut down server when main thread exits
     # use_colors=False to disable colored logs, as windows doesn't support them
@@ -119,7 +120,7 @@ if __name__ == "__main__":
         if not uni_server.running():
             # Can't start. Likely a port is already in use. Show the web app instead and exit
             show_studio()
-            sys.exit(0)
+            on_quit()
         # TK without a window, to get dock events on MacOS
         root = tk.Tk()
         root.title("fune")
@@ -130,5 +131,3 @@ if __name__ == "__main__":
         root.after(10, show_studio)
         root.after(10, close_splash)
         root.mainloop()
-        tray.stop()
-        sys.exit(0)
