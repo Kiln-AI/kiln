@@ -1,6 +1,6 @@
 # MacOS Code Signing
 
-How to sign on of the builds from GitHub Actions for offical release.
+How to sign on of the builds from GitHub Actions for official release.
 
 Easy way, but just signs with personal ID, not developer ID: `codesign --force --deep -s - fune.app`
 
