@@ -68,11 +68,16 @@ def quit_app():
     if root:
         root.destroy()
 
+    raise SystemExit(0)
+
 
 def on_quit():
     global root
+    # use main runloop if possible
     if root:
         root.after(100, quit_app)
+    else:
+        raise SystemExit(0)
 
 
 def run_taskbar():
