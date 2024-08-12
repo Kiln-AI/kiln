@@ -7,8 +7,25 @@ import uvicorn
 import server.server as server
 import sys
 import threading
-import subprocess
-import signal
+import contextlib
+import time
+
+
+class ThreadedServer(uvicorn.Server):
+    def install_signal_handlers(self):
+        pass
+
+    @contextlib.contextmanager
+    def run_in_thread(self):
+        thread = threading.Thread(target=self.run)
+        thread.start()
+        try:
+            while not self.started:
+                time.sleep(1e-3)
+            yield
+        finally:
+            self.should_exit = True
+            thread.join()
 
 
 def resource_path(relative_path):
@@ -35,7 +52,6 @@ def show_studio():
 
 
 def quit_app():
-    # TODO: broken on Windows because console is still open
     root.destroy()
 
 
@@ -61,19 +77,20 @@ def close_splash():
 
 
 if __name__ == "__main__":
-    # TK without a window, to get dock events
-    root = tk.Tk()
-    if sys.platform == "darwin":
+    # run the server in a thread, and shut down server when main thread exits
+    config = uvicorn.Config(
+        server.app, host="127.0.0.1", port=8757, log_level="warning"
+    )
+    with ThreadedServer(
+        config=config,
+    ).run_in_thread():
+        # TK without a window, to get dock events
+        root = tk.Tk()
         root.withdraw()  # hide the window
-    # Register callback for the dock icon to reopen the web app
-    root.createcommand("tk::mac::ReopenApplication", show_studio)
-    run_taskbar()
-    # start the server in a thread, show the web app, and start the taskbar
-    server_thread = run_studio_thread()
-    root.after(10, show_studio)
-    root.after(10, close_splash)
-    root.mainloop()
-    print("Stopping fune")
-    # signal to stop server thread cleanly
-    os.kill(os.getpid(), signal.SIGTERM)
-    server_thread.join(timeout=5)
+        # Register callback for the dock icon to reopen the web app
+        root.createcommand("tk::mac::ReopenApplication", show_studio)
+        run_taskbar()
+        root.after(10, show_studio)
+        root.after(10, close_splash)
+        root.mainloop()
+        print("Stopping fune")
