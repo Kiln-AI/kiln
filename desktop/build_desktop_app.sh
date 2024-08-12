@@ -37,7 +37,7 @@ fi
 
 # Builds the desktop app
 # TODO: use a spec instead of long winded command line
-pyinstaller $(printf %s "$PLATFORM_OPTS") --icon="./icon.png" \
+pyinstaller $(printf %s "$PLATFORM_OPTS") --windowed --icon="./icon.png" \
   --add-data "./taskbar.png:." --add-data "../../studio/web_ui/build:./studio/web_ui/build" \
   --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
   -n fune --specpath=./desktop/build \
