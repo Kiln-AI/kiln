@@ -4,7 +4,7 @@
 
 <div class="navbar bg-base-100 container mx-auto">
   <div class="flex-1">
-    <a class="btn btn-ghost normal-case text-xl" href="/">Fune Studio</a>
+    <a class="btn btn-ghost normal-case text-xl" href="/">Kiln Studio</a>
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1 hidden sm:flex font-bold text-lg">
@@ -56,7 +56,7 @@
       <span class="footer-title opacity-80">Explore</span>
       <a class="link link-hover mb-1" href="/">Home</a>
       <a class="link link-hover mb-1" href="/">Home Again</a>
-      <a class="link link-hover my-1" href="https://github.com/scosman/fune"
+      <a class="link link-hover my-1" href="https://github.com/kiln-ai"
         >Github</a
       >
     </nav>

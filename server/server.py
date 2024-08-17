@@ -23,10 +23,10 @@ app = FastAPI()
 
 
 def settings_path(create=True):
-    funedir = os.path.join(Path.home(), ".fune")
-    if create and not os.path.exists(funedir):
-        os.makedirs(funedir)
-    return os.path.join(funedir, "settings.yaml")
+    settings_dir = os.path.join(Path.home(), ".kiln_ai")
+    if create and not os.path.exists(settings_dir):
+        os.makedirs(settings_dir)
+    return os.path.join(settings_dir, "settings.yaml")
 
 
 def load_settings():

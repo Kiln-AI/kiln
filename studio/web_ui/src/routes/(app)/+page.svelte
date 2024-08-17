@@ -29,7 +29,7 @@
       <div
         class="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent mb-4 md:mb-8"
       >
-        Fune Studio
+        Kiln Studio
       </div>
 
       <div
@@ -44,7 +44,7 @@
         <span> ML product platform</span>
       </div>
       <div class="mt-16 md:mt-6">
-        <a href="https://github.com/scosman/fune">
+        <a href="https://github.com/kiln-ai">
           <button class="btn btn-primary px-6">★ US ON GITHUB</button>
         </a>
       </div>

@@ -23,7 +23,7 @@ if [ "$(uname)" == "Darwin" ]; then
   cp desktop/mac_taskbar.png desktop/build/taskbar.png
   cp desktop/mac_icon.png desktop/build/icon.png
   # onedir launches faster, and still looks like 1 file with MacOS .app bundles
-  PLATFORM_OPTS="--onedir --windowed --osx-bundle-identifier=net.scosman.fune"
+  PLATFORM_OPTS="--onedir --windowed --osx-bundle-identifier=com.kiln-ai.kiln.studio"
 
   PY_PLAT=$(python -c 'import platform; print(platform.machine())')
   echo "Building MacOS app for single platform ($PY_PLAT)"
@@ -41,14 +41,14 @@ fi
 pyinstaller $(printf %s "$PLATFORM_OPTS") --icon="./icon.png" \
   --add-data "./taskbar.png:." --add-data "../../studio/web_ui/build:./studio/web_ui/build" \
   --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
-  -n fune --specpath=./desktop/build \
+  -n kiln --specpath=./desktop/build \
   --paths=. ./desktop/desktop.py
 
 # MacOS apps have symlinks, and GitHub artifact upload zip will break them. Tar instead.
 if [[ $* == *--compress-mac-app* && "$(uname)" == "Darwin" ]]; then
   echo "Compressing MacOS app"
   cd ./desktop/build/dist
-  tar czpvf fune.app.tgz fune.app
-  rm -r fune.app
+  tar czpvf kiln.app.tgz kiln.app
+  rm -r kiln.app
   cd ../../..
 fi

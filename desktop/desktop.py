@@ -90,12 +90,12 @@ def run_taskbar():
     make_open_studio_default = sys.platform == "Windows"
     menu = (
         pystray.MenuItem(
-            "Open Fune Studio", show_studio, default=make_open_studio_default
+            "Open Kiln Studio", show_studio, default=make_open_studio_default
         ),
         pystray.MenuItem("Quit", on_quit),
     )
     global tray
-    tray = pystray.Icon("fune", image, "fune", menu)
+    tray = pystray.Icon("kiln", image, "kiln", menu)
     # running detached since we use tk mainloop to get events from dock icon
     tray.run_detached()
     return tray
@@ -127,7 +127,7 @@ if __name__ == "__main__":
             on_quit()
         # TK without a window, to get dock events on MacOS
         root = tk.Tk()
-        root.title("fune")
+        root.title("kiln")
         root.withdraw()  # remove the window
         # Register callback for the dock icon to reopen the web app
         root.createcommand("tk::mac::ReopenApplication", show_studio)
