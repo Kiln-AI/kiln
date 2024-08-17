@@ -1,4 +1,4 @@
-name: fune
+name: kiln
 channels:
   - defaults
   - conda-forge
@@ -6,5 +6,5 @@ dependencies:
   - pip=24.0
   - python=3.12.4
   - pip:
-    - -r requirements.txt
-prefix: /opt/anaconda3/envs/fune
+      - -r requirements.txt
+prefix: /opt/anaconda3/envs/kiln
