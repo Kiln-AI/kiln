@@ -13,6 +13,7 @@ mypy-extensions==1.0.0
 ordered-set==4.1.0
 pathspec==0.12.1
 pipenv==2024.0.1
+pydantic==2.8.2
 pycodestyle==2.12.1
 pyinstaller==6.9.0
 pystray==0.19.5
@@ -24,3 +25,4 @@ tomlkit==0.13.0
 watchfiles==0.22.0
 websockets==12.0
 hatch==1.12.0
+pytest==8.3.2

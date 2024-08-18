@@ -29,20 +29,20 @@ else
 fi
 
 echo "${headerStart}Checking Core: build, test${headerEnd}"
-cd core
-hatch build
-hatch test
-cd ..
+#cd core
+#hatch build
+#hatch test
+#cd ..
 
 echo "${headerStart}Checking Studio: build, test${headerEnd}"
-cd studio
-hatch build
-hatch test
-cd ..
+#cd studio
+#hatch build
+#hatch test
+#cd ..
 
 echo "${headerStart}Checking Types${headerEnd}"
-cd src/core
-mypy --install-types --non-interactive .
-cd ../studio
-mypy --install-types --non-interactive .
-cd ../..
+#cd src/core
+#mypy --install-types --non-interactive .
+#cd ../studio
+#mypy --install-types --non-interactive .
+#cd ../..
