@@ -8,30 +8,39 @@ set -e
 # work from the root of the repo
 cd "$(dirname "$0")"
 
-echo "Checking Python"
+headerStart="\n\033[4;34m=== "
+headerEnd=" ===\033[0m\n"
+
+echo "${headerStart}Checking Python: Ruff, format, check${headerEnd}"
 ruff check
 ruff format --check
 
-echo "checking Web UI"
-cd src/web_ui
-npm run format_check
-npm run lint
-npm run check
-cd ../..
+changed_files=$(git diff --name-only)
 
-echo "checking Core: build, test"
+if [[ "$changed_files" == *"src/web_ui/"* ]]; then
+    echo "${headerStart}Checking Web UI: format, lint, check${headerEnd}"
+    cd src/web_ui
+    npm run format_check
+    npm run lint
+    npm run check
+    cd ../..
+else
+    echo "${headerStart}Skipping Web UI: format, lint, check${headerEnd}"
+fi
+
+echo "${headerStart}Checking Core: build, test${headerEnd}"
 cd core
 hatch build
 hatch test
 cd ..
 
-echo "checking Studio: build, test"
+echo "${headerStart}Checking Studio: build, test${headerEnd}"
 cd studio
 hatch build
 hatch test
 cd ..
 
-echo "Checking Types Core"
+echo "${headerStart}Checking Types${headerEnd}"
 mypy --install-types
 mypy src/core
 mypy src/studio
