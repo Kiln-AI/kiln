@@ -30,3 +30,8 @@ cd studio
 hatch build
 hatch test
 cd ..
+
+echo "Checking Types Core"
+mypy --install-types
+mypy src/core
+mypy src/studio

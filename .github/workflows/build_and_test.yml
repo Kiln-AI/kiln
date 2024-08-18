@@ -24,6 +24,10 @@ jobs:
         run: hatch test
         working-directory: ./core
 
+      - name: Check Types Core
+        run: mypy .
+        working-directory: ./src/core
+
       - name: Build Studio
         run: hatch build
         working-directory: ./studio
@@ -31,3 +35,7 @@ jobs:
       - name: Test Studio
         run: hatch test
         working-directory: ./studio
+
+      - name: Check Types Studio
+        run: mypy .
+        working-directory: ./src/studio
