@@ -16,6 +16,8 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - run: mypy --install-types
+
       - name: Build Core
         run: hatch build
         working-directory: ./core
