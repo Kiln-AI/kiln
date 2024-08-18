@@ -8,32 +8,31 @@ name: Format and Lint
 on:
   push:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   format_and_lint:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.9
-  
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install ruff
-    - name: Lint with ruff
-      run: |
-        ruff check .
-    - name: Format with ruff
-      run: |
-        ruff format --check .
-    - name: Download go misspell
-      run: go install github.com/client9/misspell/cmd/misspell@latest
-    - name: Run misspell
-      run: misspell -error .
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+      - name: Lint with ruff
+        run: |
+          ruff check .
+      - name: Format with ruff
+        run: |
+          ruff format --check .
+      - name: Download go misspell
+        run: go install github.com/client9/misspell/cmd/misspell@latest
+      - name: Run misspell
+        run: misspell -error .

@@ -22,8 +22,8 @@ jobs:
       - run: pip install -r requirements.txt
 
       # Compress MacOS app param ignored on Windows
-      - run: sh ./desktop/build_desktop_app.sh --compress-mac-app
+      - run: sh ./src/desktop/build_desktop_app.sh --compress-mac-app
       - uses: actions/upload-artifact@v4
         with:
           name: kiln-desktop-${{ runner.os }}-${{ runner.arch }}
-          path: ./desktop/build/dist/*
+          path: ./src/desktop/build/dist/*
