@@ -1,0 +1,33 @@
+name: Build Desktop Apps
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
+
+      - name: Build Core
+        run: hatch build
+        working-directory: ./core
+
+      - name: Test Core
+        run: hatch test
+        working-directory: ./core
+
+      - name: Build Studio
+        run: hatch build
+        working-directory: ./studio
+
+      - name: Test Studio
+        run: hatch test
+        working-directory: ./studio
