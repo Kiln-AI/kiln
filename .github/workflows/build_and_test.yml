@@ -16,8 +16,6 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - run: mypy --install-types
-
       - name: Build Core
         run: hatch build
         working-directory: ./core
@@ -27,7 +25,7 @@ jobs:
         working-directory: ./core
 
       - name: Check Types Core
-        run: mypy .
+        run: mypy --install-types --non-interactive .
         working-directory: ./src/core
 
       - name: Build Studio
@@ -39,5 +37,5 @@ jobs:
         working-directory: ./studio
 
       - name: Check Types Studio
-        run: mypy .
+        run: mypy --install-types --non-interactive .
         working-directory: ./src/studio

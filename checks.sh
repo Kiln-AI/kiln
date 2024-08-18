@@ -41,6 +41,8 @@ hatch test
 cd ..
 
 echo "${headerStart}Checking Types${headerEnd}"
-mypy --install-types
-mypy src/core
-mypy src/studio
+cd src/core
+mypy --install-types --non-interactive .
+cd ../studio
+mypy --install-types --non-interactive .
+cd ../..
