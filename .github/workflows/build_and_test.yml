@@ -1,4 +1,4 @@
-name: Build Desktop Apps
+name: Build and Test
 
 on:
   push:
