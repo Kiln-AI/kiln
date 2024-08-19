@@ -7,4 +7,5 @@ dependencies:
   - python=3.12.4
   - pip:
       - -r requirements.txt
+      - -r dev-requirements.txt
 prefix: /opt/anaconda3/envs/kiln
