@@ -8,7 +8,7 @@ T = TypeVar("T", bound="KilnBaseModel")
 
 
 class KilnBaseModel(BaseModel):
-    version: int = 1
+    v: int = 1  # schema_version
     path: Optional[Path] = None
 
     @classmethod
@@ -16,6 +16,12 @@ class KilnBaseModel(BaseModel):
         with open(path, "r") as file:
             m = cls.model_validate_json(file.read(), strict=True)
         m.path = path
+        if m.v > m.max_schema_version():
+            raise ValueError(
+                f"Cannot load from file because the schema version is higher than the current version. Upgrade kiln to the latest version. "
+                f"Class: {m.__class__.__name__}, id: {getattr(m, 'id', None)}, path: {path}, "
+                f"version: {m.v}, max version: {m.max_schema_version()}"
+            )
         return m
 
     def save_to_file(self) -> None:
@@ -28,4 +34,6 @@ class KilnBaseModel(BaseModel):
         with open(self.path, "w") as file:
             json.dump(data, file, indent=4)
 
-        print(f"Project saved to {self.path}")
+    # increment for breaking changes
+    def max_schema_version(self) -> int:
+        return 1
