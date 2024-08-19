@@ -8,3 +8,5 @@ watchfiles==0.22.0
 pytest==8.3.2
 poetry==1.8.3
 pyright==1.1.376
+uvicorn==0.30.3
+requests==2.32.3

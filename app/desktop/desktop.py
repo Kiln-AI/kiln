@@ -10,6 +10,10 @@ import threading
 import contextlib
 import time
 
+# TODO: remove this and all other globals in this file
+root = None  # type: tk.Tk | None
+tray = None  # type: ignore
+
 
 class ThreadedServer(uvicorn.Server):
     def install_signal_handlers(self):
@@ -65,13 +69,13 @@ def show_studio():
 def quit_app():
     # TODO: Windows issue needs pyinstaller update: https://github.com/pyinstaller/pyinstaller/issues/8701
     global tray
-    if tray:
+    if tray is not None:
         tray.stop()
     global root
-    if root:
+    if root is not None:
         root.destroy()
-
-    sys.exit(0)
+        # TODO: shouldn't need explicit exit, but would need to test all platforms to remove
+        sys.exit(0)
 
 
 def on_quit():
@@ -110,15 +114,16 @@ def close_splash():
         pass
 
 
-if __name__ == "__main__":
-    root = None
-    tray = None
+def server_config(port=8757):
+    return uvicorn.Config(
+        server.app, host="127.0.0.1", port=port, log_level="warning", use_colors=False
+    )
 
+
+if __name__ == "__main__":
     # run the server in a thread, and shut down server when main thread exits
     # use_colors=False to disable colored logs, as windows doesn't support them
-    config = uvicorn.Config(
-        server.app, host="127.0.0.1", port=8757, log_level="warning", use_colors=False
-    )
+    config = server_config()
     uni_server = ThreadedServer(config=config)
     with uni_server.run_in_thread():
         if not uni_server.running():

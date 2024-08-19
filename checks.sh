@@ -28,18 +28,8 @@ else
     echo "${headerStart}Skipping Web UI: format, lint, check${headerEnd}"
 fi
 
-echo "${headerStart}Checking Core: build, test${headerEnd}"
-cd libs/core
-poetry install
-python3 -m pytest tests/
-cd ../..
-
-echo "${headerStart}Checking Studio: build, test${headerEnd}"
-cd libs/studio
-# note: don't install, or it will fetch pypi version of core instead of local
-python3 -m pytest tests/
-cd ../..
+echo "${headerStart}Running Python Tests${headerEnd}"
+python3 -m pytest .
 
 echo "${headerStart}Checking Types${headerEnd}"
 pyright .
-cd ../..
