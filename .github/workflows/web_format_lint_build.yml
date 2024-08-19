@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./src/web_ui
+        working-directory: ./app/web_ui
 
     steps:
       - uses: actions/checkout@v4

@@ -10,5 +10,9 @@
   },
   "python.testing.pytestArgs": ["."],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "python.testing.pytestEnabled": true,
+  "files.exclude": {
+    "**/.pytest_cache": true,
+    "**/dist": true
+  }
 }

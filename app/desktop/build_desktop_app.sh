@@ -2,7 +2,7 @@
 
 set -e
 
-# move to the root of the src
+# move to the root of the project
 cd "$(dirname "$0")"
 cd ..
 
