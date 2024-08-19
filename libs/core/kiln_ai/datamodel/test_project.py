@@ -36,3 +36,17 @@ def test_save_to_file_without_path():
     project = KilnProject(name="Test Project")
     with pytest.raises(ValueError):
         project.save_to_file()
+
+
+def test_name_validation():
+    KilnProject(name="Test Project")
+    KilnProject(name="Te st_Proj-ect 1234567890")
+    KilnProject(name=("a" * 120))  # longest
+
+    # a string with 120 characters
+
+    with pytest.raises(ValueError):
+        KilnProject(name="Test Project!")
+        KilnProject(name="Test.Project")
+        KilnProject(name=("a" * 121))  # too long
+        KilnProject(name=("a"))  # too short
