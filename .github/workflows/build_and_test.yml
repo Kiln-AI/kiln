@@ -19,7 +19,7 @@ jobs:
 
       # Remove this later: needed as server expects this dir to exist
       - name: Mock Studio Web UI
-        run: mkdir -p ./app/web_ui/build
+        run: mkdir -p ./app/web_ui/build && echo "test" > ./app/web_ui/build/index.html
 
       - name: Test All Python
         run: python3 -m pytest .
