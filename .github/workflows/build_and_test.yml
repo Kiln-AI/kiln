@@ -41,10 +41,5 @@ jobs:
         run: poetry build
         working-directory: ./libs/studio
 
-      - name: Check Types Core
+      - name: Check Python Types
         run: pyright .
-        working-directory: ./libs/core
-
-      - name: Check Types Studio
-        run: pyright .
-        working-directory: ./libs/studio

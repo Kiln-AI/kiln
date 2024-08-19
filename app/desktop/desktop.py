@@ -41,7 +41,7 @@ class ThreadedServer(uvicorn.Server):
 
 def resource_path(relative_path):
     try:
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS  # type: ignore
     except Exception:
         base_path = os.path.dirname(__file__)
 

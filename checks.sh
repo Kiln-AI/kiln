@@ -41,8 +41,5 @@ python3 -m pytest tests/
 cd ../..
 
 echo "${headerStart}Checking Types${headerEnd}"
-cd libs/core
-pyright .
-cd ../studio
 pyright .
 cd ../..
