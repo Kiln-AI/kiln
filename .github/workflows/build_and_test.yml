@@ -17,6 +17,10 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pip install -r dev-requirements.txt
 
+      # Remove this later: needed as server expects this dir to exist
+      - name: Mock Studio Web UI
+        run: mkdir -p ./app/web_ui/build
+
       - name: Test All Python
         run: python3 -m pytest .
 
@@ -30,10 +34,6 @@ jobs:
       - name: Build Core
         run: poetry build
         working-directory: ./libs/core
-
-      # Remove this later: needed as server expects this dir to exist
-      - name: Mock Studio Web UI
-        run: mkdir -p ./app/web_ui/build
 
       - name: Build Studio
         run: poetry build
