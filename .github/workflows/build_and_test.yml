@@ -33,7 +33,7 @@ jobs:
         run: mkdir -p ./src/web_ui/build
 
       - name: Test Studio
-        run: pip install -e ../core && python3 -m pytest tests/
+        run: python3 -m pytest tests/
         working-directory: ./libs/studio
 
       - name: Build Studio
