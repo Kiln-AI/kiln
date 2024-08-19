@@ -13,10 +13,10 @@ import sys
 def studio_path():
     try:
         base_path = sys._MEIPASS  # type: ignore
+        return os.path.join(base_path, "./web_ui/build")
     except Exception:
         base_path = os.path.join(os.path.dirname(__file__), "..")
-
-    return os.path.join(base_path, "../../src/web_ui/build")
+        return os.path.join(base_path, "../../src/web_ui/build")
 
 
 app = FastAPI()
