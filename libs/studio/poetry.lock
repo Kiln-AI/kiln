@@ -37,17 +37,15 @@ files = [
 ]
 
 [[package]]
-name = "kilnai"
+name = "kiln-ai"
 version = "0.0.3"
 description = "Kiln AI"
 optional = false
-python-versions = "*"
-files = []
-develop = true
-
-[package.source]
-type = "directory"
-url = "../kiln_ai"
+python-versions = ">=3.8"
+files = [
+    {file = "kiln_ai-0.0.3-py3-none-any.whl", hash = "sha256:266630551c777f853d11b6a5e1e9982e4d52e1285d62002f3b4964c73c7f8b05"},
+    {file = "kiln_ai-0.0.3.tar.gz", hash = "sha256:810964f7ab5d4695814b0d800aba62645aef69a1b4e6b79f9460509da1204b1f"},
+]
 
 [[package]]
 name = "packaging"
@@ -111,4 +109,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "14aaa010f1cc147d5080335645797a86fffbe4443ce973f3e40272e1caffc3cd"
+content-hash = "604195bebd9b13eb149a5b78114b1a56d02b30ff21411c7a3c7ded58a9a105d5"

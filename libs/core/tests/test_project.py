@@ -3,7 +3,7 @@ import kilnai.datamodel as datamodel
 
 
 def test_coreadd():
-    assert coreadd.add(1, 1) == 3
+    assert coreadd.add(1, 1) == 2
 
 
 def test_project_init():
