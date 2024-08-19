@@ -43,7 +43,7 @@ cd ../..
 # TODO test build?
 
 echo "${headerStart}Checking Types${headerEnd}"
-#cd src/core
+#cd libs/core
 #mypy --install-types --non-interactive .
 #cd ../studio
 #mypy --install-types --non-interactive .
