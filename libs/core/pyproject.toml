@@ -5,6 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "kiln-ai"
 version = "0.0.4"
+readme = "README.md"
 description = 'Kiln AI'
 authors = [
   "Steve Cosman, Chesterfield Laboratories Inc <scosman@users.noreply.github.com>",

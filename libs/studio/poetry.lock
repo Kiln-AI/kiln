@@ -38,13 +38,13 @@ files = [
 
 [[package]]
 name = "kiln-ai"
-version = "0.0.3"
+version = "0.0.4"
 description = "Kiln AI"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "kiln_ai-0.0.3-py3-none-any.whl", hash = "sha256:266630551c777f853d11b6a5e1e9982e4d52e1285d62002f3b4964c73c7f8b05"},
-    {file = "kiln_ai-0.0.3.tar.gz", hash = "sha256:810964f7ab5d4695814b0d800aba62645aef69a1b4e6b79f9460509da1204b1f"},
+    {file = "kiln_ai-0.0.4-py3-none-any.whl", hash = "sha256:0b4720624b88e6f375115283630a7652cd1b549b55a27a38c2ad3eca20f9d52d"},
+    {file = "kiln_ai-0.0.4.tar.gz", hash = "sha256:5b64de1296467d6187280d207a0797e98732180c0e8d0a2d024f0aa08513e382"},
 ]
 
 [[package]]

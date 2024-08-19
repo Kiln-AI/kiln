@@ -6,6 +6,7 @@ build-backend = "poetry.core.masonry.api"
 name = "kiln_studio"
 version = "0.0.1"
 description = 'Kiln Studio'
+readme = "README.md"
 authors = [
   "Steve Cosman, Chesterfield Laboratories Inc <scosman@users.noreply.github.com>",
 ]

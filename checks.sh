@@ -29,16 +29,18 @@ else
 fi
 
 echo "${headerStart}Checking Core: build, test${headerEnd}"
-#cd core
-#hatch build
-#hatch test
-#cd ..
+cd libs/core
+poetry install
+python3 -m pytest tests/
+cd ../..
 
 echo "${headerStart}Checking Studio: build, test${headerEnd}"
-#cd studio
-#hatch build
-#hatch test
-#cd ..
+cd libs/studio
+# note: don't install, or it will fetch pypi version of core instead of local
+python3 -m pytest tests/
+cd ../..
+
+# TODO test build?
 
 echo "${headerStart}Checking Types${headerEnd}"
 #cd src/core

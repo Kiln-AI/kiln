@@ -1,5 +1,5 @@
-import kilnai.coreadd as coreadd
-import kilnai.datamodel as datamodel
+import kiln_ai.coreadd as coreadd
+import kiln_ai.datamodel as datamodel
 
 
 def test_coreadd():
