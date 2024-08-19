@@ -12,7 +12,10 @@
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "files.exclude": {
+    "**/__pycache__": true,
     "**/.pytest_cache": true,
-    "**/dist": true
+    "**/.ruff_cache": true,
+    "**/dist": true,
+    "**/node_modules": true
   }
 }
