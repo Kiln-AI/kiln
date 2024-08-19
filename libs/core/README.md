@@ -12,5 +12,5 @@
 ## Installation
 
 ```console
-pip install kiln-ai
+pip install kiln_ai
 ```

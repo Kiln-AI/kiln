@@ -6,6 +6,9 @@
   "eslint.validate": ["javascript", "javascriptreact", "svelte"],
   // Svelte, JS, TS files
   "[javascript, typescript, svelte, json]": {
-    "editor.defaultFormatter": "svelte.svelte-vscode",
-  }
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "python.testing.pytestArgs": ["."],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

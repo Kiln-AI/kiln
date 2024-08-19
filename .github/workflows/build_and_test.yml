@@ -16,26 +16,34 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Install Core
+        run: poetry install
+        working-directory: ./libs/core
+
       - name: Build Core
-        run: hatch build
-        working-directory: ./core
+        run: poetry build
+        working-directory: ./libs/core
 
       - name: Test Core
-        run: hatch test
-        working-directory: ./core
+        run: python3 -m pytest tests/
+        working-directory: ./libs/core
 
-      - name: Check Types Core
-        run: mypy --install-types --non-interactive .
-        working-directory: ./src/core
-
-      - name: Build Studio
-        run: hatch build
-        working-directory: ./studio
+      # Remove this later: needed as server expects this dir to exist
+      - name: Mock Studio Web UI
+        run: mkdir -p ./src/web_ui/build
 
       - name: Test Studio
-        run: hatch test
-        working-directory: ./studio
+        run: python3 -m pytest tests/
+        working-directory: ./libs/studio
+
+      - name: Build Studio
+        run: poetry build
+        working-directory: ./libs/studio
+
+      - name: Check Types Core
+        run: pyright .
+        working-directory: ./libs/core
 
       - name: Check Types Studio
-        run: mypy --install-types --non-interactive .
-        working-directory: ./src/studio
+        run: pyright .
+        working-directory: ./libs/studio

@@ -12,11 +12,11 @@ import sys
 # TODO would rather this get passed. This class shouldn't know about desktop
 def studio_path():
     try:
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS  # type: ignore
     except Exception:
         base_path = os.path.join(os.path.dirname(__file__), "..")
 
-    return os.path.join(base_path, "web_ui/build")
+    return os.path.join(base_path, "../../src/web_ui/build")
 
 
 app = FastAPI()
@@ -38,7 +38,7 @@ def load_settings():
 
 
 @app.post("/setting")
-def update_settings(new_settings: dict):
+def update_settings(new_settings: dict[str, int | float | str | bool]):
     settings = load_settings()
     settings.update(new_settings)
     with open(settings_path(), "w") as f:
