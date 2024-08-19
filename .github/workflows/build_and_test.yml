@@ -20,9 +20,9 @@ jobs:
         run: poetry install
         working-directory: ./libs/core
 
-      #- name: Build Core
-      #  run: poetry build
-      #  working-directory: ./libs/core
+      - name: Build Core
+        run: poetry build
+        working-directory: ./libs/core
 
       - name: Test Core
         run: python3 -m pytest tests/
@@ -41,9 +41,9 @@ jobs:
         working-directory: ./libs/studio
 
       - name: Check Types Core
-        run: mypy --install-types --non-interactive .
+        run: pyright .
         working-directory: ./libs/core
 
       - name: Check Types Studio
-        run: mypy --install-types --non-interactive .
+        run: pyright .
         working-directory: ./libs/studio

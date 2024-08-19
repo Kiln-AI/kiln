@@ -24,3 +24,7 @@ kiln-ai = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.1"
+
+[tool.pyright]
+reportMissingTypeArgument = true
+strictListInference = true

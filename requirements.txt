@@ -9,8 +9,6 @@ importlib-resources==6.4.0
 isort==5.13.2
 jaraco.text==3.12.1
 mccabe==0.7.0
-mypy==1.11.1
-mypy-extensions==1.0.0
 ordered-set==4.1.0
 pathspec==0.12.1
 pipenv==2024.0.1
@@ -27,3 +25,4 @@ watchfiles==0.22.0
 websockets==12.0
 pytest==8.3.2
 poetry==1.8.3
+pyright==1.1.376

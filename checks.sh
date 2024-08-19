@@ -40,11 +40,9 @@ cd libs/studio
 python3 -m pytest tests/
 cd ../..
 
-# TODO test build?
-
 echo "${headerStart}Checking Types${headerEnd}"
-#cd libs/core
-#mypy --install-types --non-interactive .
-#cd ../studio
-#mypy --install-types --non-interactive .
-#cd ../..
+cd libs/core
+pyright .
+cd ../studio
+pyright .
+cd ../..
