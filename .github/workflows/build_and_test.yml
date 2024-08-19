@@ -28,6 +28,10 @@ jobs:
         run: python3 -m pytest tests/
         working-directory: ./libs/core
 
+      # Remove this later: needed as server expects this dir to exist
+      - name: Mock Studio Web UI
+        run: mkdir -p ./src/web_ui/build
+
       - name: Test Studio
         run: python3 -m pytest tests/
         working-directory: ./libs/studio
