@@ -1,46 +1,29 @@
 import pystray
 from PIL import Image
-import os
 import tkinter as tk
 import webbrowser
-import uvicorn
-import kiln_studio.server as server
 import sys
-import threading
+from .desktop_server import ThreadedServer, server_config
 import contextlib
-import time
+import os
 
 # TODO: remove this and all other globals in this file
 root = None  # type: tk.Tk | None
 tray = None  # type: ignore
 
 
-class ThreadedServer(uvicorn.Server):
-    def install_signal_handlers(self):
-        pass
-
+class DesktopServer(ThreadedServer):
     @contextlib.contextmanager
     def run_in_thread(self):
-        self.stopped = False
-        thread = threading.Thread(target=self.run_safe, daemon=True)
-        thread.start()
         try:
-            while not self.started and not self.stopped:
-                time.sleep(1e-3)
-            yield
+            with super().run_in_thread():
+                yield
         finally:
-            self.should_exit = True
-            thread.join()
             on_quit()
 
-    def run_safe(self):
-        try:
-            self.run()
-        finally:
-            self.stopped = True
 
-    def running(self):
-        return self.started and not self.stopped
+def show_studio():
+    webbrowser.open("http://localhost:8757")
 
 
 def resource_path(relative_path):
@@ -50,20 +33,6 @@ def resource_path(relative_path):
         base_path = os.path.dirname(__file__)
 
     return os.path.join(base_path, relative_path)
-
-
-def run_studio():
-    uvicorn.run(server.app, host="127.0.0.1", port=8757, log_level="warning")
-
-
-def run_studio_thread():
-    thread = threading.Thread(target=run_studio)
-    thread.start()
-    return thread
-
-
-def show_studio():
-    webbrowser.open("http://localhost:8757")
 
 
 def quit_app():
@@ -114,17 +83,11 @@ def close_splash():
         pass
 
 
-def server_config(port=8757):
-    return uvicorn.Config(
-        server.app, host="127.0.0.1", port=port, log_level="warning", use_colors=False
-    )
-
-
 if __name__ == "__main__":
     # run the server in a thread, and shut down server when main thread exits
     # use_colors=False to disable colored logs, as windows doesn't support them
     config = server_config()
-    uni_server = ThreadedServer(config=config)
+    uni_server = DesktopServer(config=config)
     with uni_server.run_in_thread():
         if not uni_server.running():
             # Can't start. Likely a port is already in use. Show the web app instead and exit
