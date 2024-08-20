@@ -112,3 +112,26 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         if parent_folder is None:
             return None
         return parent_folder / self.relationship_name() / self.build_child_filename()
+
+    @classmethod
+    def all_children_of_parent_path(cls, parent_path: Path) -> list:
+        # Determine the parent folder
+        if parent_path.is_file():
+            parent_folder = parent_path.parent
+        else:
+            parent_folder = parent_path
+
+        rn = cls().relationship_name()
+        print(rn)
+        relationship_folder = parent_folder / cls().relationship_name()
+
+        if not relationship_folder.exists() or not relationship_folder.is_dir():
+            return []
+
+        # Collect all .kiln files in the relationship folder
+        children = []
+        for child_file in relationship_folder.glob("*.kiln"):
+            child = cls.load_from_file(child_file)
+            children.append(child)
+
+        return children

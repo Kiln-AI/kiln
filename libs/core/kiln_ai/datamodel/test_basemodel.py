@@ -64,7 +64,7 @@ class NamedParentedModel(KilnParentedModel):
     def relationship_name(self) -> str:
         return "tests"
 
-    def build_child_filename(self) -> Path:
+    def build_child_filename(self):
         return Path("child.kiln")
 
     def parent_type():
@@ -88,7 +88,7 @@ class BaseParentExample(KilnBaseModel):
 class DefaultParentedModel(KilnParentedModel):
     name: Optional[str] = None
 
-    def relationship_name(self) -> str:
+    def relationship_name(self):
         return "children"
 
     def parent_type():
@@ -175,3 +175,28 @@ def test_parent_wrong_type():
     parent = KilnBaseModel()
     with pytest.raises(ValueError):
         DefaultParentedModel(parent=parent, name="Name")
+
+
+def test_load_children(test_file):
+    # Set up parent and children models
+    parent = BaseParentExample.load_from_file(test_file)
+
+    child1 = DefaultParentedModel(parent=parent, name="Child1")
+    child2 = DefaultParentedModel(parent=parent, name="Child2")
+    child3 = DefaultParentedModel(parent=parent, name="Child3")
+
+    # Ensure the children are saved correctly
+    child1.save_to_file()
+    child2.save_to_file()
+    child3.save_to_file()
+
+    # Load children from parent path
+    children = DefaultParentedModel.all_children_of_parent_path(test_file)
+
+    # Verify that all children are loaded correctly
+    assert len(children) == 3
+    names = [child.name for child in children]
+    assert "Child1" in names
+    assert "Child2" in names
+    assert "Child3" in names
+    assert all(child.type == "DefaultParentedModel" for child in children)
