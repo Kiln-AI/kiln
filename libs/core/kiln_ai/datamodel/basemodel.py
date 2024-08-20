@@ -65,8 +65,9 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
     id: str = ID_FIELD
     parent: Optional[KilnBaseModel] = Field(default=None, exclude=True)
 
+    @classmethod
     @abstractmethod
-    def relationship_name(self) -> str:
+    def relationship_name(cls) -> str:
         pass
 
     @classmethod
@@ -114,16 +115,17 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         return parent_folder / self.relationship_name() / self.build_child_filename()
 
     @classmethod
-    def all_children_of_parent_path(cls, parent_path: Path) -> list:
+    def all_children_of_parent_path(cls: Type[T], parent_path: Path | None) -> list[T]:
+        if parent_path is None:
+            raise ValueError("Parent path must be set to load children")
         # Determine the parent folder
         if parent_path.is_file():
             parent_folder = parent_path.parent
         else:
             parent_folder = parent_path
 
-        rn = cls().relationship_name()
-        print(rn)
-        relationship_folder = parent_folder / cls().relationship_name()
+        # Ignore type error: this is abstract base class, but children must implement relationship_name
+        relationship_folder = parent_folder / Path(cls.relationship_name())  # type: ignore
 
         if not relationship_folder.exists() or not relationship_folder.is_dir():
             return []

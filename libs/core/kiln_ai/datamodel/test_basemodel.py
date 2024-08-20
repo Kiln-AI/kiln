@@ -61,13 +61,15 @@ def test_type_name():
 
 # Instance of the parented model for abstract methods
 class NamedParentedModel(KilnParentedModel):
-    def relationship_name(self) -> str:
-        return "tests"
-
     def build_child_filename(self):
         return Path("child.kiln")
 
-    def parent_type():
+    @classmethod
+    def relationship_name(cls) -> str:
+        return "tests"
+
+    @classmethod
+    def parent_type(cls):
         return KilnBaseModel
 
 
@@ -88,10 +90,12 @@ class BaseParentExample(KilnBaseModel):
 class DefaultParentedModel(KilnParentedModel):
     name: Optional[str] = None
 
+    @classmethod
     def relationship_name(self):
         return "children"
 
-    def parent_type():
+    @classmethod
+    def parent_type(cls):
         return BaseParentExample
 
 

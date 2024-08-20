@@ -1,6 +1,6 @@
 import json
 import pytest
-from kiln_ai.datamodel.project import Project
+from kiln_ai.datamodel.project import Project, Task
 
 
 @pytest.fixture
@@ -60,3 +60,37 @@ def test_name_validation():
 def test_auto_type_name():
     model = Project(name="Test Project")
     assert model.type == "Project"
+
+
+def test_load_tasks(test_file):
+    # Set up a project model
+    project = Project.load_from_file(test_file)
+
+    # Set up multiple task models under the project
+    task1 = Task(parent=project, name="Task1")
+    task2 = Task(parent=project, name="Task2")
+    task3 = Task(parent=project, name="Task3")
+
+    # Ensure the tasks are saved correctly
+    task1.save_to_file()
+    task2.save_to_file()
+    task3.save_to_file()
+
+    # Load tasks from the project
+    # tasks = project.tasks()
+    tasks = Task.all_children_of_parent_path(test_file)
+
+    # Verify that all tasks are loaded correctly
+    assert len(tasks) == 3
+    names = [task.name for task in tasks]
+    assert "Task1" in names
+    assert "Task2" in names
+    assert "Task3" in names
+    assert all(task.type == "Task" for task in tasks)
+
+
+# verify error on non-saved model
+def test_load_children_no_path(test_file):
+    project = Project(name="Test Project")
+    with pytest.raises(ValueError):
+        project.tasks()
