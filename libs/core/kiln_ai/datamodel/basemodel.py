@@ -80,7 +80,7 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         return Path(path)
 
     def build_path(self) -> Path | None:
-        # if specificaly loaded from an existing path, keep that no matter what
+        # if specifically loaded from an existing path, keep that no matter what
         # this ensures the file structure is easy to use with git/version control
         # and that changes to things like name (which impacts default path) don't leave dangling files
         if self.path is not None:

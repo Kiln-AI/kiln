@@ -15,6 +15,9 @@ echo "${headerStart}Checking Python: Ruff, format, check${headerEnd}"
 ruff check
 ruff format --check
 
+echo "${headerStart}Checking for Misspellings${headerEnd}"
+find . -type f | grep -v "/node_modules/" | grep  -v "/\." | grep -v "/dist/" | grep -v "/desktop/build/" | xargs misspell -error
+
 changed_files=$(git diff --name-only)
 
 if [[ "$changed_files" == *"app/web_ui/"* ]]; then

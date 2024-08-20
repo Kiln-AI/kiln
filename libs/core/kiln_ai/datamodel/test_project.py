@@ -21,6 +21,11 @@ def test_load_from_file(test_file):
     assert project.path == test_file
 
 
+def test_project_init():
+    project = Project(name="test")
+    assert project.name == "test"
+
+
 def test_save_to_file(test_file):
     project = Project(name="Test Project", path=test_file)
     project.save_to_file()
@@ -40,7 +45,7 @@ def test_save_to_file_without_path():
 
 def test_name_validation():
     Project(name="Test Project")
-    Project(name="Te st_Proj-ect 1234567890")
+    Project(name="Te st_Proj- 1234567890")
     Project(name=("a" * 120))  # longest
 
     # a string with 120 characters
