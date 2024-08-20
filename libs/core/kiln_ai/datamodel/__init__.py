@@ -1,3 +1,3 @@
-from .project import KilnProject
+from .project import Project
 
-__all__ = ["KilnProject"]
+__all__ = ["Project"]

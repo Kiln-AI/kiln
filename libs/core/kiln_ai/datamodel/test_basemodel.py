@@ -51,3 +51,8 @@ def test_save_to_file_without_path():
 def test_max_schema_version(test_newer_file):
     with pytest.raises(ValueError):
         KilnBaseModel.load_from_file(test_newer_file)
+
+
+def test_type_name():
+    model = KilnBaseModel()
+    assert model.type == "KilnBaseModel"

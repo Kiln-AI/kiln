@@ -7,5 +7,5 @@ def test_coreadd():
 
 
 def test_project_init():
-    project = datamodel.KilnProject(name="test")
+    project = datamodel.Project(name="test")
     assert project.name == "test"
