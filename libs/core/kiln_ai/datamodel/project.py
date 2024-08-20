@@ -1,4 +1,4 @@
-from .basemodel import KilnBaseModel
+from .basemodel import KilnBaseModel, KilnParentedModel
 from pydantic import Field
 
 NAME_REGEX = r"^[A-Za-z0-9 _-]+$"
@@ -9,5 +9,8 @@ class Project(KilnBaseModel):
     name: str = NAME_FIELD
 
 
-class Task(KilnBaseModel):
+class Task(KilnParentedModel):
     name: str = NAME_FIELD
+
+    def relationship_name(self) -> str:
+        return "tasks"
