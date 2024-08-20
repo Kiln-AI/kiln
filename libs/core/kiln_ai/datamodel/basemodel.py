@@ -1,9 +1,10 @@
-from pydantic import BaseModel, computed_field, Field
+from pydantic import BaseModel, computed_field, Field, field_validator
 from typing import Optional
 from pathlib import Path
 from typing import Type, TypeVar
 from abc import ABCMeta, abstractmethod
 import uuid
+from builtins import classmethod
 
 
 # ID is a 10 digit hex string
@@ -67,6 +68,22 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
     @abstractmethod
     def relationship_name(self) -> str:
         pass
+
+    @classmethod
+    @abstractmethod
+    def parent_type(cls) -> Type[KilnBaseModel]:
+        pass
+
+    @field_validator("parent")
+    @classmethod
+    def check_parent_type(cls, v: Optional[KilnBaseModel]) -> Optional[KilnBaseModel]:
+        if v is not None:
+            expected_parent_type = cls.parent_type()
+            if not isinstance(v, expected_parent_type):
+                raise ValueError(
+                    f"Parent must be of type {expected_parent_type}, but was {type(v)}"
+                )
+        return v
 
     def build_child_filename(self) -> Path:
         # Default implementation for readable filenames.

@@ -67,6 +67,9 @@ class NamedParentedModel(KilnParentedModel):
     def build_child_filename(self) -> Path:
         return Path("child.kiln")
 
+    def parent_type():
+        return KilnBaseModel
+
 
 def test_parented_model_path_gen(tmp_path):
     parent = KilnBaseModel(path=tmp_path)
@@ -77,6 +80,10 @@ def test_parented_model_path_gen(tmp_path):
     assert child_path.parent.parent == tmp_path.parent
 
 
+class BaseParentExample(KilnBaseModel):
+    pass
+
+
 # Instance of the parented model for abstract methods, with default name builder
 class DefaultParentedModel(KilnParentedModel):
     name: Optional[str] = None
@@ -84,9 +91,12 @@ class DefaultParentedModel(KilnParentedModel):
     def relationship_name(self) -> str:
         return "children"
 
+    def parent_type():
+        return BaseParentExample
+
 
 def test_build_default_child_filename(tmp_path):
-    parent = KilnBaseModel(path=tmp_path)
+    parent = BaseParentExample(path=tmp_path)
     child = DefaultParentedModel(parent=parent)
     child_path = child.build_path()
     child_path_without_id = child_path.name[10:]
@@ -103,7 +113,7 @@ def test_build_default_child_filename(tmp_path):
 
 
 def test_serialize_child(tmp_path):
-    parent = KilnBaseModel(path=tmp_path)
+    parent = BaseParentExample(path=tmp_path)
     child = DefaultParentedModel(parent=parent, name="Name")
 
     expected_path = child.build_path()
@@ -136,7 +146,7 @@ def test_serialize_child(tmp_path):
 
 def test_save_to_set_location(tmp_path):
     # Keeps the OG path if parent and path are both set
-    parent = KilnBaseModel(path=tmp_path)
+    parent = BaseParentExample(path=tmp_path)
     child_path = tmp_path.parent / "child.kiln"
     child = DefaultParentedModel(path=child_path, parent=parent, name="Name")
     assert child.build_path() == child_path
@@ -154,7 +164,14 @@ def test_save_to_set_location(tmp_path):
 
 def test_parent_without_path():
     # no path from parent or direct path
-    parent = KilnBaseModel()
+    parent = BaseParentExample()
     child = DefaultParentedModel(parent=parent, name="Name")
     with pytest.raises(ValueError):
         child.save_to_file()
+
+
+def test_parent_wrong_type():
+    # DefaultParentedModel is parented to BaseParentExample, not KilnBaseModel
+    parent = KilnBaseModel()
+    with pytest.raises(ValueError):
+        DefaultParentedModel(parent=parent, name="Name")
