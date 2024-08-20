@@ -1,4 +1,4 @@
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, computed_field, Field
 from typing import Optional
 from pathlib import Path
 from typing import Type, TypeVar
@@ -8,15 +8,11 @@ T = TypeVar("T", bound="KilnBaseModel")
 
 class KilnBaseModel(BaseModel):
     v: int = 1  # schema_version
-    path: Optional[Path] = None
+    path: Optional[Path] = Field(default=None, exclude=True)
 
     @computed_field()
     def type(self) -> str:
         return self.type_name()
-
-    # def __init__(self, **data: Any):
-    #    # automatically set type name
-    #    super().__init__(**data, type=self.type_name())
 
     # override this to set the type name explicitly
     def type_name(self) -> str:
@@ -41,7 +37,7 @@ class KilnBaseModel(BaseModel):
                 f"Cannot save to file because 'path' is not set. Class: {self.__class__.__name__}, "
                 f"id: {getattr(self, 'id', None)}, path: {self.path}"
             )
-        json_data = self.model_dump_json(exclude={"path"}, indent=2)
+        json_data = self.model_dump_json(indent=2)
         with open(self.path, "w") as file:
             file.write(json_data)
 
