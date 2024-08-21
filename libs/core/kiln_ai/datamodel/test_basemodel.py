@@ -61,9 +61,6 @@ def test_type_name():
 
 # Instance of the parented model for abstract methods
 class NamedParentedModel(KilnParentedModel):
-    def build_child_filename(self):
-        return Path("child.kiln")
-
     @classmethod
     def relationship_name(cls) -> str:
         return "tests"
@@ -77,9 +74,10 @@ def test_parented_model_path_gen(tmp_path):
     parent = KilnBaseModel(path=tmp_path)
     child = NamedParentedModel(parent=parent)
     child_path = child.build_path()
-    assert child_path.name == "child.kiln"
-    assert child_path.parent.name == "tests"
-    assert child_path.parent.parent == tmp_path.parent
+    assert child_path.name == "named_parented_model.kiln"
+    assert child_path.parent.name == child.id
+    assert child_path.parent.parent.name == "tests"
+    assert child_path.parent.parent.parent == tmp_path.parent
 
 
 class BaseParentExample(KilnBaseModel):
@@ -103,17 +101,17 @@ def test_build_default_child_filename(tmp_path):
     parent = BaseParentExample(path=tmp_path)
     child = DefaultParentedModel(parent=parent)
     child_path = child.build_path()
-    child_path_without_id = child_path.name[10:]
-    assert child_path_without_id == ".kiln"
-    assert child_path.parent.name == "children"
-    assert child_path.parent.parent == tmp_path.parent
+    assert child_path.name == "default_parented_model.kiln"
+    assert child_path.parent.name == child.id
+    assert child_path.parent.parent.name == "children"
+    assert child_path.parent.parent.parent == tmp_path.parent
     # now with name
     child = DefaultParentedModel(parent=parent, name="Name")
     child_path = child.build_path()
-    child_path_without_id = child_path.name[10:]
-    assert child_path_without_id == " - Name.kiln"
-    assert child_path.parent.name == "children"
-    assert child_path.parent.parent == tmp_path.parent
+    assert child_path.name == "default_parented_model.kiln"
+    assert child_path.parent.name == child.id + " - Name"
+    assert child_path.parent.parent.name == "children"
+    assert child_path.parent.parent.parent == tmp_path.parent
 
 
 def test_serialize_child(tmp_path):
@@ -136,8 +134,9 @@ def test_serialize_child(tmp_path):
     assert data["name"] == "Name"
     assert data["type"] == "DefaultParentedModel"
     assert len(data["id"]) == 10
-    assert child.path.parent.name == "children"
-    assert child.path.parent.parent == tmp_path.parent
+    assert child.path.parent.name == child.id + " - Name"
+    assert child.path.parent.parent.name == "children"
+    assert child.path.parent.parent.parent == tmp_path.parent
 
     # change name, see it serializes, but path stays the same
     child.name = "Name2"
@@ -162,8 +161,9 @@ def test_save_to_set_location(tmp_path):
 
     # if we don't set the path, use the parent + smartpath
     child2 = DefaultParentedModel(parent=parent, name="Name2")
-    assert child2.build_path().parent.name == "children"
-    assert child2.build_path().parent.parent == tmp_path.parent
+    assert child2.build_path().parent.name == child2.id + " - Name2"
+    assert child2.build_path().parent.parent.name == "children"
+    assert child2.build_path().parent.parent.parent == tmp_path.parent
 
 
 def test_parent_without_path():
@@ -204,3 +204,20 @@ def test_load_children(test_file):
     assert "Child2" in names
     assert "Child3" in names
     assert all(child.type == "DefaultParentedModel" for child in children)
+
+
+def test_base_filename():
+    model = DefaultParentedModel(name="Test")
+    assert model.base_filename() == "default_parented_model.kiln"
+    model = NamedParentedModel(name="Test")
+    assert model.base_filename() == "named_parented_model.kiln"
+    assert NamedParentedModel.base_filename() == "named_parented_model.kiln"
+
+
+def test_load_from_folder(test_file):
+    parent = BaseParentExample.load_from_file(test_file)
+    child1 = DefaultParentedModel(parent=parent, name="Child1")
+    child1.save_to_file()
+
+    loaded_child1 = DefaultParentedModel.load_from_folder(child1.path.parent)
+    assert loaded_child1.name == "Child1"

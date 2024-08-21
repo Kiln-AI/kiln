@@ -5,6 +5,7 @@ from typing import Type, TypeVar
 from abc import ABCMeta, abstractmethod
 import uuid
 from builtins import classmethod
+import re
 
 
 # ID is a 10 digit hex string
@@ -23,6 +24,19 @@ class KilnBaseModel(BaseModel):
     # override this to set the type name explicitly
     def type_name(self) -> str:
         return self.__class__.__name__
+
+    # Override this if you rename a model. Should keep the original base filename
+    # uses as /obj_folder/base_filename.kiln
+    @classmethod
+    def base_filename(cls) -> str:
+        class_name = cls.__name__ + ".kiln"
+        snake_case = re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
+        return snake_case
+
+    @classmethod
+    def load_from_folder(cls: Type[T], folderPath: Path) -> T:
+        path = folderPath / cls.base_filename()
+        return cls.load_from_file(path)
 
     @classmethod
     def load_from_file(cls: Type[T], path: Path) -> T:
@@ -86,15 +100,13 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
                 )
         return v
 
-    def build_child_filename(self) -> Path:
-        # Default implementation for readable filenames.
-        # Can be overridden, but probably shouldn't be.
-        # {id} - {name}.kiln
+    def build_child_dirname(self) -> Path:
+        # Default implementation for readable folder names.
+        # {id} - {name}/{type}.kiln
         path = self.id
         name = getattr(self, "name", None)
         if name is not None:
             path = f"{path} - {name[:32]}"
-        path = f"{path}.kiln"
         return Path(path)
 
     def build_path(self) -> Path | None:
@@ -112,7 +124,12 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         parent_folder = parent_path.parent
         if parent_folder is None:
             return None
-        return parent_folder / self.relationship_name() / self.build_child_filename()
+        return (
+            parent_folder
+            / self.relationship_name()
+            / self.build_child_dirname()
+            / self.__class__.base_filename()
+        )
 
     @classmethod
     def all_children_of_parent_path(cls: Type[T], parent_path: Path | None) -> list[T]:
@@ -130,9 +147,9 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         if not relationship_folder.exists() or not relationship_folder.is_dir():
             return []
 
-        # Collect all .kiln files in the relationship folder
+        # Collect all /relationship/{id}/{base_filename.kiln} files in the relationship folder
         children = []
-        for child_file in relationship_folder.glob("*.kiln"):
+        for child_file in relationship_folder.glob(f"**/{cls.base_filename()}"):
             child = cls.load_from_file(child_file)
             children.append(child)
 
