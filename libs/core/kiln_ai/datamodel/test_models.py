@@ -1,6 +1,6 @@
 import json
 import pytest
-from kiln_ai.datamodel.models import Project, Task, TaskType
+from kiln_ai.datamodel.models import Project, Task, TaskDeterminism, Priority
 
 
 @pytest.fixture
@@ -51,13 +51,22 @@ def test_save_to_file(test_project_file):
     assert data["description"] == "Test Description"
 
 
+def test_task_defaults():
+    task = Task(name="Test Task")
+    assert task.description == ""
+    assert task.instruction == ""
+    assert task.priority == Priority.p2
+    assert task.determinism == TaskDeterminism.flexible
+
+
 def test_task_serialization(test_project_file):
     project = Project.load_from_file(test_project_file)
     task = Task(
         parent=project,
         name="Test Task",
-        type=TaskType.LANG_SINGLE,
         description="Test Description",
+        determinism=TaskDeterminism.semantic_match,
+        priority=Priority.p0,
         instruction="Test Base Task Instruction",
     )
 
@@ -67,6 +76,8 @@ def test_task_serialization(test_project_file):
     assert parsed_task.name == "Test Task"
     assert parsed_task.description == "Test Description"
     assert parsed_task.instruction == "Test Base Task Instruction"
+    assert parsed_task.determinism == TaskDeterminism.semantic_match
+    assert parsed_task.priority == Priority.p0
 
 
 def test_save_to_file_without_path():

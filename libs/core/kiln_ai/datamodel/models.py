@@ -1,13 +1,56 @@
 from .basemodel import KilnBaseModel, KilnParentedModel
 from pydantic import Field
+from enum import Enum, IntEnum
 
+
+# Conventions:
+# 1) Names are filename safe as they may be used as file names. They are informational and not to be used in prompts/training/validation.
+# 2) Descrptions are for Kiln users to describe/understanding the purpose of this object. They must never be used in prompts/training/validation. Use "instruction/requirements" instead.
+
+# Filename compatible names
 NAME_REGEX = r"^[A-Za-z0-9 _-]+$"
 NAME_FIELD = Field(min_length=1, max_length=120, pattern=NAME_REGEX)
 
 
-# Child of Project
+class Priority(IntEnum):
+    p0 = 0
+    p1 = 1
+    p2 = 2
+    p3 = 3
+
+
+class TaskRequirement(KilnParentedModel):
+    name: str = NAME_FIELD
+    description: str = Field(default="")
+    instruction: str = Field(default="")
+    priority: Priority = Field(default=Priority.p2)
+
+    @classmethod
+    def relationship_name(cls):
+        return "requirements"
+
+    @classmethod
+    def parent_type(cls):
+        return Task
+
+
+class TaskTypeEnum(str, Enum):
+    lang_single_call = "lang_single_call"
+
+
+class TaskDeterminism(str, Enum):
+    deterministic = "deterministic"  # Expect exact match
+    semantic_match = "semantic_match"  # Expect same meaning, but flexible on expression of the meaning
+    flexible = "flexible"  # Flexible on semantic output. Eval should be custom based on parsing requirements.
+
+
 class Task(KilnParentedModel):
     name: str = NAME_FIELD
+    description: str = Field(default="")
+    type: TaskTypeEnum = Field(default=TaskTypeEnum.lang_single_call)
+    priority: Priority = Field(default=Priority.p2)
+    determinism: TaskDeterminism = Field(default=TaskDeterminism.flexible)
+    instruction: str = Field(default="")
 
     @classmethod
     def relationship_name(cls):
@@ -20,6 +63,7 @@ class Task(KilnParentedModel):
 
 class Project(KilnBaseModel):
     name: str = NAME_FIELD
+    description: str = Field(default="")
 
     def tasks(self) -> list[Task]:
         return Task.all_children_of_parent_path(self.path)

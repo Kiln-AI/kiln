@@ -44,9 +44,12 @@ class KilnBaseModel(BaseModel):
     @classmethod
     def load_from_file(cls: Type[T], path: Path) -> T:
         with open(path, "r") as file:
-            parsed_json = json.loads(file.read())
-            # TODO: strict
-            m = cls.model_validate(parsed_json)  # , strict=True)
+            file_data = file.read()
+            # TODO P2 perf: parsing the JSON twice here.
+            # Once for model_type, once for model. Can't call model_validate with parsed json because enum types break; they get strings instead of enums.
+            parsed_json = json.loads(file_data)
+            m = cls.model_validate_json(file_data, strict=True)
+            file_data = None
         m.path = path
         if m.v > m.max_schema_version():
             raise ValueError(
