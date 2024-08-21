@@ -6,9 +6,20 @@ from typing import Optional
 
 
 @pytest.fixture
-def test_file(tmp_path) -> Path:
+def test_base_file(tmp_path) -> Path:
     test_file_path = tmp_path / "test_model.json"
-    data = {"v": 1}
+    data = {"v": 1, "model_type": "kiln_base_model"}
+
+    with open(test_file_path, "w") as file:
+        json.dump(data, file, indent=4)
+
+    return test_file_path
+
+
+@pytest.fixture
+def test_base_parented_file(tmp_path) -> Path:
+    test_file_path = tmp_path / "test_model.json"
+    data = {"v": 1, "model_type": "base_parent_example"}
 
     with open(test_file_path, "w") as file:
         json.dump(data, file, indent=4)
@@ -27,20 +38,21 @@ def test_newer_file(tmp_path) -> Path:
     return test_file_path
 
 
-def test_load_from_file(test_file):
-    model = KilnBaseModel.load_from_file(test_file)
+def test_load_from_file(test_base_file):
+    model = KilnBaseModel.load_from_file(test_base_file)
     assert model.v == 1
-    assert model.path == test_file
+    assert model.path == test_base_file
 
 
-def test_save_to_file(test_file):
-    model = KilnBaseModel(path=test_file)
+def test_save_to_file(test_base_file):
+    model = KilnBaseModel(path=test_base_file)
     model.save_to_file()
 
-    with open(test_file, "r") as file:
+    with open(test_base_file, "r") as file:
         data = json.load(file)
 
     assert data["v"] == 1
+    assert data["model_type"] == "kiln_base_model"
 
 
 def test_save_to_file_without_path():
@@ -181,9 +193,9 @@ def test_parent_wrong_type():
         DefaultParentedModel(parent=parent, name="Name")
 
 
-def test_load_children(test_file):
+def test_load_children(test_base_parented_file):
     # Set up parent and children models
-    parent = BaseParentExample.load_from_file(test_file)
+    parent = BaseParentExample.load_from_file(test_base_parented_file)
 
     child1 = DefaultParentedModel(parent=parent, name="Child1")
     child2 = DefaultParentedModel(parent=parent, name="Child2")
@@ -195,7 +207,7 @@ def test_load_children(test_file):
     child3.save_to_file()
 
     # Load children from parent path
-    children = DefaultParentedModel.all_children_of_parent_path(test_file)
+    children = DefaultParentedModel.all_children_of_parent_path(test_base_parented_file)
 
     # Verify that all children are loaded correctly
     assert len(children) == 3
@@ -214,8 +226,8 @@ def test_base_filename():
     assert NamedParentedModel.base_filename() == "named_parented_model.kiln"
 
 
-def test_load_from_folder(test_file):
-    parent = BaseParentExample.load_from_file(test_file)
+def test_load_from_folder(test_base_parented_file):
+    parent = BaseParentExample.load_from_file(test_base_parented_file)
     child1 = DefaultParentedModel(parent=parent, name="Child1")
     child1.save_to_file()
 

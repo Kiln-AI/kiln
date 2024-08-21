@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 import uuid
 from builtins import classmethod
 import re
+import json
 
 
 # ID is a 10 digit hex string
@@ -25,15 +26,15 @@ class KilnBaseModel(BaseModel):
     def model_type(self) -> str:
         return self.type_name()
 
-    # override this to set the type name explicitly
-    def type_name(self) -> str:
-        return snake_case(self.__class__.__name__)
+    # if changing the model name, should keep the original name here for parsing old files
+    @classmethod
+    def type_name(cls) -> str:
+        return snake_case(cls.__name__)
 
-    # Override this if you rename a model. Should keep the original base filename
-    # uses as /obj_folder/base_filename.kiln
+    # used as /obj_folder/base_filename.kiln
     @classmethod
     def base_filename(cls) -> str:
-        return snake_case(cls.__name__) + ".kiln"
+        return cls.type_name() + ".kiln"
 
     @classmethod
     def load_from_folder(cls: Type[T], folderPath: Path) -> T:
@@ -43,11 +44,19 @@ class KilnBaseModel(BaseModel):
     @classmethod
     def load_from_file(cls: Type[T], path: Path) -> T:
         with open(path, "r") as file:
-            m = cls.model_validate_json(file.read(), strict=True)
+            parsed_json = json.loads(file.read())
+            # TODO: strict
+            m = cls.model_validate(parsed_json)  # , strict=True)
         m.path = path
         if m.v > m.max_schema_version():
             raise ValueError(
                 f"Cannot load from file because the schema version is higher than the current version. Upgrade kiln to the latest version. "
+                f"Class: {m.__class__.__name__}, id: {getattr(m, 'id', None)}, path: {path}, "
+                f"version: {m.v}, max version: {m.max_schema_version()}"
+            )
+        if parsed_json["model_type"] != cls.type_name():
+            raise ValueError(
+                f"Cannot load from file because the model type is incorrect. Expected {cls.type_name()}, got {parsed_json['model_type']}. "
                 f"Class: {m.__class__.__name__}, id: {getattr(m, 'id', None)}, path: {path}, "
                 f"version: {m.v}, max version: {m.max_schema_version()}"
             )

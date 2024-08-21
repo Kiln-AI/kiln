@@ -1,12 +1,12 @@
 import json
 import pytest
-from kiln_ai.datamodel.models import Project, Task
+from kiln_ai.datamodel.models import Project, Task, TaskType
 
 
 @pytest.fixture
-def test_file(tmp_path):
-    test_file_path = tmp_path / "test_project.json"
-    data = {"v": 1, "name": "Test Project"}
+def test_project_file(tmp_path):
+    test_file_path = tmp_path / "project.json"
+    data = {"v": 1, "name": "Test Project", "model_type": "project"}
 
     with open(test_file_path, "w") as file:
         json.dump(data, file, indent=4)
@@ -14,11 +14,22 @@ def test_file(tmp_path):
     return test_file_path
 
 
-def test_load_from_file(test_file):
-    project = Project.load_from_file(test_file)
+@pytest.fixture
+def test_task_file(tmp_path):
+    test_file_path = tmp_path / "task.json"
+    data = {"v": 1, "name": "Test Task", "model_type": "task"}
+
+    with open(test_file_path, "w") as file:
+        json.dump(data, file, indent=4)
+
+    return test_file_path
+
+
+def test_load_from_file(test_project_file):
+    project = Project.load_from_file(test_project_file)
     assert project.v == 1
     assert project.name == "Test Project"
-    assert project.path == test_file
+    assert project.path == test_project_file
 
 
 def test_project_init():
@@ -26,13 +37,13 @@ def test_project_init():
     assert project.name == "test"
 
 
-def test_save_to_file(test_file):
+def test_save_to_file(test_project_file):
     project = Project(
-        name="Test Project", description="Test Description", path=test_file
+        name="Test Project", description="Test Description", path=test_project_file
     )
     project.save_to_file()
 
-    with open(test_file, "r") as file:
+    with open(test_project_file, "r") as file:
         data = json.load(file)
 
     assert data["v"] == 1
@@ -40,18 +51,19 @@ def test_save_to_file(test_file):
     assert data["description"] == "Test Description"
 
 
-def test_task_serialization(test_file):
-    project = Project.load_from_file(test_file)
+def test_task_serialization(test_project_file):
+    project = Project.load_from_file(test_project_file)
     task = Task(
         parent=project,
         name="Test Task",
+        type=TaskType.LANG_SINGLE,
         description="Test Description",
         instruction="Test Base Task Instruction",
     )
 
     task.save_to_file()
 
-    parsed_task = Task.all_children_of_parent_path(test_file)[0]
+    parsed_task = Task.all_children_of_parent_path(test_project_file)[0]
     assert parsed_task.name == "Test Task"
     assert parsed_task.description == "Test Description"
     assert parsed_task.instruction == "Test Base Task Instruction"
@@ -82,9 +94,9 @@ def test_auto_type_name():
     assert model.model_type == "project"
 
 
-def test_load_tasks(test_file):
+def test_load_tasks(test_project_file):
     # Set up a project model
-    project = Project.load_from_file(test_file)
+    project = Project.load_from_file(test_project_file)
 
     # Set up multiple task models under the project
     task1 = Task(parent=project, name="Task1")
@@ -98,7 +110,7 @@ def test_load_tasks(test_file):
 
     # Load tasks from the project
     # tasks = project.tasks()
-    tasks = Task.all_children_of_parent_path(test_file)
+    tasks = Task.all_children_of_parent_path(test_project_file)
 
     # Verify that all tasks are loaded correctly
     assert len(tasks) == 3
@@ -110,7 +122,20 @@ def test_load_tasks(test_file):
 
 
 # verify error on non-saved model
-def test_load_children_no_path(test_file):
+def test_load_children_no_path():
     project = Project(name="Test Project")
     with pytest.raises(ValueError):
         project.tasks()
+
+
+def test_check_model_type(test_project_file, test_task_file):
+    project = Project.load_from_file(test_project_file)
+    task = Task.load_from_file(test_task_file)
+    assert project.model_type == "project"
+    assert task.model_type == "task"
+
+    with pytest.raises(ValueError):
+        project = Project.load_from_file(test_task_file)
+
+    with pytest.raises(ValueError):
+        task = Task.load_from_file(test_project_file)
