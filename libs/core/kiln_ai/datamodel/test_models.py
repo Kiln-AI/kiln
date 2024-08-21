@@ -27,7 +27,9 @@ def test_project_init():
 
 
 def test_save_to_file(test_file):
-    project = Project(name="Test Project", path=test_file)
+    project = Project(
+        name="Test Project", description="Test Description", path=test_file
+    )
     project.save_to_file()
 
     with open(test_file, "r") as file:
@@ -35,6 +37,24 @@ def test_save_to_file(test_file):
 
     assert data["v"] == 1
     assert data["name"] == "Test Project"
+    assert data["description"] == "Test Description"
+
+
+def test_task_serialization(test_file):
+    project = Project.load_from_file(test_file)
+    task = Task(
+        parent=project,
+        name="Test Task",
+        description="Test Description",
+        instruction="Test Base Task Instruction",
+    )
+
+    task.save_to_file()
+
+    parsed_task = Task.all_children_of_parent_path(test_file)[0]
+    assert parsed_task.name == "Test Task"
+    assert parsed_task.description == "Test Description"
+    assert parsed_task.instruction == "Test Base Task Instruction"
 
 
 def test_save_to_file_without_path():
@@ -59,7 +79,7 @@ def test_name_validation():
 
 def test_auto_type_name():
     model = Project(name="Test Project")
-    assert model.type == "Project"
+    assert model.model_type == "project"
 
 
 def test_load_tasks(test_file):
@@ -86,7 +106,7 @@ def test_load_tasks(test_file):
     assert "Task1" in names
     assert "Task2" in names
     assert "Task3" in names
-    assert all(task.type == "Task" for task in tasks)
+    assert all(task.model_type == "task" for task in tasks)
 
 
 # verify error on non-saved model

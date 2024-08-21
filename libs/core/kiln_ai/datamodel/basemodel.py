@@ -13,25 +13,27 @@ ID_FIELD = Field(default_factory=lambda: uuid.uuid4().hex[:10].upper())
 T = TypeVar("T", bound="KilnBaseModel")
 
 
+def snake_case(s: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+
+
 class KilnBaseModel(BaseModel):
     v: int = 1  # schema_version
     path: Optional[Path] = Field(default=None, exclude=True)
 
     @computed_field()
-    def type(self) -> str:
+    def model_type(self) -> str:
         return self.type_name()
 
     # override this to set the type name explicitly
     def type_name(self) -> str:
-        return self.__class__.__name__
+        return snake_case(self.__class__.__name__)
 
     # Override this if you rename a model. Should keep the original base filename
     # uses as /obj_folder/base_filename.kiln
     @classmethod
     def base_filename(cls) -> str:
-        class_name = cls.__name__ + ".kiln"
-        snake_case = re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
-        return snake_case
+        return snake_case(cls.__name__) + ".kiln"
 
     @classmethod
     def load_from_folder(cls: Type[T], folderPath: Path) -> T:

@@ -56,7 +56,7 @@ def test_max_schema_version(test_newer_file):
 
 def test_type_name():
     model = KilnBaseModel()
-    assert model.type == "KilnBaseModel"
+    assert model.model_type == "kiln_base_model"
 
 
 # Instance of the parented model for abstract methods
@@ -132,7 +132,7 @@ def test_serialize_child(tmp_path):
 
     assert data["v"] == 1
     assert data["name"] == "Name"
-    assert data["type"] == "DefaultParentedModel"
+    assert data["model_type"] == "default_parented_model"
     assert len(data["id"]) == 10
     assert child.path.parent.name == child.id + " - Name"
     assert child.path.parent.parent.name == "children"
@@ -203,7 +203,7 @@ def test_load_children(test_file):
     assert "Child1" in names
     assert "Child2" in names
     assert "Child3" in names
-    assert all(child.type == "DefaultParentedModel" for child in children)
+    assert all(child.model_type == "default_parented_model" for child in children)
 
 
 def test_base_filename():
