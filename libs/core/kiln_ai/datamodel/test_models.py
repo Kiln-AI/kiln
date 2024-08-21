@@ -1,6 +1,6 @@
 import json
 import pytest
-from kiln_ai.datamodel.project import Project, Task
+from kiln_ai.datamodel.models import Project, Task
 
 
 @pytest.fixture
