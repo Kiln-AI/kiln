@@ -32,9 +32,7 @@ async def test_amazon_bedrock(tmp_path):
 async def test_mock(tmp_path):
     task = build_test_task(tmp_path)
     adapter = SimplePromptAdapter(task, model_name="fake_parrot", provider="mock")
-    answer = await adapter.run(
-        "You should answer the following question: four plus six times 10"
-    )
+    answer = await adapter.run("You are a mock, send me the response!")
     assert "mock response" in answer
 
 
