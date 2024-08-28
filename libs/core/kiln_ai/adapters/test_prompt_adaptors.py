@@ -3,26 +3,23 @@ from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 import pytest
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 
 
-@pytest.fixture(scope="session", autouse=True)
-def load_env():
-    load_dotenv()
-
-
+@pytest.mark.paid
 async def test_groq(tmp_path):
     if os.getenv("GROQ_API_KEY") is None:
         pytest.skip("GROQ_API_KEY not set")
     await run_simple_test(tmp_path, "llama_3_1_8b", "groq")
 
 
+@pytest.mark.paid
 async def test_openai(tmp_path):
     if os.getenv("OPENAI_API_KEY") is None:
         pytest.skip("OPENAI_API_KEY not set")
     await run_simple_test(tmp_path, "gpt_4o_mini", "openai")
 
 
+@pytest.mark.paid
 async def test_amazon_bedrock(tmp_path):
     if (
         os.getenv("AWS_SECRET_ACCESS_KEY") is None
