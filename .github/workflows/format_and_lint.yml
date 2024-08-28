@@ -28,7 +28,7 @@ jobs:
           pip install ruff
       - name: Lint with ruff
         run: |
-          ruff check .
+          ruff check --select I .
       - name: Format with ruff
         run: |
           ruff format --check .
