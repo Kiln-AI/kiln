@@ -4,18 +4,21 @@ from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from langchain_aws import ChatBedrock
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 
 class ModelName(str, Enum):
     llama_3_1_8b = "llama_3_1_8b"
     gpt_4o_mini = "gpt_4o_mini"
     gpt_4o = "gpt_4o"
+    fake_parrot = "fake_parrot"
 
 
 class ModelProviders(str, Enum):
     openai = "openai"
     groq = "groq"
     amazon_bedrock = "amazon_bedrock"
+    mock = "mock"
 
 
 # Each model only supports some providers, and requires different configuration
@@ -34,6 +37,9 @@ model_options: Dict[ModelName, Dict[ModelProviders, Dict]] = {
     },
     ModelName.gpt_4o: {
         ModelProviders.openai: {"model": "gpt-4o"},
+    },
+    ModelName.fake_parrot: {
+        ModelProviders.mock: {},
     },
 }
 
@@ -59,3 +65,5 @@ def model_from(model_name: str, provider: str) -> BaseChatModel:
         return ChatGroq(**model_provider_props)
     elif provider == ModelProviders.amazon_bedrock:
         return ChatBedrock(**model_provider_props)
+    elif provider == ModelProviders.mock:
+        return FakeListChatModel(responses=["mock response"])

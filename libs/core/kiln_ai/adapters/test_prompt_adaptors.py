@@ -1,5 +1,5 @@
 import kiln_ai.datamodel.models as models
-from kiln_ai.adapters.langchain_adapter import SimplePromptAdapter
+from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 import pytest
 import os
 from pathlib import Path
@@ -32,7 +32,16 @@ async def test_amazon_bedrock(tmp_path):
     await run_simple_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
 
 
-async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
+async def test_mock(tmp_path):
+    task = build_test_task(tmp_path)
+    adapter = SimplePromptAdapter(task, model_name="fake_parrot", provider="mock")
+    answer = await adapter.run(
+        "You should answer the following question: four plus six times 10"
+    )
+    assert "mock response" in answer
+
+
+def build_test_task(tmp_path: Path):
     project = models.Project(name="test", path=tmp_path / "test.kiln")
     project.save_to_file()
     assert project.name == "test"
@@ -57,7 +66,11 @@ async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
     )
     r2.save_to_file()
     assert len(task.requirements()) == 2
+    return task
 
+
+async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
+    task = build_test_task(tmp_path)
     adapter = SimplePromptAdapter(task, model_name=model_name, provider=provider)
     answer = await adapter.run(
         "You should answer the following question: four plus six times 10"

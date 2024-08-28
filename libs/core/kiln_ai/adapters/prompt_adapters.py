@@ -3,7 +3,7 @@ from .ml_model_list import model_from
 from abc import ABCMeta, abstractmethod
 
 
-class LangChainBaseAdapter(metaclass=ABCMeta):
+class BasePromptAdapter(metaclass=ABCMeta):
     def __init__(self, kiln_task: models.Task, model_name: str, provider: str):
         self.kiln_task = kiln_task
         self.model = model_from(model_name, provider)
@@ -27,7 +27,7 @@ class LangChainBaseAdapter(metaclass=ABCMeta):
         return answer
 
 
-class SimplePromptAdapter(LangChainBaseAdapter):
+class SimplePromptAdapter(BasePromptAdapter):
     def build_prompt(self) -> str:
         base_prompt = self.kiln_task.instruction
 
