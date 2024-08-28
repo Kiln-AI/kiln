@@ -1,8 +1,8 @@
 import kiln_ai.datamodel.models as models
-import kiln_ai.adapters.langchain_adapter as ad
+from kiln_ai.adapters.langchain_adapter import SimplePromptAdapter
 import pytest
 import os
-
+from pathlib import Path
 from dotenv import load_dotenv
 
 
@@ -11,10 +11,28 @@ def load_env():
     load_dotenv()
 
 
-async def test_langchain(tmp_path):
+async def test_groq(tmp_path):
     if os.getenv("GROQ_API_KEY") is None:
         pytest.skip("GROQ_API_KEY not set")
+    await run_simple_test(tmp_path, "llama_3_1_8b", "groq")
 
+
+async def test_openai(tmp_path):
+    if os.getenv("OPENAI_API_KEY") is None:
+        pytest.skip("OPENAI_API_KEY not set")
+    await run_simple_test(tmp_path, "gpt_4o_mini", "openai")
+
+
+async def test_amazon_bedrock(tmp_path):
+    if (
+        os.getenv("AWS_SECRET_ACCESS_KEY") is None
+        or os.getenv("AWS_ACCESS_KEY_ID") is None
+    ):
+        pytest.skip("AWS keys not set")
+    await run_simple_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
+
+
+async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
     project = models.Project(name="test", path=tmp_path / "test.kiln")
     project.save_to_file()
     assert project.name == "test"
@@ -40,6 +58,8 @@ async def test_langchain(tmp_path):
     r2.save_to_file()
     assert len(task.requirements()) == 2
 
-    adapter = ad.ExperimentalKilnAdapter(task)
-    answer = await adapter.run()
+    adapter = SimplePromptAdapter(task, model_name=model_name, provider=provider)
+    answer = await adapter.run(
+        "You should answer the following question: four plus six times 10"
+    )
     assert "64" in answer
