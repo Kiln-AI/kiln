@@ -3,7 +3,9 @@ from pathlib import Path
 
 import kiln_ai.datamodel.models as models
 import pytest
+from kiln_ai.adapters.ml_model_list import model_options
 from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 
 @pytest.mark.paid
@@ -32,9 +34,19 @@ async def test_amazon_bedrock(tmp_path):
 
 async def test_mock(tmp_path):
     task = build_test_task(tmp_path)
-    adapter = SimplePromptAdapter(task, model_name="fake_parrot", provider="mock")
+    mockChatModel = FakeListChatModel(responses=["mock response"])
+    adapter = SimplePromptAdapter(task, custom_model=mockChatModel)
     answer = await adapter.run("You are a mock, send me the response!")
     assert "mock response" in answer
+
+
+@pytest.mark.paid
+async def test_all_built_in_models(tmp_path):
+    task = build_test_task(tmp_path)
+    # iterate all options in model_options
+    for model_name in model_options:
+        for provider in model_options[model_name]:
+            await run_simple_task(task, model_name, provider)
 
 
 def build_test_task(tmp_path: Path):
@@ -67,6 +79,10 @@ def build_test_task(tmp_path: Path):
 
 async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
     task = build_test_task(tmp_path)
+    return await run_simple_test(task, model_name, provider)
+
+
+async def run_simple_task(task: models.Task, model_name: str, provider: str):
     adapter = SimplePromptAdapter(task, model_name=model_name, provider=provider)
     answer = await adapter.run(
         "You should answer the following question: four plus six times 10"

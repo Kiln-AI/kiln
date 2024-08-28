@@ -1,14 +1,28 @@
 from abc import ABCMeta, abstractmethod
 
 import kiln_ai.datamodel.models as models
+from langchain_core.language_models.chat_models import BaseChatModel
 
 from .ml_model_list import model_from
 
 
 class BasePromptAdapter(metaclass=ABCMeta):
-    def __init__(self, kiln_task: models.Task, model_name: str, provider: str):
+    def __init__(
+        self,
+        kiln_task: models.Task,
+        custom_model: BaseChatModel | None = None,
+        model_name: str | None = None,
+        provider: str | None = None,
+    ):
         self.kiln_task = kiln_task
-        self.model = model_from(model_name, provider)
+        if custom_model is not None:
+            self.model = custom_model
+        elif model_name is not None and provider is not None:
+            self.model = model_from(model_name, provider)
+        else:
+            raise ValueError(
+                "model_name and provider must be provided if custom_model is not provided"
+            )
 
     @abstractmethod
     def build_prompt(self) -> str:
