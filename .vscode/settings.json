@@ -8,7 +8,10 @@
   "[javascript, typescript, svelte, json]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
-  "python.testing.pytestArgs": ["."],
+  "python.testing.pytestArgs": [
+    ".",
+    "-s"
+  ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "files.exclude": {

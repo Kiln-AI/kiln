@@ -34,10 +34,6 @@ class TaskRequirement(KilnParentedModel):
         return Task
 
 
-class TaskTypeEnum(str, Enum):
-    lang_single_call = "lang_single_call"
-
-
 class TaskDeterminism(str, Enum):
     deterministic = "deterministic"  # Expect exact match
     semantic_match = "semantic_match"  # Expect same meaning, but flexible on expression of the meaning
@@ -47,7 +43,6 @@ class TaskDeterminism(str, Enum):
 class Task(KilnParentedModel):
     name: str = NAME_FIELD
     description: str = Field(default="")
-    type: TaskTypeEnum = Field(default=TaskTypeEnum.lang_single_call)
     priority: Priority = Field(default=Priority.p2)
     determinism: TaskDeterminism = Field(default=TaskDeterminism.flexible)
     instruction: str = Field(default="")
@@ -59,6 +54,9 @@ class Task(KilnParentedModel):
     @classmethod
     def parent_type(cls):
         return Project
+
+    def requirements(self) -> list[TaskRequirement]:
+        return TaskRequirement.all_children_of_parent_path(self.path)
 
 
 class Project(KilnBaseModel):
