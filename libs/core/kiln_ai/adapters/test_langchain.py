@@ -1,6 +1,7 @@
 import kiln_ai.datamodel.models as models
 import kiln_ai.adapters.langchain_adapter as ad
 import pytest
+import os
 
 from dotenv import load_dotenv
 
@@ -11,6 +12,9 @@ def load_env():
 
 
 async def test_langchain(tmp_path):
+    if os.getenv("GROQ_API_KEY") is None:
+        pytest.skip("GROQ_API_KEY not set")
+
     project = models.Project(name="test", path=tmp_path / "test.kiln")
     project.save_to_file()
     assert project.name == "test"
