@@ -1,6 +1,7 @@
 import json
+
 import pytest
-from kiln_ai.datamodel.models import Project, Task, TaskDeterminism, Priority
+from kiln_ai.datamodel.models import Priority, Project, Task, TaskDeterminism
 
 
 @pytest.fixture

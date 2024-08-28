@@ -1,12 +1,12 @@
+import os
+import sys
+from pathlib import Path
 from typing import Union
 
 import uvicorn
+import yaml
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-import os
-import yaml
-from pathlib import Path
-import sys
 
 
 # TODO would rather this get passed. This class shouldn't know about desktop

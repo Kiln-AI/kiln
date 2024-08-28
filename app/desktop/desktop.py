@@ -1,11 +1,13 @@
-import pystray
-from PIL import Image
-import tkinter as tk
-import webbrowser
-import sys
-from .desktop_server import ThreadedServer, server_config
 import contextlib
 import os
+import sys
+import tkinter as tk
+import webbrowser
+
+import pystray
+from PIL import Image
+
+from .desktop_server import ThreadedServer, server_config
 
 # TODO: remove this and all other globals in this file
 root = None  # type: tk.Tk | None

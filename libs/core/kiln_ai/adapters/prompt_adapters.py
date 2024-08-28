@@ -1,6 +1,8 @@
-import kiln_ai.datamodel.models as models
-from .ml_model_list import model_from
 from abc import ABCMeta, abstractmethod
+
+import kiln_ai.datamodel.models as models
+
+from .ml_model_list import model_from
 
 
 class BasePromptAdapter(metaclass=ABCMeta):

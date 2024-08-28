@@ -1,5 +1,5 @@
-import kiln_studio.server as server
 import kiln_ai.coreadd as coreadd
+import kiln_studio.server as server
 
 
 def test_import() -> None:

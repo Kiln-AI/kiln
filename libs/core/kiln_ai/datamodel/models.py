@@ -1,7 +1,8 @@
-from .basemodel import KilnBaseModel, KilnParentedModel
-from pydantic import Field
 from enum import Enum, IntEnum
 
+from pydantic import Field
+
+from .basemodel import KilnBaseModel, KilnParentedModel
 
 # Conventions:
 # 1) Names are filename safe as they may be used as file names. They are informational and not to be used in prompts/training/validation.
