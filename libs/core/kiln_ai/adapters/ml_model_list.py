@@ -2,6 +2,11 @@ from enum import Enum
 from typing import Dict
 
 from langchain_aws import ChatBedrock
+from langchain_community.chat_models.azureml_endpoint import (
+    AzureMLChatOnlineEndpoint,
+    CustomOpenAIChatContentFormatter,
+)
+from langchain_community.llms.azureml_endpoint import AzureMLEndpointApiType
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
@@ -17,6 +22,7 @@ class ModelProviders(str, Enum):
     openai = "openai"
     groq = "groq"
     amazon_bedrock = "amazon_bedrock"
+    azure = "azure"
 
 
 # Each model only supports some providers, and requires different configuration
@@ -28,6 +34,11 @@ model_options: Dict[ModelName, Dict[ModelProviders, Dict]] = {
         ModelProviders.amazon_bedrock: {
             "model_id": "meta.llama3-1-8b-instruct-v1:0",
             "region_name": "us-west-2",  # Llama 3.1 only in west-2
+        },
+        ModelProviders.azure: {
+            "endpoint_url": "https://Meta-Llama-3-1-8B-Instruct-qfsbv.eastus.models.ai.azure.com/v1/chat/completions",
+            "endpoint_api_type": AzureMLEndpointApiType.serverless,
+            "content_formatter": CustomOpenAIChatContentFormatter(),
         },
     },
     ModelName.gpt_4o_mini: {
@@ -60,3 +71,5 @@ def model_from(model_name: str, provider: str) -> BaseChatModel:
         return ChatGroq(**model_provider_props)
     elif provider == ModelProviders.amazon_bedrock:
         return ChatBedrock(**model_provider_props)
+    elif provider == ModelProviders.azure:
+        return AzureMLChatOnlineEndpoint(**model_provider_props)

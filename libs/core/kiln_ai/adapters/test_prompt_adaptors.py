@@ -8,10 +8,16 @@ from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 
-@pytest.mark.paid
+# @pytest.mark.paid
 async def test_groq(tmp_path):
     if os.getenv("GROQ_API_KEY") is None:
         pytest.skip("GROQ_API_KEY not set")
+    print("PATH: ", tmp_path)
+    print("PATH: ", tmp_path)
+    print("PATH: ", tmp_path)
+    print("PATH: ", tmp_path)
+    print("PATH: ", tmp_path)
+    print("PATH: ", tmp_path)
     await run_simple_test(tmp_path, "llama_3_1_8b", "groq")
 
 
@@ -20,6 +26,13 @@ async def test_openai(tmp_path):
     if os.getenv("OPENAI_API_KEY") is None:
         pytest.skip("OPENAI_API_KEY not set")
     await run_simple_test(tmp_path, "gpt_4o_mini", "openai")
+
+
+@pytest.mark.paid
+async def test_azure(tmp_path):
+    if os.getenv("AZUREML_ENDPOINT_API_KEY") is None:
+        pytest.skip("AZUREML_ENDPOINT_API_KEY not set")
+    await run_simple_test(tmp_path, "llama_3_1_8b", "azure")
 
 
 @pytest.mark.paid
@@ -79,7 +92,7 @@ def build_test_task(tmp_path: Path):
 
 async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
     task = build_test_task(tmp_path)
-    return await run_simple_test(task, model_name, provider)
+    await run_simple_task(task, model_name, provider)
 
 
 async def run_simple_task(task: models.Task, model_name: str, provider: str):

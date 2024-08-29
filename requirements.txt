@@ -9,4 +9,5 @@ langchain==0.2.14
 langchain-openai==0.1.22
 langchain-groq==0.1.9
 langchain-aws==0.1.17
+langchain_community==0.2.14
 pytest-asyncio==0.24.0
