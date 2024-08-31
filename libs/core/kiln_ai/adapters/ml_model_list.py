@@ -39,7 +39,7 @@ model_options: Dict[ModelName, Dict[ModelProviders, Dict]] = {
 }
 
 
-def model_from(model_name: str, provider: str) -> BaseChatModel:
+def langchain_model_from(model_name: str, provider: str) -> BaseChatModel:
     if model_name not in ModelName.__members__:
         raise ValueError(f"Invalid model_name: {model_name}")
     model_name = ModelName(model_name)
