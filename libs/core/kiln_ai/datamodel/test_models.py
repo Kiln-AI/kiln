@@ -2,6 +2,7 @@ import json
 
 import pytest
 from kiln_ai.datamodel.models import Priority, Project, Task, TaskDeterminism
+from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -151,3 +152,64 @@ def test_check_model_type(test_project_file, test_task_file):
 
     with pytest.raises(ValueError):
         task = Task.load_from_file(test_project_file)
+
+
+json_joke_schema = """{
+  "type": "object",
+  "properties": {
+    "setup": {
+      "description": "The setup of the joke",
+      "title": "Setup",
+      "type": "string"
+    },
+    "punchline": {
+      "description": "The punchline to the joke",
+      "title": "Punchline",
+      "type": "string"
+    },
+    "rating": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "How funny the joke is, from 1 to 10",
+      "title": "Rating"
+    }
+  },
+  "required": [
+    "setup",
+    "punchline"
+  ]
+}
+"""
+
+
+def test_task_output_schema(tmp_path):
+    path = tmp_path / "task.kiln"
+    task = Task(name="Test Task", path=path)
+    task.save_to_file()
+    assert task.output_schema() is None
+    task = Task(name="Test Task", output_json_schema=json_joke_schema, path=path)
+    task.save_to_file()
+    print("asdf", task.output_json_schema)
+    print(task.output_schema())
+    schema = task.output_schema()
+    assert schema is not None
+    assert schema["properties"]["setup"]["type"] == "string"
+    assert schema["properties"]["punchline"]["type"] == "string"
+    assert schema["properties"]["rating"] is not None
+
+    # Not json schema
+    with pytest.raises(ValidationError):
+        task = Task(name="Test Task", output_json_schema="hello", path=path)
+        task.save_to_file()
+    with pytest.raises(ValidationError):
+        task = Task(name="Test Task", output_json_schema='{"asdf":{}}', path=path)
+        task.save_to_file()
+    with pytest.raises(ValidationError):
+        task = Task(name="Test Task", output_json_schema="{'asdf':{}}", path=path)
