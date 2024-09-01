@@ -13,7 +13,8 @@
   },
   "python.testing.pytestArgs": [
     ".",
-    "-s"
+    "-s",
+    "--runsinglewithoutchecks"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
