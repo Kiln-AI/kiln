@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import Dict
+from typing import Dict, List
 
 import httpx
 from langchain_aws import ChatBedrock
@@ -8,13 +8,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
-
-
-class ModelName(str, Enum):
-    llama_3_1_8b = "llama_3_1_8b"
-    gpt_4o_mini = "gpt_4o_mini"
-    gpt_4o = "gpt_4o"
-    phi_3_5 = "phi_3_5"
+from pydantic import BaseModel
 
 
 class ModelProviders(str, Enum):
@@ -24,47 +18,102 @@ class ModelProviders(str, Enum):
     ollama = "ollama"
 
 
-# Each model only supports some providers, and requires different configuration
-model_options: Dict[ModelName, Dict[ModelProviders, Dict]] = {
-    # TODO: Confirm these are all the same model (instant/instruct)
-    ModelName.llama_3_1_8b: {
-        ModelProviders.groq: {
-            "model": "llama-3.1-8b-instant",
-        },
-        ModelProviders.amazon_bedrock: {
-            "model_id": "meta.llama3-1-8b-instruct-v1:0",
-            "region_name": "us-west-2",  # Llama 3.1 only in west-2
-        },
-        ModelProviders.ollama: {
-            "model": "llama3.1",
-        },
-    },
-    ModelName.gpt_4o_mini: {
-        ModelProviders.openai: {"model": "gpt-4o-mini"},
-    },
-    ModelName.gpt_4o: {
-        ModelProviders.openai: {"model": "gpt-4o"},
-    },
-    ModelName.phi_3_5: {
-        ModelProviders.ollama: {"model": "phi3.5"},
-    },
-}
+class ModelFamily(str, Enum):
+    gpt = "gpt"
+    llama = "llama"
+    phi = "phi"
 
 
-def langchain_model_from(model_name: str, provider: str) -> BaseChatModel:
+class ModelName(str, Enum):
+    llama_3_1_8b = "llama_3_1_8b"
+    gpt_4o_mini = "gpt_4o_mini"
+    gpt_4o = "gpt_4o"
+    phi_3_5 = "phi_3_5"
+
+
+class KilnModel(BaseModel):
+    model_family: str
+    model_name: str
+    provider_config: Dict[ModelProviders, Dict]
+    supports_structured_output: bool = True
+
+
+built_in_models: List[KilnModel] = [
+    # GPT 4o Mini
+    KilnModel(
+        model_family=ModelFamily.gpt,
+        model_name=ModelName.gpt_4o_mini,
+        provider_config={
+            ModelProviders.openai: {
+                "model": "gpt-4o-mini",
+            },
+        },
+    ),
+    # GPT 4o
+    KilnModel(
+        model_family=ModelFamily.gpt,
+        model_name=ModelName.gpt_4o,
+        provider_config={
+            ModelProviders.openai: {
+                "model": "gpt-4o",
+            },
+        },
+    ),
+    # Llama 3.1-8b
+    KilnModel(
+        model_family=ModelFamily.llama,
+        model_name=ModelName.llama_3_1_8b,
+        provider_config={
+            ModelProviders.groq: {
+                "model": "llama-3.1-8b-instant",
+            },
+            ModelProviders.amazon_bedrock: {
+                "model_id": "meta.llama3-1-8b-instruct-v1:0",
+                "region_name": "us-west-2",  # Llama 3.1 only in west-2
+            },
+            ModelProviders.ollama: {
+                "model": "llama3.1",
+            },
+        },
+    ),
+    # Phi 3.5
+    KilnModel(
+        model_family=ModelFamily.phi,
+        model_name=ModelName.phi_3_5,
+        supports_structured_output=False,
+        provider_config={
+            ModelProviders.ollama: {
+                "model": "phi3.5",
+            },
+        },
+    ),
+]
+
+
+def langchain_model_from(
+    model_name: str, provider_name: str | None = None
+) -> BaseChatModel:
     if model_name not in ModelName.__members__:
         raise ValueError(f"Invalid model_name: {model_name}")
-    model_name = ModelName(model_name)
-    if provider not in ModelProviders.__members__:
-        raise ValueError(f"Invalid provider: {provider}")
-    provider = ModelProviders(provider)
 
-    model_hosts = model_options[model_name]
-    if model_hosts is None:
+    # Select the model from built_in_models using the model_name
+    model = next(filter(lambda m: m.model_name == model_name, built_in_models))
+    if model is None:
         raise ValueError(f"Model {model_name} not found")
-    model_provider_props = model_hosts[provider]
-    if model_provider_props is None:
-        raise ValueError(f"Provider {provider} not found for model {model_name}")
+
+    # If a provider is provided, select the provider from the model's provider_config
+    provider: ModelProviders | None = None
+    if model.provider_config is None or len(model.provider_config) == 0:
+        raise ValueError(f"Model {model_name} has no providers")
+    if provider_name is None:
+        # TODO: priority order
+        provider_name = list(model.provider_config.keys())[0]
+    if provider_name not in ModelProviders.__members__:
+        raise ValueError(f"Invalid provider: {provider_name}")
+    if provider_name not in model.provider_config:
+        raise ValueError(f"Provider {provider_name} not found for model {model_name}")
+    model_provider_props = model.provider_config[provider_name]
+    provider = ModelProviders(provider_name)
 
     if provider == ModelProviders.openai:
         return ChatOpenAI(**model_provider_props)

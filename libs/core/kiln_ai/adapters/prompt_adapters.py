@@ -21,7 +21,7 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
         self.__is_structured = False
         if custom_model is not None:
             self.model = custom_model
-        elif model_name is not None and provider is not None:
+        elif model_name is not None:
             self.model = langchain_model_from(model_name, provider)
         else:
             raise ValueError(

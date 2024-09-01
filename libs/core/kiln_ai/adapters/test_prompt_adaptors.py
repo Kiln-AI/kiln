@@ -3,7 +3,7 @@ from pathlib import Path
 
 import kiln_ai.datamodel.models as models
 import pytest
-from kiln_ai.adapters.ml_model_list import model_options, ollama_online
+from kiln_ai.adapters.ml_model_list import built_in_models, ollama_online
 from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
@@ -22,6 +22,15 @@ async def test_ollama_phi(tmp_path):
         pytest.skip("Ollama API not running. Expect it running on localhost:11434")
 
     await run_simple_test(tmp_path, "phi_3_5", "ollama")
+
+
+@pytest.mark.ollama
+async def test_autoselect_provider(tmp_path):
+    # Check if Ollama API is running
+    if not await ollama_online():
+        pytest.skip("Ollama API not running. Expect it running on localhost:11434")
+
+    await run_simple_test(tmp_path, "phi_3_5")
 
 
 @pytest.mark.ollama
@@ -62,10 +71,9 @@ async def test_mock(tmp_path):
 @pytest.mark.ollama
 async def test_all_built_in_models(tmp_path):
     task = build_test_task(tmp_path)
-    # iterate all options in model_options
-    for model_name in model_options:
-        for provider in model_options[model_name]:
-            await run_simple_task(task, model_name, provider)
+    for model in built_in_models:
+        for provider in model.provider_config:
+            await run_simple_task(task, model.model_name, provider)
 
 
 def build_test_task(tmp_path: Path):
@@ -96,7 +104,7 @@ def build_test_task(tmp_path: Path):
     return task
 
 
-async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
+async def run_simple_test(tmp_path: Path, model_name: str, provider: str | None = None):
     task = build_test_task(tmp_path)
     return await run_simple_task(task, model_name, provider)
 
