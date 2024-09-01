@@ -3,7 +3,7 @@ from pathlib import Path
 
 import kiln_ai.datamodel.models as models
 import pytest
-from kiln_ai.adapters.ml_model_list import model_options
+from kiln_ai.adapters.ml_model_list import model_options, ollama_online
 from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
@@ -13,6 +13,24 @@ async def test_groq(tmp_path):
     if os.getenv("GROQ_API_KEY") is None:
         pytest.skip("GROQ_API_KEY not set")
     await run_simple_test(tmp_path, "llama_3_1_8b", "groq")
+
+
+@pytest.mark.ollama
+async def test_ollama_phi(tmp_path):
+    # Check if Ollama API is running
+    if not await ollama_online():
+        pytest.skip("Ollama API not running. Expect it running on localhost:11434")
+
+    await run_simple_test(tmp_path, "phi_3_5", "ollama")
+
+
+@pytest.mark.ollama
+async def test_ollama_llama(tmp_path):
+    # Check if Ollama API is running
+    if not await ollama_online():
+        pytest.skip("Ollama API not running. Expect it running on localhost:11434")
+
+    await run_simple_test(tmp_path, "llama_3_1_8b", "ollama")
 
 
 @pytest.mark.paid
@@ -41,6 +59,7 @@ async def test_mock(tmp_path):
 
 
 @pytest.mark.paid
+@pytest.mark.ollama
 async def test_all_built_in_models(tmp_path):
     task = build_test_task(tmp_path)
     # iterate all options in model_options

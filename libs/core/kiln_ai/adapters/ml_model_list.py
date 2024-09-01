@@ -1,9 +1,12 @@
+import os
 from enum import Enum
 from typing import Dict
 
+import httpx
 from langchain_aws import ChatBedrock
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_groq import ChatGroq
+from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
 
@@ -11,16 +14,19 @@ class ModelName(str, Enum):
     llama_3_1_8b = "llama_3_1_8b"
     gpt_4o_mini = "gpt_4o_mini"
     gpt_4o = "gpt_4o"
+    phi_3_5 = "phi_3_5"
 
 
 class ModelProviders(str, Enum):
     openai = "openai"
     groq = "groq"
     amazon_bedrock = "amazon_bedrock"
+    ollama = "ollama"
 
 
 # Each model only supports some providers, and requires different configuration
 model_options: Dict[ModelName, Dict[ModelProviders, Dict]] = {
+    # TODO: Confirm these are all the same model (instant/instruct)
     ModelName.llama_3_1_8b: {
         ModelProviders.groq: {
             "model": "llama-3.1-8b-instant",
@@ -29,12 +35,18 @@ model_options: Dict[ModelName, Dict[ModelProviders, Dict]] = {
             "model_id": "meta.llama3-1-8b-instruct-v1:0",
             "region_name": "us-west-2",  # Llama 3.1 only in west-2
         },
+        ModelProviders.ollama: {
+            "model": "llama3.1",
+        },
     },
     ModelName.gpt_4o_mini: {
         ModelProviders.openai: {"model": "gpt-4o-mini"},
     },
     ModelName.gpt_4o: {
         ModelProviders.openai: {"model": "gpt-4o"},
+    },
+    ModelName.phi_3_5: {
+        ModelProviders.ollama: {"model": "phi3.5"},
     },
 }
 
@@ -60,3 +72,20 @@ def langchain_model_from(model_name: str, provider: str) -> BaseChatModel:
         return ChatGroq(**model_provider_props)
     elif provider == ModelProviders.amazon_bedrock:
         return ChatBedrock(**model_provider_props)
+    elif provider == ModelProviders.ollama:
+        return ChatOllama(**model_provider_props, base_url=ollama_base_url())
+
+
+def ollama_base_url():
+    env_base_url = os.getenv("OLLAMA_BASE_URL")
+    if env_base_url is not None:
+        return env_base_url
+    return "http://localhost:11434"
+
+
+async def ollama_online():
+    try:
+        httpx.get(ollama_base_url() + "/api/tags")
+    except httpx.RequestError:
+        return False
+    return True
