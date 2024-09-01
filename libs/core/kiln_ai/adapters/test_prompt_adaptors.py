@@ -79,7 +79,7 @@ def build_test_task(tmp_path: Path):
 
 async def run_simple_test(tmp_path: Path, model_name: str, provider: str):
     task = build_test_task(tmp_path)
-    return await run_simple_test(task, model_name, provider)
+    return await run_simple_task(task, model_name, provider)
 
 
 async def run_simple_task(task: models.Task, model_name: str, provider: str):
