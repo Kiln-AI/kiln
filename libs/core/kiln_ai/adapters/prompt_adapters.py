@@ -58,7 +58,11 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
         prompt += f"\n\n{input}"
         response = self.model.invoke(prompt)
         if self.__is_structured:
-            if not isinstance(response, dict) or "parsed" not in response:
+            if (
+                not isinstance(response, dict)
+                or "parsed" not in response
+                or not isinstance(response["parsed"], dict)
+            ):
                 raise RuntimeError(f"structured response not returned: {response}")
             structured_response = response["parsed"]
             # TODO: not JSON, use a dict here
