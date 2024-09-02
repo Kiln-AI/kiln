@@ -56,7 +56,7 @@ async def test_amazon_bedrock(tmp_path):
         or os.getenv("AWS_ACCESS_KEY_ID") is None
     ):
         pytest.skip("AWS keys not set")
-    await run_simple_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
+    await run_simple_test(tmp_path, "llama_3_1_70b", "amazon_bedrock")
 
 
 async def test_mock(tmp_path):

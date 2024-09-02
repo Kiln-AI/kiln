@@ -22,13 +22,16 @@ class ModelFamily(str, Enum):
     gpt = "gpt"
     llama = "llama"
     phi = "phi"
+    mistral = "mistral"
 
 
 class ModelName(str, Enum):
     llama_3_1_8b = "llama_3_1_8b"
+    llama_3_1_70b = "llama_3_1_70b"
     gpt_4o_mini = "gpt_4o_mini"
     gpt_4o = "gpt_4o"
     phi_3_5 = "phi_3_5"
+    mistral_large = "mistral_large"
 
 
 class KilnModel(BaseModel):
@@ -67,12 +70,42 @@ built_in_models: List[KilnModel] = [
             ModelProviders.groq: {
                 "model": "llama-3.1-8b-instant",
             },
-            ModelProviders.amazon_bedrock: {
-                "model_id": "meta.llama3-1-8b-instruct-v1:0",
-                "region_name": "us-west-2",  # Llama 3.1 only in west-2
-            },
+            # Doesn't reliably work with tool calling / structured output
+            # https://www.reddit.com/r/LocalLLaMA/comments/1ece00h/llama_31_8b_instruct_functiontool_calling_seems/
+            # ModelProviders.amazon_bedrock: {
+            #     "model_id": "meta.llama3-1-8b-instruct-v1:0",
+            #     "region_name": "us-west-2",  # Llama 3.1 only in west-2
+            # },
             ModelProviders.ollama: {
                 "model": "llama3.1",
+            },
+        },
+    ),
+    # Llama 3.1 70b
+    KilnModel(
+        model_family=ModelFamily.llama,
+        model_name=ModelName.llama_3_1_70b,
+        provider_config={
+            ModelProviders.groq: {
+                "model": "llama-3.1-70b-versatile",
+            },
+            ModelProviders.amazon_bedrock: {
+                "model_id": "meta.llama3-1-70b-instruct-v1:0",
+                "region_name": "us-west-2",  # Llama 3.1 only in west-2
+            },
+            # ModelProviders.ollama: {
+            #    "model": "llama3.1:70b",
+            # },
+        },
+    ),
+    # Mistral Large
+    KilnModel(
+        model_family=ModelFamily.mistral,
+        model_name=ModelName.mistral_large,
+        provider_config={
+            ModelProviders.amazon_bedrock: {
+                "model_id": "mistral.mistral-large-2407-v1:0",
+                "region_name": "us-west-2",  # only in west-2
             },
         },
     ),

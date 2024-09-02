@@ -42,7 +42,9 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
             # Langchain expects title/description to be at top level, on top of json schema
             output_schema["title"] = "task_response"
             output_schema["description"] = "A response from the task"
-            self.model = self.model.with_structured_output(output_schema)
+            self.model = self.model.with_structured_output(
+                output_schema, include_raw=True
+            )
             self.__is_structured = True
 
     @abstractmethod
@@ -56,10 +58,11 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
         prompt += f"\n\n{input}"
         if self.__is_structured:
             response = self.model.invoke(prompt)
-            if not isinstance(response, dict):
-                raise RuntimeError(f"structured response is not a dict: {response}")
+            if not isinstance(response, dict) or "parsed" not in response:
+                raise RuntimeError(f"structured response not returned: {response}")
+            structured_response = response["parsed"]
             # TODO: not JSON, use a dict here
-            return json.dumps(response)
+            return json.dumps(structured_response)
         else:
             answer = ""
             async for chunk in self.model.astream(prompt):
