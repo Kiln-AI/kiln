@@ -56,7 +56,7 @@ async def test_amazon_bedrock(tmp_path):
         or os.getenv("AWS_ACCESS_KEY_ID") is None
     ):
         pytest.skip("AWS keys not set")
-    await run_simple_test(tmp_path, "llama_3_1_70b", "amazon_bedrock")
+    await run_simple_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
 
 
 async def test_mock(tmp_path):
@@ -72,8 +72,14 @@ async def test_mock(tmp_path):
 async def test_all_built_in_models(tmp_path):
     task = build_test_task(tmp_path)
     for model in built_in_models:
-        for provider in model.provider_config:
-            await run_simple_task(task, model.model_name, provider)
+        for provider in model.providers:
+            try:
+                print(f"Running {model.model_name} {provider.name}")
+                await run_simple_task(task, model.model_name, provider.name)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Error running {model.model_name} {provider}"
+                ) from e
 
 
 def build_test_task(tmp_path: Path):

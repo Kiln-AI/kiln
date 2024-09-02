@@ -4,8 +4,6 @@ from pathlib import Path
 import kiln_ai.datamodel.models as models
 import pytest
 from kiln_ai.adapters.ml_model_list import (
-    ModelName,
-    ModelProviders,
     built_in_models,
     ollama_online,
 )
@@ -20,10 +18,7 @@ async def test_structured_output_groq(tmp_path):
 
 @pytest.mark.paid
 async def test_structured_output_bedrock(tmp_path):
-    pytest.skip(
-        "bedrock not working with structured output. New API, hopefully fixed soon by langchain"
-    )
-    await run_structured_output_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
+    await run_structured_output_test(tmp_path, "mistral_large", "amazon_bedrock")
 
 
 @pytest.mark.ollama
@@ -33,6 +28,11 @@ async def test_structured_output_ollama_phi(tmp_path):
         "not working yet - phi3.5 does not support tools. Need json_mode + format in prompt"
     )
     await run_structured_output_test(tmp_path, "phi_3_5", "ollama")
+
+
+@pytest.mark.ollama
+async def test_structured_output_gpt_4o_mini(tmp_path):
+    await run_structured_output_test(tmp_path, "gpt_4o_mini", "openai")
 
 
 @pytest.mark.ollama
@@ -51,13 +51,17 @@ async def test_all_built_in_models_structured_output(tmp_path):
                 f"Skipping {model.model_name} because it does not support structured output"
             )
             continue
-        for provider in model.provider_config:
-            if provider == ModelProviders.amazon_bedrock:
-                # TODO: bedrock not working, should investigate and fix
+        for provider in model.providers:
+            if not provider.supports_structured_output:
+                print(
+                    f"Skipping {model.model_name} {provider.name} because it does not support structured output"
+                )
                 continue
             try:
                 print(f"Running {model.model_name} {provider}")
-                await run_structured_output_test(tmp_path, model.model_name, provider)
+                await run_structured_output_test(
+                    tmp_path, model.model_name, provider.name
+                )
             except Exception as e:
                 raise RuntimeError(
                     f"Error running {model.model_name} {provider}"

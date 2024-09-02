@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 import kiln_ai.datamodel.models as models
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages.base import BaseMessageChunk
+from langchain_core.messages.base import BaseMessage
 
 from .base_adapter import BaseAdapter
 from .ml_model_list import langchain_model_from
@@ -56,24 +56,20 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
         # TODO cleanup
         prompt = self.build_prompt()
         prompt += f"\n\n{input}"
+        response = self.model.invoke(prompt)
         if self.__is_structured:
-            response = self.model.invoke(prompt)
             if not isinstance(response, dict) or "parsed" not in response:
                 raise RuntimeError(f"structured response not returned: {response}")
             structured_response = response["parsed"]
             # TODO: not JSON, use a dict here
             return json.dumps(structured_response)
         else:
-            answer = ""
-            async for chunk in self.model.astream(prompt):
-                if not isinstance(chunk, BaseMessageChunk) or not isinstance(
-                    chunk.content, str
-                ):
-                    raise RuntimeError(f"chunk is not a string: {chunk}")
-
-                print(chunk.content, end="", flush=True)
-                answer += chunk.content
-            return answer
+            if not isinstance(response, BaseMessage):
+                raise RuntimeError(f"response is not a BaseMessage: {response}")
+            text_content = response.content
+            if not isinstance(text_content, str):
+                raise RuntimeError(f"response is not a string: {text_content}")
+            return text_content
 
 
 class SimplePromptAdapter(BaseLangChainPromptAdapter):
