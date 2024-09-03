@@ -18,9 +18,11 @@ ruff format --check
 
 echo "${headerStart}Checking for Misspellings${headerEnd}"
 find . -type f | grep -v "/node_modules/" | grep  -v "/\." | grep -v "/dist/" | grep -v "/desktop/build/" | xargs misspell -error
+echo "No misspellings found"
 
+
+echo "${headerStart}Web UI: format, lint, check${headerEnd}"
 changed_files=$(git diff --name-only)
-
 if [[ "$changed_files" == *"app/web_ui/"* ]]; then
     echo "${headerStart}Checking Web UI: format, lint, check${headerEnd}"
     cd app/web_ui
@@ -29,11 +31,11 @@ if [[ "$changed_files" == *"app/web_ui/"* ]]; then
     npm run check
     cd ../..
 else
-    echo "${headerStart}Skipping Web UI: format, lint, check${headerEnd}"
+    echo "Skipping Web UI: no files changed"
 fi
 
 echo "${headerStart}Running Python Tests${headerEnd}"
-python3 -m pytest .
+python3 -m pytest -q .
 
 echo "${headerStart}Checking Types${headerEnd}"
 pyright .
