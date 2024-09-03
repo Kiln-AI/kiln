@@ -3,11 +3,11 @@ from pathlib import Path
 
 import kiln_ai.datamodel.models as models
 import pytest
+from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.adapters.ml_model_list import (
     built_in_models,
     ollama_online,
 )
-from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 from kiln_ai.datamodel.test_models import json_joke_schema
 
 
@@ -89,7 +89,7 @@ def build_structured_output_test_task(tmp_path: Path):
 
 async def run_structured_output_test(tmp_path: Path, model_name: str, provider: str):
     task = build_structured_output_test_task(tmp_path)
-    a = SimplePromptAdapter(task, model_name=model_name, provider=provider)
+    a = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
     result = await a.run("Cows")  # a joke about cows
     parsed = json.loads(result)
     assert parsed["setup"] is not None

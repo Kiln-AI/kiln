@@ -1,21 +1,22 @@
 import json
-from abc import ABCMeta, abstractmethod
 
 import kiln_ai.datamodel.models as models
+from kiln_ai.adapters.prompt_builders import SimplePromptBuilder
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages.base import BaseMessage
 
-from .base_adapter import BaseAdapter
+from .base_adapter import BaseAdapter, BasePromptBuilder
 from .ml_model_list import langchain_model_from
 
 
-class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
+class LangChainPromptAdapter(BaseAdapter):
     def __init__(
         self,
         kiln_task: models.Task,
         custom_model: BaseChatModel | None = None,
         model_name: str | None = None,
         provider: str | None = None,
+        prompt_builder: BasePromptBuilder | None = None,
     ):
         self.kiln_task = kiln_task
         self.__is_structured = False
@@ -46,16 +47,15 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
                 output_schema, include_raw=True
             )
             self.__is_structured = True
-
-    @abstractmethod
-    def build_prompt(self) -> str:
-        pass
+        if prompt_builder is None:
+            self.prompt_builder = SimplePromptBuilder(kiln_task)
+        else:
+            self.prompt_builder = prompt_builder
 
     # TODO: don't just append input to prompt
     async def run(self, input: str) -> str:
         # TODO cleanup
-        prompt = self.build_prompt()
-        prompt += f"\n\n{input}"
+        prompt = self.prompt_builder.build_prompt(input)
         response = self.model.invoke(prompt)
         if self.__is_structured:
             if (
@@ -74,17 +74,3 @@ class BaseLangChainPromptAdapter(BaseAdapter, metaclass=ABCMeta):
             if not isinstance(text_content, str):
                 raise RuntimeError(f"response is not a string: {text_content}")
             return text_content
-
-
-class SimplePromptAdapter(BaseLangChainPromptAdapter):
-    def build_prompt(self) -> str:
-        base_prompt = self.kiln_task.instruction
-
-        # TODO: this is just a quick version. Formatting and best practices TBD
-        if len(self.kiln_task.requirements()) > 0:
-            base_prompt += "\n\nYou should requect the following requirements:\n"
-            # iterate requirements, formatting them in numbereed list like 1) task.instruction\n2)...
-            for i, requirement in enumerate(self.kiln_task.requirements()):
-                base_prompt += f"{i+1}) {requirement.instruction}\n"
-
-        return base_prompt

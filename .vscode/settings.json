@@ -4,7 +4,8 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
-    }
+    },
+    "editor.tabSize": 4,
   },
   "eslint.validate": ["javascript", "javascriptreact", "svelte"],
   // Svelte, JS, TS files
@@ -24,5 +25,5 @@
     "**/.ruff_cache": true,
     "**/dist": true,
     "**/node_modules": true
-  }
+  },
 }

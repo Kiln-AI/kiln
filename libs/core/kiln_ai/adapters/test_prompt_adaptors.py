@@ -3,8 +3,8 @@ from pathlib import Path
 
 import kiln_ai.datamodel.models as models
 import pytest
+from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.adapters.ml_model_list import built_in_models, ollama_online
-from kiln_ai.adapters.prompt_adapters import SimplePromptAdapter
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 
@@ -62,7 +62,7 @@ async def test_amazon_bedrock(tmp_path):
 async def test_mock(tmp_path):
     task = build_test_task(tmp_path)
     mockChatModel = FakeListChatModel(responses=["mock response"])
-    adapter = SimplePromptAdapter(task, custom_model=mockChatModel)
+    adapter = LangChainPromptAdapter(task, custom_model=mockChatModel)
     answer = await adapter.run("You are a mock, send me the response!")
     assert "mock response" in answer
 
@@ -116,7 +116,8 @@ async def run_simple_test(tmp_path: Path, model_name: str, provider: str | None 
 
 
 async def run_simple_task(task: models.Task, model_name: str, provider: str):
-    adapter = SimplePromptAdapter(task, model_name=model_name, provider=provider)
+    adapter = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
+
     answer = await adapter.run(
         "You should answer the following question: four plus six times 10"
     )
