@@ -1,5 +1,9 @@
 import pytest
-from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
+from kiln_ai.datamodel.json_schema import (
+    JsonObjectSchema,
+    schema_from_json_str,
+    validate_schema,
+)
 from pydantic import BaseModel
 
 
@@ -59,3 +63,13 @@ def test_json_schema():
         o = ExampleModel(x_schema="{'asdf':{}}")
     with pytest.raises(ValueError):
         o = ExampleModel(x_schema="{asdf")
+
+
+def test_validate_schema_content():
+    o = {"setup": "asdf", "punchline": "asdf", "rating": 1}
+    validate_schema(o, json_joke_schema)
+    o = {"setup": "asdf"}
+    with pytest.raises(Exception):
+        validate_schema(0, json_joke_schema)
+    o = {"setup": "asdf", "punchline": "asdf"}
+    validate_schema(o, json_joke_schema)

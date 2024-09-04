@@ -55,9 +55,13 @@ class Task(KilnParentedModel):
     input_json_schema: JsonObjectSchema | None = None
 
     def output_schema(self) -> Dict | None:
+        if self.output_json_schema is None:
+            return None
         return schema_from_json_str(self.output_json_schema)
 
     def input_schema(self) -> Dict | None:
+        if self.input_json_schema is None:
+            return None
         return schema_from_json_str(self.input_json_schema)
 
     @classmethod

@@ -17,10 +17,12 @@ def _check_json_schema(v: str) -> str:
     return v
 
 
-def schema_from_json_str(v: str | None) -> Dict | None:
-    if v is None:
-        # Allowing None for now, may make this required later
-        return None
+def validate_schema(instance: Dict, schema_str: str) -> None:
+    schema = schema_from_json_str(schema_str)
+    jsonschema.validate(instance=instance, schema=schema)
+
+
+def schema_from_json_str(v: str) -> Dict:
     try:
         parsed = json.loads(v)
         jsonschema.Draft202012Validator.check_schema(parsed)

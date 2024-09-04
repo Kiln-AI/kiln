@@ -63,7 +63,7 @@ async def test_mock(tmp_path):
     task = build_test_task(tmp_path)
     mockChatModel = FakeListChatModel(responses=["mock response"])
     adapter = LangChainPromptAdapter(task, custom_model=mockChatModel)
-    answer = await adapter.run("You are a mock, send me the response!")
+    answer = await adapter.invoke("You are a mock, send me the response!")
     assert "mock response" in answer
 
 
@@ -118,7 +118,7 @@ async def run_simple_test(tmp_path: Path, model_name: str, provider: str | None 
 async def run_simple_task(task: models.Task, model_name: str, provider: str):
     adapter = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
 
-    answer = await adapter.run(
+    answer = await adapter.invoke(
         "You should answer the following question: four plus six times 10"
     )
     assert "64" in answer

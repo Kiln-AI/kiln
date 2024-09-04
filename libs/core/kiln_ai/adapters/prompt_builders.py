@@ -14,6 +14,6 @@ class SimplePromptBuilder(BasePromptBuilder):
             for i, requirement in enumerate(self.task.requirements()):
                 base_prompt += f"{i+1}) {requirement.instruction}\n"
 
-        # TODO: should be another message
+        # TODO: should be another message, not just appended to prompt
         base_prompt += f"\n\nThe input is:\n{input}"
         return base_prompt
