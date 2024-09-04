@@ -3,7 +3,7 @@ from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
 from pydantic import BaseModel
 
 
-class TestJsonSchema(BaseModel):
+class ExampleModel(BaseModel):
     x_schema: JsonObjectSchema | None = None
 
 
@@ -43,7 +43,7 @@ json_joke_schema = """{
 
 
 def test_json_schema():
-    o = TestJsonSchema(x_schema=json_joke_schema)
+    o = ExampleModel(x_schema=json_joke_schema)
     parsed_schema = schema_from_json_str(o.x_schema)
     assert parsed_schema is not None
     assert parsed_schema["type"] == "object"
@@ -54,8 +54,8 @@ def test_json_schema():
 
     # Not json schema
     with pytest.raises(ValueError):
-        o = TestJsonSchema(x_schema="hello")
+        o = ExampleModel(x_schema="hello")
     with pytest.raises(ValueError):
-        o = TestJsonSchema(x_schema="{'asdf':{}}")
+        o = ExampleModel(x_schema="{'asdf':{}}")
     with pytest.raises(ValueError):
-        o = TestJsonSchema(x_schema="{asdf")
+        o = ExampleModel(x_schema="{asdf")
