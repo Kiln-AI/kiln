@@ -2,6 +2,7 @@ import json
 
 import pytest
 from kiln_ai.datamodel.models import Priority, Project, Task, TaskDeterminism
+from kiln_ai.datamodel.test_json_schema import json_joke_schema
 from pydantic import ValidationError
 
 
@@ -152,41 +153,6 @@ def test_check_model_type(test_project_file, test_task_file):
 
     with pytest.raises(ValueError):
         task = Task.load_from_file(test_project_file)
-
-
-json_joke_schema = """{
-  "type": "object",
-  "properties": {
-    "setup": {
-      "description": "The setup of the joke",
-      "title": "Setup",
-      "type": "string"
-    },
-    "punchline": {
-      "description": "The punchline to the joke",
-      "title": "Punchline",
-      "type": "string"
-    },
-    "rating": {
-      "anyOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "How funny the joke is, from 1 to 10",
-      "title": "Rating"
-    }
-  },
-  "required": [
-    "setup",
-    "punchline"
-  ]
-}
-"""
 
 
 def test_task_output_schema(tmp_path):
