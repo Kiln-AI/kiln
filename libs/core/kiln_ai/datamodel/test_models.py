@@ -160,22 +160,28 @@ def test_task_output_schema(tmp_path):
     task = Task(name="Test Task", path=path)
     task.save_to_file()
     assert task.output_schema() is None
-    task = Task(name="Test Task", output_json_schema=json_joke_schema, path=path)
+    task = Task(
+        name="Test Task",
+        output_json_schema=json_joke_schema,
+        input_json_schema=json_joke_schema,
+        path=path,
+    )
     task.save_to_file()
     print("asdf", task.output_json_schema)
     print(task.output_schema())
-    schema = task.output_schema()
-    assert schema is not None
-    assert schema["properties"]["setup"]["type"] == "string"
-    assert schema["properties"]["punchline"]["type"] == "string"
-    assert schema["properties"]["rating"] is not None
+    schemas = [task.output_schema(), task.input_schema()]
+    for schema in schemas:
+        assert schema is not None
+        assert schema["properties"]["setup"]["type"] == "string"
+        assert schema["properties"]["punchline"]["type"] == "string"
+        assert schema["properties"]["rating"] is not None
 
     # Not json schema
     with pytest.raises(ValidationError):
         task = Task(name="Test Task", output_json_schema="hello", path=path)
-        task.save_to_file()
     with pytest.raises(ValidationError):
         task = Task(name="Test Task", output_json_schema='{"asdf":{}}', path=path)
-        task.save_to_file()
     with pytest.raises(ValidationError):
         task = Task(name="Test Task", output_json_schema="{'asdf':{}}", path=path)
+    with pytest.raises(ValidationError):
+        task = Task(name="Test Task", input_json_schema="{asdf", path=path)
