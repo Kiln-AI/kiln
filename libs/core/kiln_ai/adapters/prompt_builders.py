@@ -14,6 +14,11 @@ class SimplePromptBuilder(BasePromptBuilder):
             for i, requirement in enumerate(self.task.requirements()):
                 base_prompt += f"{i+1}) {requirement.instruction}\n"
 
+        if self.adapter is not None:
+            adapter_instructions = self.adapter.adapter_specific_instructions()
+            if adapter_instructions is not None:
+                base_prompt += f"\n\n{adapter_instructions}\n\n"
+
         # TODO: should be another message, not just appended to prompt
         base_prompt += f"\n\nThe input is:\n{input}"
         return base_prompt

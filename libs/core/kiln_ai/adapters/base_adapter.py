@@ -31,10 +31,17 @@ class BaseAdapter(metaclass=ABCMeta):
     async def _run(self, input: str) -> Dict | str:
         pass
 
+    # override for provider specific instructions (e.g. json format instead of tool call)
+    def adapter_specific_instructions(self) -> str | None:
+        if self._is_structured:
+            return "Always respond with a tool call. Never respond with a human readable message."
+        return None
+
 
 class BasePromptBuilder(metaclass=ABCMeta):
-    def __init__(self, task: Task):
+    def __init__(self, task: Task, adapter: BaseAdapter | None = None):
         self.task = task
+        self.adapter = adapter
 
     @abstractmethod
     def build_prompt(self, input: str) -> str:

@@ -1,4 +1,3 @@
-import json
 from typing import Dict
 
 import kiln_ai.datamodel.models as models
@@ -47,8 +46,9 @@ class LangChainPromptAdapter(BaseAdapter):
                 output_schema, include_raw=True
             )
         if prompt_builder is None:
-            self.prompt_builder = SimplePromptBuilder(kiln_task)
+            self.prompt_builder = SimplePromptBuilder(task=kiln_task, adapter=self)
         else:
+            prompt_builder.adapter = self
             self.prompt_builder = prompt_builder
 
     async def _run(self, input: str) -> Dict | str:
