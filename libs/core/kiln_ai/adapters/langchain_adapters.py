@@ -51,6 +51,12 @@ class LangChainPromptAdapter(BaseAdapter):
             prompt_builder.adapter = self
             self.prompt_builder = prompt_builder
 
+    def adapter_specific_instructions(self) -> str | None:
+        # TODO: would be better to explicitly use bind_tools:tool_choice="task_response" here
+        if self._is_structured:
+            return "Always respond with a tool call. Never respond with a human readable message."
+        return None
+
     async def _run(self, input: str) -> Dict | str:
         # TODO cleanup
         prompt = self.prompt_builder.build_prompt(input)
