@@ -3,6 +3,7 @@ from typing import Annotated, Dict
 
 import jsonschema
 import jsonschema.exceptions
+import jsonschema.validators
 from pydantic import AfterValidator
 
 JsonObjectSchema = Annotated[
@@ -19,7 +20,8 @@ def _check_json_schema(v: str) -> str:
 
 def validate_schema(instance: Dict, schema_str: str) -> None:
     schema = schema_from_json_str(schema_str)
-    jsonschema.validate(instance=instance, schema=schema)
+    v = jsonschema.Draft202012Validator(schema)
+    return v.validate(instance)
 
 
 def schema_from_json_str(v: str) -> Dict:
