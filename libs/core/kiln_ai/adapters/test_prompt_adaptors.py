@@ -30,6 +30,15 @@ async def test_ollama_phi(tmp_path):
 
 
 @pytest.mark.ollama
+async def test_ollama_gemma(tmp_path):
+    # Check if Ollama API is running
+    if not await ollama_online():
+        pytest.skip("Ollama API not running. Expect it running on localhost:11434")
+
+    await run_simple_test(tmp_path, "gemma_2_3b", "ollama")
+
+
+@pytest.mark.ollama
 async def test_autoselect_provider(tmp_path):
     # Check if Ollama API is running
     if not await ollama_online():
@@ -109,7 +118,13 @@ def build_test_task(tmp_path: Path):
         instruction="If the problem has anything other than addition, subtraction, multiplication, division, and brackets, you will not answer it. Reply instead with 'I'm just a basic calculator, I don't know how to do that'.",
     )
     r2.save_to_file()
-    assert len(task.requirements()) == 2
+    r3 = models.TaskRequirement(
+        parent=task,
+        name="Answer format",
+        instruction="The answer can contain any content about your reasoning, but at the end it should include the final answer in numerals in square brackets. For example if the answer is one hundred, the end of your response should be [100].",
+    )
+    r3.save_to_file()
+    assert len(task.requirements()) == 3
     return task
 
 

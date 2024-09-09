@@ -25,16 +25,21 @@ class ModelFamily(str, Enum):
     llama = "llama"
     phi = "phi"
     mistral = "mistral"
+    gemma = "gemma"
 
 
 class ModelName(str, Enum):
     llama_3_1_8b = "llama_3_1_8b"
     llama_3_1_70b = "llama_3_1_70b"
+    llama_3_1_405b = "llama_3_1_405b"
     gpt_4o_mini = "gpt_4o_mini"
     gpt_4o = "gpt_4o"
     phi_3_5 = "phi_3_5"
     mistral_large = "mistral_large"
     mistral_nemo = "mistral_nemo"
+    gemma_2_3b = "gemma_2_3b"
+    gemma_2_9b = "gemma_2_9b"
+    gemma_2_27b = "gemma_2_27b"
 
 
 class KilnModelProvider(BaseModel):
@@ -137,6 +142,34 @@ built_in_models: List[KilnModel] = [
             # ),
         ],
     ),
+    # Llama 3.1 405b
+    KilnModel(
+        family=ModelFamily.llama,
+        name=ModelName.llama_3_1_405b,
+        providers=[
+            # TODO: bring back when groq does: https://console.groq.com/docs/models
+            # KilnModelProvider(
+            #     name=ModelProviderName.groq,
+            #     provider_options={"model": "llama-3.1-405b-instruct-v1:0"},
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.amazon_bedrock,
+                provider_options={
+                    "model": "meta.llama3-1-405b-instruct-v1:0",
+                    "region_name": "us-west-2",  # Llama 3.1 only in west-2
+                },
+            ),
+            # TODO: enable once tests update to check if model is available
+            # KilnModelProvider(
+            #     name=ModelProviderName.ollama,
+            #     provider_options={"model": "llama3.1:405b"},
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "meta-llama/llama-3.1-405b-instruct"},
+            ),
+        ],
+    ),
     # Mistral Nemo
     KilnModel(
         family=ModelFamily.mistral,
@@ -184,6 +217,58 @@ built_in_models: List[KilnModel] = [
             KilnModelProvider(
                 name=ModelProviderName.openrouter,
                 provider_options={"model": "microsoft/phi-3.5-mini-128k-instruct"},
+            ),
+        ],
+    ),
+    # Gemma 2 1.6b
+    KilnModel(
+        family=ModelFamily.gemma,
+        name=ModelName.gemma_2_3b,
+        supports_structured_output=False,
+        providers=[
+            KilnModelProvider(
+                name=ModelProviderName.ollama,
+                provider_options={
+                    "model": "gemma2:2b",
+                },
+            ),
+        ],
+    ),
+    # Gemma 2 9b
+    KilnModel(
+        family=ModelFamily.gemma,
+        name=ModelName.gemma_2_9b,
+        supports_structured_output=False,
+        providers=[
+            # TODO: enable once tests update to check if model is available
+            # KilnModelProvider(
+            #     name=ModelProviderName.ollama,
+            #     provider_options={
+            #         "model": "gemma2:9b",
+            #     },
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "google/gemma-2-9b-it"},
+            ),
+        ],
+    ),
+    # Gemma 2 27b
+    KilnModel(
+        family=ModelFamily.gemma,
+        name=ModelName.gemma_2_27b,
+        supports_structured_output=False,
+        providers=[
+            # TODO: enable once tests update to check if model is available
+            # KilnModelProvider(
+            #     name=ModelProviderName.ollama,
+            #     provider_options={
+            #         "model": "gemma2:27b",
+            #     },
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "google/gemma-2-27b-it"},
             ),
         ],
     ),
