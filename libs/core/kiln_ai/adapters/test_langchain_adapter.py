@@ -18,3 +18,8 @@ def test_langchain_adapter_munge_response(tmp_path):
     munged = lca._munge_response(response)
     assert munged["setup"] == "Why did the cow join a band?"
     assert munged["punchline"] == "Because she wanted to be a moo-sician!"
+
+    # non mistral format should continue to work
+    munged = lca._munge_response(response["arguments"])
+    assert munged["setup"] == "Why did the cow join a band?"
+    assert munged["punchline"] == "Because she wanted to be a moo-sician!"
