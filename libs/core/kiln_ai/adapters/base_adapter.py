@@ -31,10 +31,9 @@ class BaseAdapter(metaclass=ABCMeta):
     async def _run(self, input: str) -> Dict | str:
         pass
 
-    # adapter specific instructions (e.g. tool calling, json format, etc)
-    @abstractmethod
+    # override for adapter specific instructions (e.g. tool calling, json format, etc)
     def adapter_specific_instructions(self) -> str | None:
-        pass
+        return None
 
 
 class BasePromptBuilder(metaclass=ABCMeta):

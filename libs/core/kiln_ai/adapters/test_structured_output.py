@@ -51,9 +51,6 @@ class MockAdapter(BaseAdapter):
     async def _run(self, input: str) -> Dict | str:
         return self.response
 
-    def adapter_specific_instructions(self) -> str | None:
-        return None
-
 
 async def test_mock_unstructred_response(tmp_path):
     task = build_structured_output_test_task(tmp_path)
