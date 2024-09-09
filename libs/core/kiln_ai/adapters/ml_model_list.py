@@ -233,13 +233,10 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
             **provider.provider_options,
             openai_api_key=api_key,  # type: ignore[arg-type]
             openai_api_base=base_url,  # type: ignore[arg-type]
-            # TODO: should pass these
-            # model_kwargs={
-            #     "headers": {
-            #         "HTTP-Referer": "https://kiln-ai.com",
-            #         "X-Title": "KilnAI",
-            #     }
-            # },
+            default_headers={
+                "HTTP-Referer": "https://kiln-ai.com/openrouter",
+                "X-Title": "KilnAI",
+            },
         )
     else:
         raise ValueError(f"Invalid model or provider: {name} - {provider_name}")
