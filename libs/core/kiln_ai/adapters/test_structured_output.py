@@ -18,6 +18,11 @@ async def test_structured_output_groq(tmp_path):
 
 
 @pytest.mark.paid
+async def test_structured_output_openrouter(tmp_path):
+    await run_structured_output_test(tmp_path, "mistral_nemo", "openrouter")
+
+
+@pytest.mark.paid
 async def test_structured_output_bedrock(tmp_path):
     await run_structured_output_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
 
@@ -98,7 +103,7 @@ async def test_all_built_in_models_structured_output(tmp_path):
                 )
                 continue
             try:
-                print(f"Running {model.name} {provider}")
+                print(f"Running {model.name} {provider.name}")
                 await run_structured_output_test(tmp_path, model.name, provider.name)
             except Exception as e:
                 raise RuntimeError(f"Error running {model.name} {provider}") from e

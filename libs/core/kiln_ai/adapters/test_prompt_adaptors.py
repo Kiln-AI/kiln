@@ -15,6 +15,11 @@ async def test_groq(tmp_path):
     await run_simple_test(tmp_path, "llama_3_1_8b", "groq")
 
 
+@pytest.mark.paid
+async def test_openrouter(tmp_path):
+    await run_simple_test(tmp_path, "llama_3_1_8b", "openrouter")
+
+
 @pytest.mark.ollama
 async def test_ollama_phi(tmp_path):
     # Check if Ollama API is running
@@ -74,12 +79,10 @@ async def test_all_built_in_models(tmp_path):
     for model in built_in_models:
         for provider in model.providers:
             try:
-                print(f"Running {model.model_name} {provider.name}")
-                await run_simple_task(task, model.model_name, provider.name)
+                print(f"Running {model.name} {provider.name}")
+                await run_simple_task(task, model.name, provider.name)
             except Exception as e:
-                raise RuntimeError(
-                    f"Error running {model.model_name} {provider}"
-                ) from e
+                raise RuntimeError(f"Error running {model.name} {provider}") from e
 
 
 def build_test_task(tmp_path: Path):

@@ -69,7 +69,7 @@ class LangChainPromptAdapter(BaseAdapter):
             ):
                 raise RuntimeError(f"structured response not returned: {response}")
             structured_response = response["parsed"]
-            return structured_response
+            return self._munge_response(structured_response)
         else:
             if not isinstance(response, BaseMessage):
                 raise RuntimeError(f"response is not a BaseMessage: {response}")
@@ -77,3 +77,13 @@ class LangChainPromptAdapter(BaseAdapter):
             if not isinstance(text_content, str):
                 raise RuntimeError(f"response is not a string: {text_content}")
             return text_content
+
+    def _munge_response(self, response: Dict) -> Dict:
+        # Mistral Large tool calling format is a bit different. Convert to standard format.
+        if (
+            "name" in response
+            and response["name"] == "task_response"
+            and "arguments" in response
+        ):
+            return response["arguments"]
+        return response

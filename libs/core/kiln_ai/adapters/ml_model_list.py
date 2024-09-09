@@ -1,5 +1,6 @@
 import os
 from enum import Enum
+from os import getenv
 from typing import Dict, List
 
 import httpx
@@ -16,6 +17,7 @@ class ModelProviderName(str, Enum):
     groq = "groq"
     amazon_bedrock = "amazon_bedrock"
     ollama = "ollama"
+    openrouter = "openrouter"
 
 
 class ModelFamily(str, Enum):
@@ -32,6 +34,7 @@ class ModelName(str, Enum):
     gpt_4o = "gpt_4o"
     phi_3_5 = "phi_3_5"
     mistral_large = "mistral_large"
+    mistral_nemo = "mistral_nemo"
 
 
 class KilnModelProvider(BaseModel):
@@ -58,6 +61,10 @@ built_in_models: List[KilnModel] = [
                 name=ModelProviderName.openai,
                 provider_options={"model": "gpt-4o-mini"},
             ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "openai/gpt-4o-mini"},
+            ),
         ],
     ),
     # GPT 4o
@@ -68,6 +75,10 @@ built_in_models: List[KilnModel] = [
             KilnModelProvider(
                 name=ModelProviderName.openai,
                 provider_options={"model": "gpt-4o"},
+            ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "openai/gpt-4o-2024-08-06"},
             ),
         ],
     ),
@@ -82,8 +93,6 @@ built_in_models: List[KilnModel] = [
             ),
             KilnModelProvider(
                 name=ModelProviderName.amazon_bedrock,
-                # bedrock llama doesn't support structured output, should check again latet
-                supports_structured_output=False,
                 provider_options={
                     "model": "meta.llama3-1-8b-instruct-v1:0",
                     "region_name": "us-west-2",  # Llama 3.1 only in west-2
@@ -92,6 +101,10 @@ built_in_models: List[KilnModel] = [
             KilnModelProvider(
                 name=ModelProviderName.ollama,
                 provider_options={"model": "llama3.1"},
+            ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "meta-llama/llama-3.1-8b-instruct"},
             ),
         ],
     ),
@@ -106,18 +119,33 @@ built_in_models: List[KilnModel] = [
             ),
             KilnModelProvider(
                 name=ModelProviderName.amazon_bedrock,
-                # bedrock llama doesn't support structured output, should check again latet
+                # TODO: this should work but a bug in the bedrock response schema
                 supports_structured_output=False,
                 provider_options={
                     "model": "meta.llama3-1-70b-instruct-v1:0",
                     "region_name": "us-west-2",  # Llama 3.1 only in west-2
                 },
             ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "meta-llama/llama-3.1-70b-instruct"},
+            ),
             # TODO: enable once tests update to check if model is available
             # KilnModelProvider(
             #     provider=ModelProviders.ollama,
             #     provider_options={"model": "llama3.1:70b"},
             # ),
+        ],
+    ),
+    # Mistral Nemo
+    KilnModel(
+        family=ModelFamily.mistral,
+        name=ModelName.mistral_nemo,
+        providers=[
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "mistralai/mistral-nemo"},
+            ),
         ],
     ),
     # Mistral Large
@@ -131,6 +159,10 @@ built_in_models: List[KilnModel] = [
                     "model": "mistral.mistral-large-2407-v1:0",
                     "region_name": "us-west-2",  # only in west-2
                 },
+            ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "mistralai/mistral-large"},
             ),
             # TODO: enable once tests update to check if model is available
             # KilnModelProvider(
@@ -148,6 +180,10 @@ built_in_models: List[KilnModel] = [
             KilnModelProvider(
                 name=ModelProviderName.ollama,
                 provider_options={"model": "phi3.5"},
+            ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "microsoft/phi-3.5-mini-128k-instruct"},
             ),
         ],
     ),
@@ -185,6 +221,26 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
         return ChatBedrockConverse(**provider.provider_options)
     elif provider.name == ModelProviderName.ollama:
         return ChatOllama(**provider.provider_options, base_url=ollama_base_url())
+    elif provider.name == ModelProviderName.openrouter:
+        api_key = getenv("OPENROUTER_API_KEY")
+        if api_key is None:
+            raise ValueError(
+                "OPENROUTER_API_KEY environment variable must be set to use OpenRouter. "
+                "Get your API key from https://openrouter.ai/settings/keys"
+            )
+        base_url = getenv("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1"
+        return ChatOpenAI(
+            **provider.provider_options,
+            openai_api_key=api_key,  # type: ignore[arg-type]
+            openai_api_base=base_url,  # type: ignore[arg-type]
+            # TODO: should pass these
+            # model_kwargs={
+            #     "headers": {
+            #         "HTTP-Referer": "https://kiln-ai.com",
+            #         "X-Title": "KilnAI",
+            #     }
+            # },
+        )
     else:
         raise ValueError(f"Invalid model or provider: {name} - {provider_name}")
 
