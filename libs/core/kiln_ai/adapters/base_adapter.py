@@ -8,11 +8,11 @@ from kiln_ai.datamodel.models import Task
 class BaseAdapter(metaclass=ABCMeta):
     def __init__(self, kiln_task: Task):
         self.kiln_task = kiln_task
-        self._is_structured = self.kiln_task.output_json_schema is not None
+        self._is_structured_output = self.kiln_task.output_json_schema is not None
 
     async def invoke(self, input: str) -> Dict | str:
         result = await self._run(input)
-        if self._is_structured:
+        if self._is_structured_output:
             if not isinstance(result, dict):
                 raise RuntimeError(f"structured response is not a dict: {result}")
             if self.kiln_task.output_json_schema is None:
