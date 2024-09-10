@@ -1,3 +1,4 @@
+import json
 from abc import ABCMeta, abstractmethod
 from typing import Dict
 
@@ -8,18 +9,26 @@ from kiln_ai.datamodel.models import Task
 class BaseAdapter(metaclass=ABCMeta):
     def __init__(self, kiln_task: Task):
         self.kiln_task = kiln_task
-        self._is_structured_output = self.kiln_task.output_json_schema is not None
 
-    async def invoke(self, input: str) -> Dict | str:
+        self.output_schema = self.kiln_task.output_json_schema
+
+        self.input_schema = self.kiln_task.input_json_schema
+
+    async def invoke(self, input: Dict | str) -> Dict | str:
+        # validate input
+        if self.input_schema is not None:
+            if not isinstance(input, dict):
+                raise ValueError(f"structured input is not a dict: {input}")
+            validate_schema(input, self.input_schema)
+
+        # Run
         result = await self._run(input)
-        if self._is_structured_output:
+
+        # validate output
+        if self.output_schema is not None:
             if not isinstance(result, dict):
                 raise RuntimeError(f"structured response is not a dict: {result}")
-            if self.kiln_task.output_json_schema is None:
-                raise ValueError(
-                    f"output_json_schema is not set for task {self.kiln_task.name}"
-                )
-            validate_schema(result, self.kiln_task.output_json_schema)
+            validate_schema(result, self.output_schema)
         else:
             if not isinstance(result, str):
                 raise RuntimeError(
@@ -27,8 +36,11 @@ class BaseAdapter(metaclass=ABCMeta):
                 )
         return result
 
+    def has_strctured_output(self) -> bool:
+        return self.output_schema is not None
+
     @abstractmethod
-    async def _run(self, input: str) -> Dict | str:
+    async def _run(self, input: Dict | str) -> Dict | str:
         pass
 
     # override for adapter specific instructions (e.g. tool calling, json format, etc)
@@ -45,6 +57,9 @@ class BasePromptBuilder(metaclass=ABCMeta):
     def build_prompt(self) -> str:
         pass
 
-    @abstractmethod
-    def build_user_message(self, input: str) -> str:
-        pass
+    # Can be overridden to add more information to the user message
+    def build_user_message(self, input: Dict | str) -> str:
+        if isinstance(input, Dict):
+            return f"The input is:\n{json.dumps(input, indent=2)}"
+
+        return f"The input is:\n{input}"

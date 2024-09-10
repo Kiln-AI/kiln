@@ -73,3 +73,52 @@ def test_validate_schema_content():
         validate_schema(0, json_joke_schema)
     o = {"setup": "asdf", "punchline": "asdf"}
     validate_schema(o, json_joke_schema)
+    o = {"setup": "asdf", "punchline": "asdf", "rating": "1"}
+    with pytest.raises(Exception):
+        validate_schema(o, json_joke_schema)
+
+
+json_triangle_schema = """{
+  "type": "object",
+  "properties": {
+    "a": {
+      "description": "length of side a",
+      "title": "A",
+      "type": "integer"
+    },
+    "b": {
+      "description": "length of side b",
+      "title": "B",
+      "type": "integer"
+    },
+    "c": {
+      "description": "length of side c",
+      "title": "C",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "a",
+    "b",
+    "c"
+  ]
+}
+"""
+
+
+def test_triangle_schema():
+    o = ExampleModel(x_schema=json_joke_schema)
+    parsed_schema = schema_from_json_str(o.x_schema)
+    assert parsed_schema is not None
+
+    o = ExampleModel(x_schema=json_triangle_schema)
+    schema = schema_from_json_str(o.x_schema)
+
+    assert schema is not None
+    assert schema["properties"]["a"]["type"] == "integer"
+    assert schema["properties"]["b"]["type"] == "integer"
+    assert schema["properties"]["c"]["type"] == "integer"
+    assert schema["required"] == ["a", "b", "c"]
+    validate_schema({"a": 1, "b": 2, "c": 3}, json_triangle_schema)
+    with pytest.raises(Exception):
+        validate_schema({"a": 1, "b": 2, "c": "3"}, json_triangle_schema)

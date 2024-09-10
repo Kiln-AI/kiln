@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Dict
 
+import jsonschema
+import jsonschema.exceptions
 import kiln_ai.datamodel.models as models
 import pytest
 from kiln_ai.adapters.base_adapter import BaseAdapter
@@ -9,7 +11,7 @@ from kiln_ai.adapters.ml_model_list import (
     built_in_models,
     ollama_online,
 )
-from kiln_ai.datamodel.test_models import json_joke_schema
+from kiln_ai.datamodel.test_json_schema import json_joke_schema, json_triangle_schema
 
 
 @pytest.mark.paid
@@ -143,3 +145,57 @@ async def run_structured_output_test(tmp_path: Path, model_name: str, provider: 
             rating = int(rating)
         assert rating >= 0
         assert rating <= 10
+
+
+def build_structured_input_test_task(tmp_path: Path):
+    project = models.Project(name="test", path=tmp_path / "test.kiln")
+    project.save_to_file()
+    task = models.Task(
+        parent=project,
+        name="test task",
+        instruction="You are an assistant which classifies a triangle given the lengths of its sides. If all sides are of equal length, the triangle is equilateral. If two sides are equal, the triangle is isosceles. Otherwise, it is scalene.\n\nAt the end of your response return the result in double square brackets. It should be plain text. It should be exactly one of the three following strings: '[[equilateral]]', or '[[isosceles]]', or '[[scalene]]'.",
+    )
+    task.input_json_schema = json_triangle_schema
+    schema = task.input_schema()
+    assert schema is not None
+    assert schema["properties"]["a"]["type"] == "integer"
+    assert schema["properties"]["b"]["type"] == "integer"
+    assert schema["properties"]["c"]["type"] == "integer"
+    assert schema["required"] == ["a", "b", "c"]
+    task.save_to_file()
+    assert task.name == "test task"
+    assert len(task.requirements()) == 0
+    return task
+
+
+async def run_structured_input_test(tmp_path: Path, model_name: str, provider: str):
+    task = build_structured_input_test_task(tmp_path)
+    a = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
+    with pytest.raises(ValueError):
+        # not structured input in dictionary
+        await a.invoke("a=1, b=2, c=3")
+    with pytest.raises(jsonschema.exceptions.ValidationError):
+        # invalid structured input
+        await a.invoke({"a": 1, "b": 2, "d": 3})
+
+    response = await a.invoke({"a": 2, "b": 2, "c": 2})
+    assert response is not None
+    assert isinstance(response, str)
+    assert "[[equilateral]]" in response
+
+
+@pytest.mark.paid
+async def test_structured_input_gpt_4o_mini(tmp_path):
+    await run_structured_input_test(tmp_path, "llama_3_1_8b", "groq")
+
+
+@pytest.mark.paid
+@pytest.mark.ollama
+async def test_all_built_in_models_structured_input(tmp_path):
+    for model in built_in_models:
+        for provider in model.providers:
+            try:
+                print(f"Running {model.name} {provider.name}")
+                await run_structured_input_test(tmp_path, model.name, provider.name)
+            except Exception as e:
+                raise RuntimeError(f"Error running {model.name} {provider}") from e

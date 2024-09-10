@@ -20,6 +20,3 @@ class SimplePromptBuilder(BasePromptBuilder):
                 base_prompt += f"\n\n{adapter_instructions}"
 
         return base_prompt
-
-    def build_user_message(self, input: str) -> str:
-        return f"The input is:\n{input}"
