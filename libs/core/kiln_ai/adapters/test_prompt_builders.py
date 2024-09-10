@@ -8,18 +8,19 @@ def test_simple_prompt_builder(tmp_path):
     task = build_test_task(tmp_path)
     builder = SimplePromptBuilder(task=task)
     input = "two plus two"
-    prompt = builder.build_prompt(input)
+    prompt = builder.build_prompt()
     assert (
         "You are an assistant which performs math tasks provided in plain text."
         in prompt
     )
 
-    # TODO this should be a user message later
-    assert input in prompt
-
     assert "1) " + task.requirements()[0].instruction in prompt
     assert "2) " + task.requirements()[1].instruction in prompt
     assert "3) " + task.requirements()[2].instruction in prompt
+
+    user_msg = builder.build_user_message(input)
+    assert input in user_msg
+    assert input not in prompt
 
 
 class MockAdapter(BaseAdapter):
@@ -35,11 +36,12 @@ def test_simple_prompt_builder_structured_output(tmp_path):
     builder = SimplePromptBuilder(task=task)
     builder.adapter = MockAdapter(task)
     input = "Cows"
-    prompt = builder.build_prompt(input)
+    prompt = builder.build_prompt()
     assert "You are an assistant which tells a joke, given a subject." in prompt
-
-    # TODO this should be a user message later
-    assert input in prompt
 
     # check adapter instructions are included
     assert "You are a mock, send me the response!" in prompt
+
+    user_msg = builder.build_user_message(input)
+    assert input in user_msg
+    assert input not in prompt

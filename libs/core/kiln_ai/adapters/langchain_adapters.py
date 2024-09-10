@@ -3,6 +3,7 @@ from typing import Dict
 import kiln_ai.datamodel.models as models
 from kiln_ai.adapters.prompt_builders import SimplePromptBuilder
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.messages.base import BaseMessage
 
 from .base_adapter import BaseAdapter, BasePromptBuilder
@@ -58,9 +59,13 @@ class LangChainPromptAdapter(BaseAdapter):
         return None
 
     async def _run(self, input: str) -> Dict | str:
-        # TODO cleanup
-        prompt = self.prompt_builder.build_prompt(input)
-        response = self.model.invoke(prompt)
+        prompt = self.prompt_builder.build_prompt()
+        user_msg = self.prompt_builder.build_user_message(input)
+        messages = [
+            SystemMessage(content=prompt),
+            HumanMessage(content=user_msg),
+        ]
+        response = self.model.invoke(messages)
         if self._is_structured:
             if (
                 not isinstance(response, dict)

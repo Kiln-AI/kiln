@@ -24,7 +24,7 @@ async def test_structured_output_openrouter(tmp_path):
 
 @pytest.mark.paid
 async def test_structured_output_bedrock(tmp_path):
-    await run_structured_output_test(tmp_path, "llama_3_1_8b", "amazon_bedrock")
+    await run_structured_output_test(tmp_path, "llama_3_1_70b", "amazon_bedrock")
 
 
 @pytest.mark.ollama

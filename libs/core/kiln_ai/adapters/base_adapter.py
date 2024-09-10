@@ -42,5 +42,9 @@ class BasePromptBuilder(metaclass=ABCMeta):
         self.adapter = adapter
 
     @abstractmethod
-    def build_prompt(self, input: str) -> str:
+    def build_prompt(self) -> str:
+        pass
+
+    @abstractmethod
+    def build_user_message(self, input: str) -> str:
         pass

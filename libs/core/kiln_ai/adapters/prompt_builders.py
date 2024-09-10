@@ -2,7 +2,7 @@ from kiln_ai.adapters.base_adapter import BasePromptBuilder
 
 
 class SimplePromptBuilder(BasePromptBuilder):
-    def build_prompt(self, input: str) -> str:
+    def build_prompt(self) -> str:
         base_prompt = self.task.instruction
 
         # TODO: this is just a quick version. Formatting and best practices TBD
@@ -19,6 +19,7 @@ class SimplePromptBuilder(BasePromptBuilder):
             if adapter_instructions is not None:
                 base_prompt += f"\n\n{adapter_instructions}\n\n"
 
-        # TODO: should be another message, not just appended to prompt
-        base_prompt += f"\n\nThe input is:\n{input}"
         return base_prompt
+
+    def build_user_message(self, input: str) -> str:
+        return f"The input is:\n{input}"
