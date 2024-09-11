@@ -4,14 +4,15 @@ import uuid
 from abc import ABCMeta, abstractmethod
 from builtins import classmethod
 from pathlib import Path
-from typing import Optional, Type, TypeVar
+from typing import Optional, Self, Type, TypeVar
 
-from pydantic import BaseModel, Field, computed_field, field_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 # ID is a 10 digit hex string
 ID_FIELD = Field(default_factory=lambda: uuid.uuid4().hex[:10].upper())
 ID_TYPE = str
 T = TypeVar("T", bound="KilnBaseModel")
+PT = TypeVar("PT", bound="KilnParentedModel")
 
 
 def snake_case(s: str) -> str:
@@ -49,6 +50,8 @@ class KilnBaseModel(BaseModel):
             # Once for model_type, once for model. Can't call model_validate with parsed json because enum types break; they get strings instead of enums.
             parsed_json = json.loads(file_data)
             m = cls.model_validate_json(file_data, strict=True)
+            if not isinstance(m, cls):
+                raise ValueError(f"Loaded model is not of type {cls.__name__}")
             file_data = None
         m.path = path
         if m.v > m.max_schema_version():
@@ -91,7 +94,38 @@ class KilnBaseModel(BaseModel):
 
 class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
     id: ID_TYPE = ID_FIELD
-    parent: Optional[KilnBaseModel] = Field(default=None, exclude=True)
+    _parent: KilnBaseModel | None = None
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if "parent" in data:
+            self.parent = data["parent"]
+
+    @property
+    def parent(self) -> Optional[KilnBaseModel]:
+        if self._parent is not None:
+            return self._parent
+        # lazy load parent from path
+        if self.path is None:
+            return None
+        # TODO: this only works with base_filename. If we every support custom names, we need to change this.
+        parent_path = (
+            self.path.parent.parent.parent / self.parent_type().base_filename()
+        )
+        if parent_path is None:
+            return None
+        self._parent = self.parent_type().load_from_file(parent_path)
+        return self._parent
+
+    @parent.setter
+    def parent(self, value: Optional[KilnBaseModel]):
+        if value is not None:
+            expected_parent_type = self.parent_type()
+            if not isinstance(value, expected_parent_type):
+                raise ValueError(
+                    f"Parent must be of type {expected_parent_type}, but was {type(value)}"
+                )
+        self._parent = value
 
     @classmethod
     @abstractmethod
@@ -103,16 +137,15 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
     def parent_type(cls) -> Type[KilnBaseModel]:
         pass
 
-    @field_validator("parent")
-    @classmethod
-    def check_parent_type(cls, v: Optional[KilnBaseModel]) -> Optional[KilnBaseModel]:
-        if v is not None:
-            expected_parent_type = cls.parent_type()
-            if not isinstance(v, expected_parent_type):
+    @model_validator(mode="after")
+    def check_parent_type(self) -> Self:
+        if self._parent is not None:
+            expected_parent_type = self.__class__.parent_type()
+            if not isinstance(self._parent, expected_parent_type):
                 raise ValueError(
-                    f"Parent must be of type {expected_parent_type}, but was {type(v)}"
+                    f"Parent must be of type {expected_parent_type}, but was {type(self._parent)}"
                 )
-        return v
+        return self
 
     def build_child_dirname(self) -> Path:
         # Default implementation for readable folder names.
@@ -146,7 +179,9 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         )
 
     @classmethod
-    def all_children_of_parent_path(cls: Type[T], parent_path: Path | None) -> list[T]:
+    def all_children_of_parent_path(
+        cls: Type[PT], parent_path: Path | None
+    ) -> list[PT]:
         if parent_path is None:
             raise ValueError("Parent path must be set to load children")
         # Determine the parent folder
@@ -154,6 +189,10 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
             parent_folder = parent_path.parent
         else:
             parent_folder = parent_path
+
+        parent = cls.parent_type().load_from_file(parent_path)
+        if parent is None:
+            raise ValueError("Parent must be set to load children")
 
         # Ignore type error: this is abstract base class, but children must implement relationship_name
         relationship_folder = parent_folder / Path(cls.relationship_name())  # type: ignore

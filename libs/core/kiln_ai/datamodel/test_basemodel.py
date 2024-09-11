@@ -94,7 +94,7 @@ def test_parented_model_path_gen(tmp_path):
 
 
 class BaseParentExample(KilnBaseModel):
-    pass
+    name: Optional[str] = None
 
 
 # Instance of the parented model for abstract methods, with default name builder
@@ -234,3 +234,31 @@ def test_load_from_folder(test_base_parented_file):
 
     loaded_child1 = DefaultParentedModel.load_from_folder(child1.path.parent)
     assert loaded_child1.name == "Child1"
+
+
+def test_lazy_load_parent(tmp_path):
+    # Create a parent
+    parent = BaseParentExample(
+        name="Parent", path=(tmp_path / BaseParentExample.base_filename())
+    )
+    parent.save_to_file()
+    print("PARENT", parent.path)
+
+    # Create a child
+    child = DefaultParentedModel(parent=parent, name="Child")
+    child.save_to_file()
+
+    # Load the child by path
+    loaded_child = DefaultParentedModel.load_from_file(child.path)
+
+    # Access the parent to trigger lazy loading
+    loaded_parent = loaded_child.parent
+
+    # Verify that the parent is now loaded and correct
+    assert loaded_parent is not None
+    assert loaded_parent.name == "Parent"
+    assert loaded_parent.path == parent.path
+
+    # Verify that the _parent attribute is now set
+    assert hasattr(loaded_child, "_parent")
+    assert loaded_child._parent is loaded_parent

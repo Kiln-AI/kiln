@@ -68,15 +68,12 @@ def test_example_output_model_validation():
         output="Test output",
         source=ExampleOutputSource.human,
         source_properties={"creator": "Jane Doe"},
-        requirement_ratings={
-            "req1": ReasonRating(rating=4, reason="Good performance"),
-            "req2": ReasonRating(rating=3, reason="Meets expectations"),
-        },
+        requirement_ratings={},
     )
     assert valid_output.output == "Test output"
     assert valid_output.source == ExampleOutputSource.human
     assert valid_output.source_properties == {"creator": "Jane Doe"}
-    assert len(valid_output.requirement_ratings) == 2
+    assert len(valid_output.requirement_ratings) == 0
 
     # Invalid source
     with pytest.raises(ValidationError):
@@ -133,9 +130,11 @@ def test_example_output_relationship():
 
 
 def test_structured_output_workflow(tmp_path):
-    tmp_project_dir = tmp_path / "test_structured_output_examples"
+    tmp_project_file = (
+        tmp_path / "test_structured_output_examples" / Project.base_filename()
+    )
     # Create project
-    project = Project(name="Test Project", path=str(tmp_path / tmp_project_dir))
+    project = Project(name="Test Project", path=str(tmp_project_file))
     project.save_to_file()
 
     # Create task with requirements
@@ -198,7 +197,7 @@ def test_structured_output_workflow(tmp_path):
     outputs[0].save_to_file()
 
     # Load from disk and validate
-    loaded_project = Project.load_from_file(tmp_project_dir)
+    loaded_project = Project.load_from_file(tmp_project_file)
     loaded_task = loaded_project.tasks()[0]
 
     assert loaded_task.name == "Structured Output Task"
@@ -207,8 +206,9 @@ def test_structured_output_workflow(tmp_path):
 
     loaded_examples = loaded_task.examples()
     for example in loaded_examples:
-        assert len(example.outputs()) == 1
-        output = example.outputs()[0]
+        outputs = example.outputs()
+        assert len(outputs) == 1
+        output = outputs[0]
         assert output.rating is not None
         assert len(output.requirement_ratings) == 2
 
@@ -226,3 +226,46 @@ def test_structured_output_workflow(tmp_path):
         example_with_fixed_output.outputs()[0].fixed_output
         == '{"name": "John Doe", "age": 31}'
     )
+
+
+def test_example_output_requirement_rating_keys(tmp_path):
+    # Create a project, task, and example hierarchy
+    project = Project(name="Test Project", path=(tmp_path / "test_project"))
+    project.save_to_file()
+    task = Task(name="Test Task", parent=project)
+    task.save_to_file()
+    example = Example(input="Test input", source="human", parent=task)
+    example.save_to_file()
+
+    # Create task requirements
+    req1 = TaskRequirement(name="Requirement 1", parent=task)
+    req1.save_to_file()
+    req2 = TaskRequirement(name="Requirement 2", parent=task)
+    req2.save_to_file()
+    # Valid case: all requirement IDs are valid
+    valid_output = ExampleOutput(
+        output="Test output",
+        source="human",
+        parent=example,
+        requirement_ratings={
+            req1.id: {"rating": 5, "reason": "Excellent"},
+            req2.id: {"rating": 4, "reason": "Good"},
+        },
+    )
+    valid_output.save_to_file()
+    assert valid_output.requirement_ratings is not None
+
+    # Invalid case: unknown requirement ID
+    with pytest.raises(
+        ValueError,
+        match="Requirement ID .* is not a valid requirement ID for this task",
+    ):
+        output = ExampleOutput(
+            output="Test output",
+            source="human",
+            parent=example,
+            requirement_ratings={
+                "unknown_id": {"rating": 4, "reason": "Good"},
+            },
+        )
+        output.save_to_file()

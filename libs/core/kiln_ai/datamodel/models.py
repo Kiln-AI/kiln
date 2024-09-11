@@ -1,8 +1,8 @@
 from enum import Enum, IntEnum
-from typing import Dict
+from typing import Dict, Self
 
 from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel
 
@@ -88,7 +88,41 @@ class ExampleOutput(KilnParentedModel):
         return Example
 
     # TODO validators for output and fixed_output: validate they follow the tas
-    # TODO validator that requirement_rating keys are requirement IDs
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.validate_requirement_rating_keys_manual()
+
+    @model_validator(mode="after")
+    def validate_requirement_rating_keys(self) -> Self:
+        return self.validate_requirement_rating_keys_manual()
+
+    def validate_requirement_rating_keys_manual(self) -> Self:
+        if len(self.requirement_ratings) == 0:
+            return self
+        example = self.parent
+        if example is None:
+            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
+            return self
+        if not isinstance(example, Example):
+            raise ValueError("ExampleOutput must have a valid parent Example")
+
+        task = example.parent
+        if task is None:
+            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
+            return self
+        if not isinstance(task, Task):
+            raise ValueError(
+                "ExampleOutput's parent Example must have a valid parent Task"
+            )
+
+        valid_requirement_ids = {req.id for req in task.requirements()}
+        for key in self.requirement_ratings.keys():
+            if key not in valid_requirement_ids:
+                raise ValueError(
+                    f"Requirement ID '{key}' is not a valid requirement ID for this task"
+                )
+        return self
 
 
 class ExampleSource(str, Enum):
