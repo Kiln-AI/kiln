@@ -1,3 +1,4 @@
+import datetime
 import json
 from pathlib import Path
 from typing import Optional
@@ -70,6 +71,14 @@ def test_max_schema_version(test_newer_file):
 def test_type_name():
     model = KilnBaseModel()
     assert model.model_type == "kiln_base_model"
+
+
+def test_created_at():
+    model = KilnBaseModel()
+    assert model.created_at is not None
+    # Check it's within 2 seconds of now
+    now = datetime.datetime.now()
+    assert abs((model.created_at - now).total_seconds()) < 2
 
 
 # Instance of the parented model for abstract methods

@@ -3,6 +3,7 @@ import re
 import uuid
 from abc import ABCMeta, abstractmethod
 from builtins import classmethod
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Self, Type, TypeVar
 
@@ -30,6 +31,7 @@ class KilnBaseModel(BaseModel):
 
     v: int = 1  # schema_version
     path: Optional[Path] = Field(default=None, exclude=True)
+    created_at: datetime = Field(default_factory=datetime.now)
 
     @computed_field()
     def model_type(self) -> str:
