@@ -15,10 +15,12 @@ from kiln_ai.datamodel.models import (
 from pydantic import ValidationError
 
 
-def test_example_model_validation():
+def test_example_model_validation(tmp_path):
     # Valid example
+    task = Task(name="Test Task", path=tmp_path / Task.base_filename())
+    task.save_to_file()
     valid_example = Example(
-        path="/test/path",
+        parent=task,
         input="Test input",
         source=ExampleSource.human,
         source_properties={"creator": "John Doe"},
@@ -30,7 +32,7 @@ def test_example_model_validation():
     # Invalid source
     with pytest.raises(ValidationError):
         Example(
-            path="/test/path",
+            parent=task,
             input="Test input",
             source="invalid_source",
             source_properties={},
@@ -38,21 +40,23 @@ def test_example_model_validation():
 
     # Missing required field
     with pytest.raises(ValidationError):
-        Example(path="/test/path", source=ExampleSource.human, source_properties={})
+        Example(parent=task, source=ExampleSource.human, source_properties={})
 
     # Invalid source_properties type
     with pytest.raises(ValidationError):
         Example(
-            path="/test/path",
+            parent=task,
             input="Test input",
             source=ExampleSource.human,
             source_properties="invalid",
         )
 
 
-def test_example_relationship():
+def test_example_relationship(tmp_path):
+    task = Task(name="Test Task", path=tmp_path / Task.base_filename())
+    task.save_to_file()
     example = Example(
-        path="/test/path",
+        parent=task,
         input="Test input",
         source=ExampleSource.human,
         source_properties={},
@@ -303,3 +307,43 @@ def test_example_output_schema_validation(tmp_path):
             parent=example,
         )
         output.save_to_file()
+
+
+def test_example_input_schema_validation(tmp_path):
+    # Create a project and task hierarchy
+    project = Project(name="Test Project", path=(tmp_path / "test_project"))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        parent=project,
+        input_json_schema=json.dumps(
+            {
+                "type": "object",
+                "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+                "required": ["name", "age"],
+            }
+        ),
+    )
+    task.save_to_file()
+
+    # Create an example with a valid input schema
+    valid_example = Example(
+        input='{"name": "John Doe", "age": 30}',
+        source=ExampleSource.human,
+        parent=task,
+    )
+    valid_example.save_to_file()
+
+    # Changing to invalid input
+    with pytest.raises(ValueError):
+        valid_example.input = '{"name": "John Doe", "age": "thirty"}'
+        valid_example.save_to_file()
+
+    # Invalid case: input does not match task input schema
+    with pytest.raises(ValueError):
+        example = Example(
+            input='{"name": "John Doe", "age": "thirty"}',
+            source=ExampleSource.human,
+            parent=task,
+        )
+        example.save_to_file()

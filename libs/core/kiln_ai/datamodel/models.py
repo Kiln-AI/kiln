@@ -186,6 +186,27 @@ class Example(KilnParentedModel):
     def outputs(self) -> list[ExampleOutput]:
         return ExampleOutput.all_children_of_parent_path(self.path)
 
+    @model_validator(mode="after")
+    def validate_input_format(self) -> Self:
+        task = self.parent
+        if task is None:
+            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
+            return self
+        if not isinstance(task, Task):
+            raise ValueError(
+                "ExampleOutput's parent Example must have a valid parent Task"
+            )
+
+        # validate output
+        if task.input_json_schema is not None:
+            try:
+                validate_schema(json.loads(self.input), task.input_json_schema)
+            except json.JSONDecodeError:
+                raise ValueError("Input is not a valid JSON object")
+            except jsonschema.exceptions.ValidationError as e:
+                raise ValueError(f"Input does not match task input schema: {e}")
+        return self
+
 
 class TaskRequirement(KilnParentedModel):
     name: str = NAME_FIELD

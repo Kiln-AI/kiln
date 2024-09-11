@@ -10,7 +10,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    ValidationError,
     computed_field,
     model_validator,
 )
