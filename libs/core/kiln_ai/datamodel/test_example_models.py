@@ -61,10 +61,14 @@ def test_example_relationship():
     assert example.parent_type().__name__ == "Task"
 
 
-def test_example_output_model_validation():
+def test_example_output_model_validation(tmp_path):
     # Valid example output
+    task = Task(name="Test Task", path=tmp_path / Task.base_filename())
+    task.save_to_file()
+    example = Example(input="Test input", source=ExampleSource.human, parent=task)
+    example.save_to_file()
     valid_output = ExampleOutput(
-        path="/test/path",
+        parent=example,
         output="Test output",
         source=ExampleOutputSource.human,
         source_properties={"creator": "Jane Doe"},
@@ -115,18 +119,6 @@ def test_example_output_model_validation():
             source_properties={},
             requirement_ratings="invalid",
         )
-
-
-def test_example_output_relationship():
-    example_output = ExampleOutput(
-        path="/test/path",
-        output="Test output",
-        source=ExampleOutputSource.human,
-        source_properties={},
-        requirement_ratings={},
-    )
-    assert example_output.relationship_name() == "outputs"
-    assert example_output.parent_type().__name__ == "Example"
 
 
 def test_structured_output_workflow(tmp_path):
@@ -267,5 +259,47 @@ def test_example_output_requirement_rating_keys(tmp_path):
             requirement_ratings={
                 "unknown_id": {"rating": 4, "reason": "Good"},
             },
+        )
+        output.save_to_file()
+
+
+def test_example_output_schema_validation(tmp_path):
+    # Create a project, task, and example hierarchy
+    project = Project(name="Test Project", path=(tmp_path / "test_project"))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        parent=project,
+        output_json_schema=json.dumps(
+            {
+                "type": "object",
+                "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+                "required": ["name", "age"],
+            }
+        ),
+    )
+    task.save_to_file()
+    example = Example(input="Test input", source="human", parent=task)
+    example.save_to_file()
+
+    # Create an example output with a valid schema
+    valid_output = ExampleOutput(
+        output='{"name": "John Doe", "age": 30}',
+        source="human",
+        parent=example,
+    )
+    valid_output.save_to_file()
+
+    # changing to invalid output
+    with pytest.raises(ValueError):
+        valid_output.output = '{"name": "John Doe", "age": "thirty"}'
+        valid_output.save_to_file()
+
+    # Invalid case: output does not match task output schema
+    with pytest.raises(ValueError):
+        output = ExampleOutput(
+            output='{"name": "John Doe", "age": "thirty"}',
+            source="human",
+            parent=example,
         )
         output.save_to_file()

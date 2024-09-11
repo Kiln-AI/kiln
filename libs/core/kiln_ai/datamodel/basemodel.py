@@ -6,7 +6,14 @@ from builtins import classmethod
 from pathlib import Path
 from typing import Optional, Self, Type, TypeVar
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    computed_field,
+    model_validator,
+)
 
 # ID is a 10 digit hex string
 ID_FIELD = Field(default_factory=lambda: uuid.uuid4().hex[:10].upper())
@@ -20,6 +27,8 @@ def snake_case(s: str) -> str:
 
 
 class KilnBaseModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+
     v: int = 1  # schema_version
     path: Optional[Path] = Field(default=None, exclude=True)
 

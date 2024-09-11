@@ -1,10 +1,19 @@
-from enum import Enum, IntEnum
-from typing import Dict, Self
+from __future__ import annotations
 
+import json
+from enum import Enum, IntEnum
+from typing import TYPE_CHECKING, Dict, Self
+
+import jsonschema
+import jsonschema.exceptions
 from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
 from pydantic import Field, model_validator
 
 from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel
+from .json_schema import validate_schema
+
+if TYPE_CHECKING:
+    from .models import Task
 
 # Conventions:
 # 1) Names are filename safe as they may be used as file names. They are informational and not to be used in prompts/training/validation.
@@ -89,32 +98,47 @@ class ExampleOutput(KilnParentedModel):
 
     # TODO validators for output and fixed_output: validate they follow the tas
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.validate_requirement_rating_keys_manual()
-
     @model_validator(mode="after")
-    def validate_requirement_rating_keys(self) -> Self:
-        return self.validate_requirement_rating_keys_manual()
-
-    def validate_requirement_rating_keys_manual(self) -> Self:
-        if len(self.requirement_ratings) == 0:
-            return self
-        example = self.parent
-        if example is None:
+    def validate_output_format(self) -> Self:
+        task = self.task_for_validation()
+        if task is None:
             # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
             return self
+
+        # validate output
+        if task.output_json_schema is not None:
+            try:
+                validate_schema(json.loads(self.output), task.output_json_schema)
+            except json.JSONDecodeError:
+                raise ValueError("Output is not a valid JSON object")
+            except jsonschema.exceptions.ValidationError as e:
+                raise ValueError(f"Output does not match task output schema: {e}")
+        return self
+
+    def task_for_validation(self) -> Task | None:
+        example = self.parent
+        if example is None:
+            return None
         if not isinstance(example, Example):
             raise ValueError("ExampleOutput must have a valid parent Example")
 
         task = example.parent
         if task is None:
-            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
-            return self
+            return None
         if not isinstance(task, Task):
             raise ValueError(
                 "ExampleOutput's parent Example must have a valid parent Task"
             )
+        return task
+
+    @model_validator(mode="after")
+    def validate_requirement_rating_keys(self) -> Self:
+        if len(self.requirement_ratings) == 0:
+            return self
+        task = self.task_for_validation()
+        if task is None:
+            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
+            return self
 
         valid_requirement_ids = {req.id for req in task.requirements()}
         for key in self.requirement_ratings.keys():
