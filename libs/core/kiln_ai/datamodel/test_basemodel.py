@@ -73,12 +73,16 @@ def test_type_name():
     assert model.model_type == "kiln_base_model"
 
 
-def test_created_at():
+def test_created_atby():
     model = KilnBaseModel()
     assert model.created_at is not None
     # Check it's within 2 seconds of now
     now = datetime.datetime.now()
     assert abs((model.created_at - now).total_seconds()) < 2
+
+    # Created by
+    assert len(model.created_by) > 0
+    # assert model.created_by == "scosman"
 
 
 # Instance of the parented model for abstract methods

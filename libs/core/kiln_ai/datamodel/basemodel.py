@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Self, Type, TypeVar
 
+from kiln_ai.utils.config import Config
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -32,6 +33,7 @@ class KilnBaseModel(BaseModel):
     v: int = 1  # schema_version
     path: Optional[Path] = Field(default=None, exclude=True)
     created_at: datetime = Field(default_factory=datetime.now)
+    created_by: str = Field(default_factory=lambda: Config.shared().user_id)
 
     @computed_field()
     def model_type(self) -> str:
