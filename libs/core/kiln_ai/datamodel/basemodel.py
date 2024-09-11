@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, computed_field, field_validator
 
 # ID is a 10 digit hex string
 ID_FIELD = Field(default_factory=lambda: uuid.uuid4().hex[:10].upper())
+ID_TYPE = str
 T = TypeVar("T", bound="KilnBaseModel")
 
 
@@ -89,7 +90,7 @@ class KilnBaseModel(BaseModel):
 
 
 class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
-    id: str = ID_FIELD
+    id: ID_TYPE = ID_FIELD
     parent: Optional[KilnBaseModel] = Field(default=None, exclude=True)
 
     @classmethod
