@@ -1,6 +1,6 @@
 {
-  "name": "cmsassstarter",
-  "version": "0.0.1",
+  "name": "kiln-web-ui",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "dev": "vite dev",

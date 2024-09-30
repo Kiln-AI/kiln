@@ -2,77 +2,58 @@
   import "../../app.css"
 </script>
 
-<div class="navbar bg-base-100 container mx-auto">
-  <div class="flex-1">
-    <a class="btn btn-ghost normal-case text-xl" href="/">Kiln Studio</a>
-  </div>
-  <div class="flex-none">
-    <ul class="menu menu-horizontal px-1 hidden sm:flex font-bold text-lg">
-      <li class="md:mx-2"><a href="/">Home</a></li>
-      <li class="md:mx-2"><a href="/">Also Home</a></li>
-    </ul>
-    <div class="dropdown dropdown-end sm:hidden">
-      <!-- svelte-ignore a11y-label-has-associated-control -->
-      <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-      <label tabindex="0" class="btn btn-ghost btn-circle">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          ><path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 6h16M4 12h16M4 18h7"
-          /></svg
-        >
-      </label>
-      <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-      <ul
-        tabindex="0"
-        class="menu menu-lg dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 font-bold"
-      >
-        <li><a href="/">Home</a></li>
-        <li><a href="/">Also Home</a></li>
-      </ul>
+<div class="drawer lg:drawer-open">
+  <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+  <div class="drawer-content flex flex-col lg:mx-4 min-h-screen">
+    <div class="flex-none h-12">
+      <div class="flex flex-row h-full items-center">
+        <label for="main-drawer" class="drawer-button lg:hidden">
+          <svg
+            class="size-6 mx-3"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+          >
+            <path
+              fill="currentColor"
+              fill-rule="evenodd"
+              d="M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"
+            />
+          </svg>
+        </label>
+        <div class="flex-grow"></div>
+      </div>
+    </div>
+
+    <div class="flex-grow rounded-t-lg bg-base-100 shadow-lg p-4">
+      <slot />
     </div>
   </div>
-</div>
+  <div class="drawer-side">
+    <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"
+    ></label>
 
-<div class="">
-  <slot />
-</div>
-
-<!-- Spacer grows so the footer can be at bottom on short pages -->
-<div class="flex-grow"></div>
-<div class="">
-  <div class="border-t max-w-[1000px] mx-auto"></div>
-  <footer
-    class="footer p-10 gap-x-48 lg:gap-x-64 xl:gap-x-96 place-content-center text-base"
-  >
-    <nav>
-      <span class="footer-title opacity-80">Explore</span>
-      <a class="link link-hover mb-1" href="/">Home</a>
-      <a class="link link-hover mb-1" href="/">Home Again</a>
-      <a class="link link-hover my-1" href="https://github.com/kiln-ai"
-        >Github</a
-      >
-    </nav>
-    <aside>
-      <span class="footer-title opacity-80">Sponsor</span>
-      <a
-        class="link link-hover max-w-[260px]"
-        href="https://criticalmoments.io"
-      >
-        <img
-          alt="Critical Moments Logo"
-          src="/images/cm_logo.svg"
-          class="w-[180px] mb-3 aspect-[420/154]"
-        />
-        Make mobile apps? Improve conversion rates and ratings with Critical Moments.
-      </a>
-    </aside>
-  </footer>
+    <ul
+      class="menu bg-base-200 text-base-content min-h-full w-72 lg:w-60 p-4 pt-1 lg:pt-4"
+    >
+      <li class="hover:bg-transparent flex flex-row justify-end">
+        <label
+          for="main-drawer"
+          class="lg:hidden ml-3 text-2xl cursor-pointer ml-4 pt-[5px]"
+        >
+          &#x2715;
+        </label>
+      </li>
+      <li class="mb-4">
+        <a href="https://kiln-ai.com" target="_blank">
+          <div class="flex flex-row items-center mx-[-5px] p-0">
+            <img src="/logo.svg" alt="logo" class="w-8 h-8" />
+            <div class="text-lg font-bold ml-1">Kiln AI</div>
+          </div>
+        </a>
+      </li>
+      <li><a href="/?1">Sidebar Item 1</a></li>
+      <li><a href="/?2">Sidebar Item 2</a></li>
+    </ul>
+  </div>
 </div>

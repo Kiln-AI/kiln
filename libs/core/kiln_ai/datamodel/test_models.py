@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from kiln_ai.datamodel.models import Priority, Project, Task, TaskDeterminism
+from kiln_ai.datamodel import Priority, Project, Task, TaskDeterminism
 from kiln_ai.datamodel.test_json_schema import json_joke_schema
 from pydantic import ValidationError
 

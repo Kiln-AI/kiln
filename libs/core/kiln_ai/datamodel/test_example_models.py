@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from kiln_ai.datamodel.models import (
+from kiln_ai.datamodel import (
     Example,
     ExampleOutput,
     ExampleOutputSource,

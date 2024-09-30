@@ -1,6 +1,6 @@
 from typing import Dict
 
-import kiln_ai.datamodel.models as models
+import kiln_ai.datamodel as datamodel
 from kiln_ai.adapters.prompt_builders import SimplePromptBuilder
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -13,7 +13,7 @@ from .ml_model_list import langchain_model_from
 class LangChainPromptAdapter(BaseAdapter):
     def __init__(
         self,
-        kiln_task: models.Task,
+        kiln_task: datamodel.Task,
         custom_model: BaseChatModel | None = None,
         model_name: str | None = None,
         provider: str | None = None,
