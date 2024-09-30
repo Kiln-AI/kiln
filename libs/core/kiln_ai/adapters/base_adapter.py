@@ -16,9 +16,7 @@ from kiln_ai.utils.config import Config
 class BaseAdapter(metaclass=ABCMeta):
     def __init__(self, kiln_task: Task):
         self.kiln_task = kiln_task
-
         self.output_schema = self.kiln_task.output_json_schema
-
         self.input_schema = self.kiln_task.input_json_schema
 
     async def invoke(
@@ -50,7 +48,7 @@ class BaseAdapter(metaclass=ABCMeta):
 
         return result
 
-    def has_strctured_output(self) -> bool:
+    def has_structured_output(self) -> bool:
         return self.output_schema is not None
 
     @abstractmethod

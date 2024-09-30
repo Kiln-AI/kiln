@@ -28,7 +28,7 @@ class LangChainPromptAdapter(BaseAdapter):
             raise ValueError(
                 "model_name and provider must be provided if custom_model is not provided"
             )
-        if self.has_strctured_output():
+        if self.has_structured_output():
             if not hasattr(self.model, "with_structured_output") or not callable(
                 getattr(self.model, "with_structured_output")
             ):
@@ -54,7 +54,7 @@ class LangChainPromptAdapter(BaseAdapter):
 
     def adapter_specific_instructions(self) -> str | None:
         # TODO: would be better to explicitly use bind_tools:tool_choice="task_response" here
-        if self.has_strctured_output():
+        if self.has_structured_output():
             return "Always respond with a tool call. Never respond with a human readable message."
         return None
 
@@ -66,7 +66,7 @@ class LangChainPromptAdapter(BaseAdapter):
             HumanMessage(content=user_msg),
         ]
         response = self.model.invoke(messages)
-        if self.has_strctured_output():
+        if self.has_structured_output():
             if (
                 not isinstance(response, dict)
                 or "parsed" not in response
