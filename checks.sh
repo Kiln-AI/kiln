@@ -22,7 +22,7 @@ echo "No misspellings found"
 
 
 echo "${headerStart}Web UI: format, lint, check${headerEnd}"
-changed_files=$(git diff --name-only)
+changed_files=$(git diff --name-only --staged)
 if [[ "$changed_files" == *"app/web_ui/"* ]]; then
     echo "${headerStart}Checking Web UI: format, lint, check${headerEnd}"
     cd app/web_ui

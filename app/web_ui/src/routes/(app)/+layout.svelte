@@ -38,8 +38,8 @@
       <div class="text-lg font-bold ml-1">Kiln AI</div>
     </div>
     <ul class="menu bg-base-200 text-base-content min-h-full w-60 p-4">
-      <li><a>Sidebar Item 1</a></li>
-      <li><a>Sidebar Item 2</a></li>
+      <li><a href="/">Sidebar Item 1</a></li>
+      <li><a href="/">Sidebar Item 2</a></li>
     </ul>
   </div>
 </div>
