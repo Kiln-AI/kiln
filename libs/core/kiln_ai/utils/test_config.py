@@ -1,8 +1,9 @@
 import os
+import pwd
 
 import pytest
 
-from libs.core.kiln_ai.utils.config import Config, ConfigProperty
+from libs.core.kiln_ai.utils.config import Config, ConfigProperty, _get_user_id
 
 
 def TestConfig():
@@ -107,7 +108,42 @@ def test_default_lambda(reset_config):
     assert config.lambda_property == "lambda_value"
 
 
+def test_get_user_id_none(monkeypatch):
+    def mock_getpwuid(_):
+        class MockPwnam:
+            pw_name = None
+
+        return MockPwnam()
+
+    monkeypatch.setattr(pwd, "getpwuid", mock_getpwuid)
+    assert _get_user_id() == "unknown_user"
+
+
+def test_get_user_id_exception(monkeypatch):
+    def mock_getpwuid(_):
+        raise Exception("Test exception")
+
+    monkeypatch.setattr(pwd, "getpwuid", mock_getpwuid)
+    assert _get_user_id() == "unknown_user"
+
+
+def test_get_user_id_valid(monkeypatch):
+    def mock_getpwuid(_):
+        class MockPwnam:
+            pw_name = "test_user"
+
+        return MockPwnam()
+
+    monkeypatch.setattr(pwd, "getpwuid", mock_getpwuid)
+    assert _get_user_id() == "test_user"
+
+
 def test_user_id_default(reset_config):
     config = Config()
     # assert config.user_id == "scosman"
     assert len(config.user_id) > 0
+
+
+def test_autosave_examples_default(reset_config):
+    config = Config()
+    assert config.autosave_examples

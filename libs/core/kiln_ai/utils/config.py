@@ -26,7 +26,12 @@ class Config:
             "user_id": ConfigProperty(
                 str,
                 env_var="KILN_USER_ID",
-                default_lambda=lambda: pwd.getpwuid(os.getuid()).pw_name,
+                default_lambda=_get_user_id,
+            ),
+            "autosave_examples": ConfigProperty(
+                bool,
+                env_var="KILN_AUTOSAVE_EXAMPLES",
+                default=True,
             ),
         }
 
@@ -60,3 +65,10 @@ class Config:
             self._values[name] = self._properties[name].type(value)
         else:
             raise AttributeError(f"Config has no attribute '{name}'")
+
+
+def _get_user_id():
+    try:
+        return pwd.getpwuid(os.getuid()).pw_name or "unknown_user"
+    except Exception:
+        return "unknown_user"

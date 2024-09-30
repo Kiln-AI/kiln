@@ -73,7 +73,7 @@ class ExampleOutput(KilnParentedModel):
     # TODO: add structure/validation to this. For human creator_id. Model ID and verion and provider for models
     source_properties: Dict[str, str] = Field(
         default={},
-        description="Additional properties of the source, e.g. the name of the human who provided the output or the model that generated the output.",
+        description="Additional properties of the source, e.g. the user name of the human who provided the output or the model that generated the output.",
     )
     rating: ReasonRating | None = Field(
         default=None,

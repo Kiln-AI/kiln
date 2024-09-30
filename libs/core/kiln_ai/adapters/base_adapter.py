@@ -2,8 +2,15 @@ import json
 from abc import ABCMeta, abstractmethod
 from typing import Dict
 
-from kiln_ai.datamodel import Task
+from kiln_ai.datamodel import (
+    Example,
+    ExampleOutput,
+    ExampleOutputSource,
+    ExampleSource,
+    Task,
+)
 from kiln_ai.datamodel.json_schema import validate_schema
+from kiln_ai.utils.config import Config
 
 
 class BaseAdapter(metaclass=ABCMeta):
@@ -34,6 +41,11 @@ class BaseAdapter(metaclass=ABCMeta):
                 raise RuntimeError(
                     f"response is not a string for non-structured task: {result}"
                 )
+
+        # Save the example and output
+        if Config.shared().autosave_examples:
+            self.save_example(input, result)
+
         return result
 
     def has_strctured_output(self) -> bool:
@@ -46,6 +58,30 @@ class BaseAdapter(metaclass=ABCMeta):
     # override for adapter specific instructions (e.g. tool calling, json format, etc)
     def adapter_specific_instructions(self) -> str | None:
         return None
+
+    # create an example and example output
+    def save_example(self, input: Dict | str, output: Dict | str) -> Example:
+        # Convert input and output to JSON strings if they are dictionaries
+        input_str = json.dumps(input) if isinstance(input, dict) else input
+        output_str = json.dumps(output) if isinstance(output, dict) else output
+
+        # TODO P2: check for existing example with this input, and use it instead of creating a new one
+        example = Example(
+            parent=self.kiln_task,
+            input=input_str,
+            # TODO P1: this isn't necessarily synthetic. Should pass this in.
+            source=ExampleSource.synthetic,
+        )
+        example.save_to_file()
+
+        example_output = ExampleOutput(
+            parent=example,
+            output=output_str,
+            source=ExampleOutputSource.synthetic,
+            source_properties={"creator": Config.shared().user_id},
+        )
+        example_output.save_to_file()
+        return example
 
 
 class BasePromptBuilder(metaclass=ABCMeta):
