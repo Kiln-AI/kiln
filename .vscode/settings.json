@@ -7,11 +7,6 @@
     },
     "editor.tabSize": 4,
   },
-  "eslint.validate": ["javascript", "javascriptreact", "svelte"],
-  // Svelte, JS, TS files
-  "[javascript, typescript, svelte, json]": {
-    "editor.defaultFormatter": "svelte.svelte-vscode"
-  },
   "python.testing.pytestArgs": [
     ".",
     "-s",
@@ -26,4 +21,15 @@
     "**/dist": true,
     "**/node_modules": true
   },
+  // Svelte, JS, TS files
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "svelte"],
 }
