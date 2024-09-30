@@ -174,6 +174,7 @@ def test_structured_output_workflow(tmp_path):
         output = ExampleOutput(
             output='{"name": "John Doe", "age": 30}',
             source=ExampleOutputSource.human,
+            source_properties={"creator": "john_doe"},
             parent=example,
         )
         output.save_to_file()
@@ -242,6 +243,7 @@ def test_example_output_requirement_rating_keys(tmp_path):
     valid_output = ExampleOutput(
         output="Test output",
         source="human",
+        source_properties={"creator": "john_doe"},
         parent=example,
         requirement_ratings={
             req1.id: {"rating": 5, "reason": "Excellent"},
@@ -259,6 +261,7 @@ def test_example_output_requirement_rating_keys(tmp_path):
         output = ExampleOutput(
             output="Test output",
             source="human",
+            source_properties={"creator": "john_doe"},
             parent=example,
             requirement_ratings={
                 "unknown_id": {"rating": 4, "reason": "Good"},
@@ -283,13 +286,19 @@ def test_example_output_schema_validation(tmp_path):
         ),
     )
     task.save_to_file()
-    example = Example(input="Test input", source="human", parent=task)
+    example = Example(
+        input="Test input",
+        source="human",
+        parent=task,
+        source_properties={"creator": "john_doe"},
+    )
     example.save_to_file()
 
     # Create an example output with a valid schema
     valid_output = ExampleOutput(
         output='{"name": "John Doe", "age": 30}',
         source="human",
+        source_properties={"creator": "john_doe"},
         parent=example,
     )
     valid_output.save_to_file()
@@ -304,6 +313,7 @@ def test_example_output_schema_validation(tmp_path):
         output = ExampleOutput(
             output='{"name": "John Doe", "age": "thirty"}',
             source="human",
+            source_properties={"creator": "john_doe"},
             parent=example,
         )
         output.save_to_file()
@@ -347,3 +357,89 @@ def test_example_input_schema_validation(tmp_path):
             parent=task,
         )
         example.save_to_file()
+
+
+def test_valid_human_example_output():
+    output = ExampleOutput(
+        output="Test output",
+        source=ExampleOutputSource.human,
+        source_properties={"creator": "John Doe"},
+    )
+    assert output.source == ExampleOutputSource.human
+    assert output.source_properties["creator"] == "John Doe"
+
+
+def test_invalid_human_example_output_missing_creator():
+    with pytest.raises(
+        ValidationError,
+        match="must include \['creator'\]",
+    ):
+        ExampleOutput(
+            output="Test output", source=ExampleOutputSource.human, source_properties={}
+        )
+
+
+def test_invalid_human_example_output_empty_creator():
+    with pytest.raises(ValidationError, match="must not be empty string"):
+        ExampleOutput(
+            output="Test output",
+            source=ExampleOutputSource.human,
+            source_properties={"creator": ""},
+        )
+
+
+def test_valid_synthetic_example_output():
+    output = ExampleOutput(
+        output="Test output",
+        source=ExampleOutputSource.synthetic,
+        source_properties={
+            "adapter_name": "TestAdapter",
+            "model_name": "GPT-4",
+            "model_provider": "OpenAI",
+            "prompt_builder_name": "TestPromptBuilder",
+        },
+    )
+    assert output.source == ExampleOutputSource.synthetic
+    assert output.source_properties["adapter_name"] == "TestAdapter"
+    assert output.source_properties["model_name"] == "GPT-4"
+    assert output.source_properties["model_provider"] == "OpenAI"
+    assert output.source_properties["prompt_builder_name"] == "TestPromptBuilder"
+
+
+def test_invalid_synthetic_example_output_missing_keys():
+    with pytest.raises(
+        ValidationError, match="example output source_properties must include"
+    ):
+        ExampleOutput(
+            output="Test output",
+            source=ExampleOutputSource.synthetic,
+            source_properties={"adapter_name": "TestAdapter", "model_name": "GPT-4"},
+        )
+
+
+def test_invalid_synthetic_example_output_empty_values():
+    with pytest.raises(ValidationError, match="must not be empty string"):
+        ExampleOutput(
+            output="Test output",
+            source=ExampleOutputSource.synthetic,
+            source_properties={
+                "adapter_name": "TestAdapter",
+                "model_name": "",
+                "model_provider": "OpenAI",
+                "prompt_builder_name": "TestPromptBuilder",
+            },
+        )
+
+
+def test_invalid_synthetic_example_output_non_string_values():
+    with pytest.raises(ValidationError, match="Input should be a valid string"):
+        ExampleOutput(
+            output="Test output",
+            source=ExampleOutputSource.synthetic,
+            source_properties={
+                "adapter_name": "TestAdapter",
+                "model_name": "GPT-4",
+                "model_provider": "OpenAI",
+                "prompt_builder_name": 123,
+            },
+        )

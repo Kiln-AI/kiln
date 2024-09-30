@@ -95,6 +95,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     e1 = Example(
         input='{"subject": "Cows"}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=task,
     )
     e1.save_to_file()
@@ -104,6 +105,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     eo1 = ExampleOutput(
         output='{"joke": "Moo I am a cow joke."}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=e1,
     )
     eo1.save_to_file()
@@ -116,12 +118,14 @@ def test_multi_shot_prompt_builder(tmp_path):
     e2 = Example(
         input='{"subject": "Dogs"}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=task,
     )
     e2.save_to_file()
     eo2 = ExampleOutput(
         output='{"joke": "This is a ruff joke."}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=e2,
         rating=ReasonRating(rating=4, reason="Bark"),
     )

@@ -153,6 +153,34 @@ class ExampleOutput(KilnParentedModel):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_source_properties(self) -> Self:
+        if self.source == ExampleOutputSource.synthetic:
+            required_keys = {
+                "adapter_name",
+                "model_name",
+                "model_provider",
+                "prompt_builder_name",
+            }
+        elif self.source == ExampleOutputSource.human:
+            required_keys = {"creator"}
+        else:
+            raise ValueError(f"Invalid source type: {self.source}")
+
+        missing_keys = []
+        for key in required_keys:
+            if key not in self.source_properties:
+                missing_keys.append(key)
+            elif self.source_properties[key] == "":
+                raise ValueError(
+                    f"example output source_properties[{key}] must not be empty string for {self.source} outputs"
+                )
+        if len(missing_keys) > 0:
+            raise ValueError(
+                f"example output source_properties must include {missing_keys} for {self.source} outputs"
+            )
+        return self
+
 
 class ExampleSource(str, Enum):
     """
