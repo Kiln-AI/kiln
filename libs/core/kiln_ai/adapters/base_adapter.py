@@ -19,6 +19,7 @@ class AdapterInfo:
     adapter_name: str
     model_name: str
     model_provider: str
+    prompt_builder_name: str
 
 
 class BaseAdapter(metaclass=ABCMeta):
@@ -121,11 +122,29 @@ class BaseAdapter(metaclass=ABCMeta):
         example_output = ExampleOutput(
             parent=example,
             output=output_str,
+            # Synthetic since an adapter, not a human, is creating this
             source=ExampleOutputSource.synthetic,
-            source_properties={"creator": Config.shared().user_id},
+            source_properties=self._properties_for_example_output(),
         )
         example_output.save_to_file()
         return example
+
+    def _properties_for_example_output(self) -> Dict:
+        props = {}
+
+        # creator user id
+        creator = Config.shared().user_id
+        if creator and creator != "":
+            props["creator"] = creator
+
+        # adapter info
+        adapter_info = self.adapter_info()
+        props["adapter_name"] = adapter_info.adapter_name
+        props["model_name"] = adapter_info.model_name
+        props["model_provider"] = adapter_info.model_provider
+        props["prompt_builder_name"] = adapter_info.prompt_builder_name
+
+        return props
 
 
 class BasePromptBuilder(metaclass=ABCMeta):

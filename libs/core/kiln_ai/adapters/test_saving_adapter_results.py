@@ -20,6 +20,7 @@ class TestAdapter(BaseAdapter):
             adapter_name="mock_adapter",
             model_name="mock_model",
             model_provider="mock_provider",
+            prompt_builder_name="mock_prompt_builder",
         )
 
 
@@ -51,7 +52,6 @@ def test_save_example_isolation(test_task):
     assert saved_output.parent.id == example.id
     assert saved_output.output == output_data
     assert saved_output.source == ExampleOutputSource.synthetic
-    assert saved_output.source_properties == {"creator": Config.shared().user_id}
     assert saved_output.requirement_ratings == {}
 
     # Verify that the data can be read back from disk
@@ -68,8 +68,19 @@ def test_save_example_isolation(test_task):
     assert reloaded_output.parent.id == reloaded_example.id
     assert reloaded_output.output == output_data
     assert reloaded_output.source == ExampleOutputSource.synthetic
-    assert reloaded_output.source_properties == {"creator": Config.shared().user_id}
     assert reloaded_output.requirement_ratings == {}
+    assert reloaded_output.source_properties["adapter_name"] == "mock_adapter"
+    assert reloaded_output.source_properties["model_name"] == "mock_model"
+    assert reloaded_output.source_properties["model_provider"] == "mock_provider"
+    assert (
+        reloaded_output.source_properties["prompt_builder_name"]
+        == "mock_prompt_builder"
+    )
+    creator = Config.shared().user_id
+    if creator and creator != "":
+        assert reloaded_output.source_properties["creator"] == creator
+    else:
+        assert "creator" not in reloaded_output.source_properties
 
     # Run again, with same input and different output. Should create a new ExampleOutput under the same Example.
     example = adapter.save_example(input_data, ExampleSource.human, "Different output")
@@ -132,3 +143,8 @@ async def test_autosave_true(test_task):
         assert examples[0].outputs()[0].output == "Test output"
         assert examples[0].outputs()[0].source_properties["creator"] == "test_user"
         assert examples[0].outputs()[0].source == ExampleOutputSource.synthetic
+        output = examples[0].outputs()[0]
+        assert output.source_properties["adapter_name"] == "mock_adapter"
+        assert output.source_properties["model_name"] == "mock_model"
+        assert output.source_properties["model_provider"] == "mock_provider"
+        assert output.source_properties["prompt_builder_name"] == "mock_prompt_builder"

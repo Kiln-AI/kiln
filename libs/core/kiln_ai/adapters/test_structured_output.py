@@ -63,6 +63,7 @@ class MockAdapter(BaseAdapter):
             adapter_name="mock_adapter",
             model_name="mock_model",
             model_provider="mock_provider",
+            prompt_builder_name="mock_prompt_builder",
         )
 
 
@@ -189,6 +190,11 @@ async def run_structured_input_test(tmp_path: Path, model_name: str, provider: s
     assert response is not None
     assert isinstance(response, str)
     assert "[[equilateral]]" in response
+    adapter_info = a.adapter_info()
+    assert adapter_info.prompt_builder_name == "SimplePromptBuilder"
+    assert adapter_info.model_name == model_name
+    assert adapter_info.model_provider == provider
+    assert adapter_info.adapter_name == "kiln_langchain_adapter"
 
 
 @pytest.mark.paid

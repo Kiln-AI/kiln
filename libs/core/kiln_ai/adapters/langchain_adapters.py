@@ -104,6 +104,7 @@ class LangChainPromptAdapter(BaseAdapter):
             model_name=self.model_name,
             model_provider=self.model_provider,
             adapter_name="kiln_langchain_adapter",
+            prompt_builder_name=self.prompt_builder.prompt_builder_name(),
         )
 
     def _munge_response(self, response: Dict) -> Dict:

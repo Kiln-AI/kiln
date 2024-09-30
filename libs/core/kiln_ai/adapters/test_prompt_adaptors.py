@@ -140,3 +140,8 @@ async def run_simple_task(task: datamodel.Task, model_name: str, provider: str):
         "You should answer the following question: four plus six times 10"
     )
     assert "64" in answer
+    model_info = adapter.adapter_info()
+    assert model_info.model_name == model_name
+    assert model_info.model_provider == provider
+    assert model_info.adapter_name == "kiln_langchain_adapter"
+    assert model_info.prompt_builder_name == "SimplePromptBuilder"
