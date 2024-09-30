@@ -2,8 +2,8 @@ import json
 from abc import ABCMeta, abstractmethod
 from typing import Dict
 
+from kiln_ai.datamodel import Task
 from kiln_ai.datamodel.json_schema import validate_schema
-from kiln_ai.datamodel.models import Task
 
 
 class BaseAdapter(metaclass=ABCMeta):

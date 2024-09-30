@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-import kiln_ai.datamodel.models as models
+import kiln_ai.datamodel as datamodel
 import pytest
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.adapters.ml_model_list import built_in_models, ollama_online
@@ -95,30 +95,30 @@ async def test_all_built_in_models(tmp_path):
 
 
 def build_test_task(tmp_path: Path):
-    project = models.Project(name="test", path=tmp_path / "test.kiln")
+    project = datamodel.Project(name="test", path=tmp_path / "test.kiln")
     project.save_to_file()
     assert project.name == "test"
 
-    task = models.Task(parent=project, name="test task")
+    task = datamodel.Task(parent=project, name="test task")
     task.save_to_file()
     assert task.name == "test task"
     task.instruction = (
         "You are an assistant which performs math tasks provided in plain text."
     )
 
-    r1 = models.TaskRequirement(
+    r1 = datamodel.TaskRequirement(
         parent=task,
         name="BEDMAS",
         instruction="You follow order of mathematical operation (BEDMAS)",
     )
     r1.save_to_file()
-    r2 = models.TaskRequirement(
+    r2 = datamodel.TaskRequirement(
         parent=task,
         name="only basic math",
         instruction="If the problem has anything other than addition, subtraction, multiplication, division, and brackets, you will not answer it. Reply instead with 'I'm just a basic calculator, I don't know how to do that'.",
     )
     r2.save_to_file()
-    r3 = models.TaskRequirement(
+    r3 = datamodel.TaskRequirement(
         parent=task,
         name="Answer format",
         instruction="The answer can contain any content about your reasoning, but at the end it should include the final answer in numerals in square brackets. For example if the answer is one hundred, the end of your response should be [100].",
@@ -133,7 +133,7 @@ async def run_simple_test(tmp_path: Path, model_name: str, provider: str | None 
     return await run_simple_task(task, model_name, provider)
 
 
-async def run_simple_task(task: models.Task, model_name: str, provider: str):
+async def run_simple_task(task: datamodel.Task, model_name: str, provider: str):
     adapter = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
 
     answer = await adapter.invoke(

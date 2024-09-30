@@ -13,7 +13,7 @@ from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel
 from .json_schema import validate_schema
 
 if TYPE_CHECKING:
-    from .models import Task
+    from . import Task
 
 # Conventions:
 # 1) Names are filename safe as they may be used as file names. They are informational and not to be used in prompts/training/validation.

@@ -3,7 +3,7 @@ from typing import Dict
 
 import jsonschema
 import jsonschema.exceptions
-import kiln_ai.datamodel.models as models
+import kiln_ai.datamodel as datamodel
 import pytest
 from kiln_ai.adapters.base_adapter import BaseAdapter
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
@@ -51,7 +51,7 @@ async def test_structured_output_ollama_llama(tmp_path):
 
 
 class MockAdapter(BaseAdapter):
-    def __init__(self, kiln_task: models.Task, response: Dict | str | None):
+    def __init__(self, kiln_task: datamodel.Task, response: Dict | str | None):
         super().__init__(kiln_task)
         self.response = response
 
@@ -79,8 +79,8 @@ async def test_mock_unstructred_response(tmp_path):
         answer = await adapter.invoke("You are a mock, send me the response!")
 
     # Should error, expecting a string, not a dict
-    project = models.Project(name="test", path=tmp_path / "test.kiln")
-    task = models.Task(parent=project, name="test task")
+    project = datamodel.Project(name="test", path=tmp_path / "test.kiln")
+    task = datamodel.Task(parent=project, name="test task")
     task.instruction = (
         "You are an assistant which performs math tasks provided in plain text."
     )
@@ -112,9 +112,9 @@ async def test_all_built_in_models_structured_output(tmp_path):
 
 
 def build_structured_output_test_task(tmp_path: Path):
-    project = models.Project(name="test", path=tmp_path / "test.kiln")
+    project = datamodel.Project(name="test", path=tmp_path / "test.kiln")
     project.save_to_file()
-    task = models.Task(
+    task = datamodel.Task(
         parent=project,
         name="test task",
         instruction="You are an assistant which tells a joke, given a subject.",
@@ -148,9 +148,9 @@ async def run_structured_output_test(tmp_path: Path, model_name: str, provider: 
 
 
 def build_structured_input_test_task(tmp_path: Path):
-    project = models.Project(name="test", path=tmp_path / "test.kiln")
+    project = datamodel.Project(name="test", path=tmp_path / "test.kiln")
     project.save_to_file()
-    task = models.Task(
+    task = datamodel.Task(
         parent=project,
         name="test task",
         instruction="You are an assistant which classifies a triangle given the lengths of its sides. If all sides are of equal length, the triangle is equilateral. If two sides are equal, the triangle is isosceles. Otherwise, it is scalene.\n\nAt the end of your response return the result in double square brackets. It should be plain text. It should be exactly one of the three following strings: '[[equilateral]]', or '[[isosceles]]', or '[[scalene]]'.",
