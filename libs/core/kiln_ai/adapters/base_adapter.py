@@ -21,7 +21,9 @@ class BaseAdapter(metaclass=ABCMeta):
 
         self.input_schema = self.kiln_task.input_json_schema
 
-    async def invoke(self, input: Dict | str) -> Dict | str:
+    async def invoke(
+        self, input: Dict | str, input_source: ExampleSource = ExampleSource.human
+    ) -> Dict | str:
         # validate input
         if self.input_schema is not None:
             if not isinstance(input, dict):
@@ -44,7 +46,7 @@ class BaseAdapter(metaclass=ABCMeta):
 
         # Save the example and output
         if Config.shared().autosave_examples:
-            self.save_example(input, result)
+            self.save_example(input, input_source, result)
 
         return result
 
@@ -60,7 +62,9 @@ class BaseAdapter(metaclass=ABCMeta):
         return None
 
     # create an example and example output
-    def save_example(self, input: Dict | str, output: Dict | str) -> Example:
+    def save_example(
+        self, input: Dict | str, input_source: ExampleSource, output: Dict | str
+    ) -> Example:
         # Convert input and output to JSON strings if they are dictionaries
         input_str = json.dumps(input) if isinstance(input, dict) else input
         output_str = json.dumps(output) if isinstance(output, dict) else output
@@ -69,8 +73,7 @@ class BaseAdapter(metaclass=ABCMeta):
         example = Example(
             parent=self.kiln_task,
             input=input_str,
-            # TODO P1: this isn't necessarily synthetic. Should pass this in.
-            source=ExampleSource.synthetic,
+            source=input_source,
         )
         example.save_to_file()
 

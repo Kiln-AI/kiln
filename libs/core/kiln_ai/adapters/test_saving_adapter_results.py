@@ -32,12 +32,12 @@ def test_save_example_isolation(test_task):
     input_data = "Test input"
     output_data = "Test output"
 
-    example = adapter.save_example(input_data, output_data)
+    example = adapter.save_example(input_data, ExampleSource.human, output_data)
 
     # Check that the example was saved correctly
     assert example.parent == test_task
     assert example.input == input_data
-    assert example.source == ExampleSource.synthetic
+    assert example.source == ExampleSource.human
 
     # Check that the example output was saved correctly
     saved_outputs = example.outputs()
@@ -55,7 +55,7 @@ def test_save_example_isolation(test_task):
     assert len(reloaded_examples) == 1
     reloaded_example = reloaded_examples[0]
     assert reloaded_example.input == input_data
-    assert reloaded_example.source == ExampleSource.synthetic
+    assert reloaded_example.source == ExampleSource.human
 
     reloaded_outputs = reloaded_example.outputs()
     assert len(reloaded_outputs) == 1
@@ -76,7 +76,7 @@ async def test_autosave_false(test_task):
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
-        await adapter.invoke(input_data)
+        await adapter.invoke(input_data, ExampleSource.synthetic)
 
         # Check that no examples were saved
         assert len(test_task.examples()) == 0
@@ -92,12 +92,14 @@ async def test_autosave_true(test_task):
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
-        await adapter.invoke(input_data)
+        await adapter.invoke(input_data, ExampleSource.synthetic)
 
         # Check that an example was saved
         examples = test_task.examples()
         assert len(examples) == 1
         assert examples[0].input == input_data
+        assert examples[0].source == ExampleSource.synthetic
         assert len(examples[0].outputs()) == 1
         assert examples[0].outputs()[0].output == "Test output"
         assert examples[0].outputs()[0].source_properties["creator"] == "test_user"
+        assert examples[0].outputs()[0].source == ExampleOutputSource.synthetic
