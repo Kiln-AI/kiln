@@ -1,5 +1,6 @@
 import json
 from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass
 from typing import Dict
 
 from kiln_ai.datamodel import (
@@ -11,6 +12,13 @@ from kiln_ai.datamodel import (
 )
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
+
+
+@dataclass
+class AdapterInfo:
+    adapter_name: str
+    model_name: str
+    model_provider: str
 
 
 class BaseAdapter(metaclass=ABCMeta):
@@ -50,6 +58,10 @@ class BaseAdapter(metaclass=ABCMeta):
 
     def has_structured_output(self) -> bool:
         return self.output_schema is not None
+
+    @abstractmethod
+    def adapter_info(self) -> AdapterInfo:
+        pass
 
     @abstractmethod
     async def _run(self, input: Dict | str) -> Dict | str:
@@ -124,6 +136,10 @@ class BasePromptBuilder(metaclass=ABCMeta):
     @abstractmethod
     def build_prompt(self) -> str:
         pass
+
+    # override to change the name of the prompt builder (if changing class names)
+    def prompt_builder_name(self) -> str:
+        return self.__class__.__name__
 
     # Can be overridden to add more information to the user message
     def build_user_message(self, input: Dict | str) -> str:

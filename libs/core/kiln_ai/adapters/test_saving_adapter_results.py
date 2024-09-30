@@ -1,10 +1,8 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
-from kiln_ai.adapters.base_adapter import BaseAdapter
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.datamodel import (
-    Example,
-    ExampleOutput,
     ExampleOutputSource,
     ExampleSource,
     Project,
@@ -16,6 +14,13 @@ from kiln_ai.utils.config import Config
 class TestAdapter(BaseAdapter):
     async def _run(self, input: dict | str) -> dict | str:
         return "Test output"
+
+    def adapter_info(self) -> AdapterInfo:
+        return AdapterInfo(
+            adapter_name="mock_adapter",
+            model_name="mock_model",
+            model_provider="mock_provider",
+        )
 
 
 @pytest.fixture

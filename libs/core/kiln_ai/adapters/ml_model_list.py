@@ -28,6 +28,7 @@ class ModelFamily(str, Enum):
     gemma = "gemma"
 
 
+# Where models have instruct and raw versions, instruct is default and raw is specified
 class ModelName(str, Enum):
     llama_3_1_8b = "llama_3_1_8b"
     llama_3_1_70b = "llama_3_1_70b"

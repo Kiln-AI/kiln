@@ -1,6 +1,6 @@
 import json
 
-from kiln_ai.adapters.base_adapter import BaseAdapter
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromptBuilder
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
@@ -39,6 +39,13 @@ class MockAdapter(BaseAdapter):
 
     def _run(self, input: str) -> str:
         return "mock response"
+
+    def adapter_info(self) -> AdapterInfo:
+        return AdapterInfo(
+            adapter_name="mock_adapter",
+            model_name="mock_model",
+            model_provider="mock_provider",
+        )
 
 
 def test_simple_prompt_builder_structured_output(tmp_path):

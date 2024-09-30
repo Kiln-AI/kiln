@@ -5,7 +5,7 @@ import jsonschema
 import jsonschema.exceptions
 import kiln_ai.datamodel as datamodel
 import pytest
-from kiln_ai.adapters.base_adapter import BaseAdapter
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.adapters.ml_model_list import (
     built_in_models,
@@ -57,6 +57,13 @@ class MockAdapter(BaseAdapter):
 
     async def _run(self, input: str) -> Dict | str:
         return self.response
+
+    def adapter_info(self) -> AdapterInfo:
+        return AdapterInfo(
+            adapter_name="mock_adapter",
+            model_name="mock_model",
+            model_provider="mock_provider",
+        )
 
 
 async def test_mock_unstructred_response(tmp_path):

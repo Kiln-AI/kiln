@@ -6,7 +6,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.messages.base import BaseMessage
 
-from .base_adapter import BaseAdapter, BasePromptBuilder
+from .base_adapter import AdapterInfo, BaseAdapter, BasePromptBuilder
 from .ml_model_list import langchain_model_from
 
 
@@ -22,8 +22,24 @@ class LangChainPromptAdapter(BaseAdapter):
         super().__init__(kiln_task)
         if custom_model is not None:
             self.model = custom_model
+
+            # Attempt to infer model provider and name from custom model
+            self.model_provider = "custom.langchain:" + custom_model.__class__.__name__
+            self.model_name = "custom.langchain:unknown_model"
+            if hasattr(custom_model, "model_name") and isinstance(
+                getattr(custom_model, "model_name"), str
+            ):
+                self.model_name = "custom.langchain:" + getattr(
+                    custom_model, "model_name"
+                )
+            if hasattr(custom_model, "model") and isinstance(
+                getattr(custom_model, "model"), str
+            ):
+                self.model_name = "custom.langchain:" + getattr(custom_model, "model")
         elif model_name is not None:
             self.model = langchain_model_from(model_name, provider)
+            self.model_name = model_name
+            self.model_provider = provider or "custom.langchain.default_provider"
         else:
             raise ValueError(
                 "model_name and provider must be provided if custom_model is not provided"
@@ -82,6 +98,13 @@ class LangChainPromptAdapter(BaseAdapter):
             if not isinstance(text_content, str):
                 raise RuntimeError(f"response is not a string: {text_content}")
             return text_content
+
+    def adapter_info(self) -> AdapterInfo:
+        return AdapterInfo(
+            model_name=self.model_name,
+            model_provider=self.model_provider,
+            adapter_name="kiln_langchain_adapter",
+        )
 
     def _munge_response(self, response: Dict) -> Dict:
         # Mistral Large tool calling format is a bit different. Convert to standard format.
