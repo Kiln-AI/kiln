@@ -34,7 +34,7 @@
     ></label>
 
     <ul
-      class="menu bg-base-200 text-base-content min-h-full w-72 lg:w-60 p-4 pt-1 lg:pt-4"
+      class="menu bg-base-200 text-base-content min-h-full w-72 lg:w-60 xl:w-72 p-4 pt-1 lg:pt-4"
     >
       <li class="hover:bg-transparent flex flex-row justify-end">
         <label

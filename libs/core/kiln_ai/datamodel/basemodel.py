@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from builtins import classmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Self, Type, TypeVar
+from typing import TYPE_CHECKING, Optional, Self, Type, TypeVar
 
 from kiln_ai.utils.config import Config
 from pydantic import (
@@ -107,6 +107,10 @@ class KilnBaseModel(BaseModel):
 class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
     id: ID_TYPE = ID_FIELD
     _parent: KilnBaseModel | None = None
+
+    # workaround to tell typechecker that we support the parent property, even though it's not a stock property
+    if TYPE_CHECKING:
+        parent: KilnBaseModel  # type: ignore
 
     def __init__(self, **data):
         super().__init__(**data)

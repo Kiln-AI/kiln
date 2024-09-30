@@ -5,7 +5,7 @@ import jsonschema
 import jsonschema.exceptions
 import kiln_ai.datamodel as datamodel
 import pytest
-from kiln_ai.adapters.base_adapter import BaseAdapter
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.adapters.ml_model_list import (
     built_in_models,
@@ -57,6 +57,14 @@ class MockAdapter(BaseAdapter):
 
     async def _run(self, input: str) -> Dict | str:
         return self.response
+
+    def adapter_info(self) -> AdapterInfo:
+        return AdapterInfo(
+            adapter_name="mock_adapter",
+            model_name="mock_model",
+            model_provider="mock_provider",
+            prompt_builder_name="mock_prompt_builder",
+        )
 
 
 async def test_mock_unstructred_response(tmp_path):
@@ -182,6 +190,11 @@ async def run_structured_input_test(tmp_path: Path, model_name: str, provider: s
     assert response is not None
     assert isinstance(response, str)
     assert "[[equilateral]]" in response
+    adapter_info = a.adapter_info()
+    assert adapter_info.prompt_builder_name == "SimplePromptBuilder"
+    assert adapter_info.model_name == model_name
+    assert adapter_info.model_provider == provider
+    assert adapter_info.adapter_name == "kiln_langchain_adapter"
 
 
 @pytest.mark.paid

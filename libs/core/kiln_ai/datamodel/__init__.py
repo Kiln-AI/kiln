@@ -73,7 +73,7 @@ class ExampleOutput(KilnParentedModel):
     # TODO: add structure/validation to this. For human creator_id. Model ID and verion and provider for models
     source_properties: Dict[str, str] = Field(
         default={},
-        description="Additional properties of the source, e.g. the name of the human who provided the output or the model that generated the output.",
+        description="Additional properties of the source, e.g. the user name of the human who provided the output or the model that generated the output.",
     )
     rating: ReasonRating | None = Field(
         default=None,
@@ -95,6 +95,11 @@ class ExampleOutput(KilnParentedModel):
     @classmethod
     def parent_type(cls):
         return Example
+
+    def parent_example(self) -> Example | None:
+        if not isinstance(self.parent, Example):
+            return None
+        return self.parent
 
     # TODO validators for output and fixed_output: validate they follow the tas
 
@@ -148,6 +153,34 @@ class ExampleOutput(KilnParentedModel):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_source_properties(self) -> Self:
+        if self.source == ExampleOutputSource.synthetic:
+            required_keys = {
+                "adapter_name",
+                "model_name",
+                "model_provider",
+                "prompt_builder_name",
+            }
+        elif self.source == ExampleOutputSource.human:
+            required_keys = {"creator"}
+        else:
+            raise ValueError(f"Invalid source type: {self.source}")
+
+        missing_keys = []
+        for key in required_keys:
+            if key not in self.source_properties:
+                missing_keys.append(key)
+            elif self.source_properties[key] == "":
+                raise ValueError(
+                    f"example output source_properties[{key}] must not be empty string for {self.source} outputs"
+                )
+        if len(missing_keys) > 0:
+            raise ValueError(
+                f"example output source_properties must include {missing_keys} for {self.source} outputs"
+            )
+        return self
+
 
 class ExampleSource(str, Enum):
     """
@@ -185,6 +218,11 @@ class Example(KilnParentedModel):
 
     def outputs(self) -> list[ExampleOutput]:
         return ExampleOutput.all_children_of_parent_path(self.path)
+
+    def parent_task(self) -> Task | None:
+        if not isinstance(self.parent, Task):
+            return None
+        return self.parent
 
     @model_validator(mode="after")
     def validate_input_format(self) -> Self:

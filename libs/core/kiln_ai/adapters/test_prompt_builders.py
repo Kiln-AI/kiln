@@ -1,6 +1,6 @@
 import json
 
-from kiln_ai.adapters.base_adapter import BaseAdapter
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromptBuilder
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
@@ -39,6 +39,13 @@ class MockAdapter(BaseAdapter):
 
     def _run(self, input: str) -> str:
         return "mock response"
+
+    def adapter_info(self) -> AdapterInfo:
+        return AdapterInfo(
+            adapter_name="mock_adapter",
+            model_name="mock_model",
+            model_provider="mock_provider",
+        )
 
 
 def test_simple_prompt_builder_structured_output(tmp_path):
@@ -88,6 +95,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     e1 = Example(
         input='{"subject": "Cows"}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=task,
     )
     e1.save_to_file()
@@ -97,6 +105,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     eo1 = ExampleOutput(
         output='{"joke": "Moo I am a cow joke."}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=e1,
     )
     eo1.save_to_file()
@@ -109,12 +118,14 @@ def test_multi_shot_prompt_builder(tmp_path):
     e2 = Example(
         input='{"subject": "Dogs"}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=task,
     )
     e2.save_to_file()
     eo2 = ExampleOutput(
         output='{"joke": "This is a ruff joke."}',
         source=ExampleSource.human,
+        source_properties={"creator": "john_doe"},
         parent=e2,
         rating=ReasonRating(rating=4, reason="Bark"),
     )
