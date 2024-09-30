@@ -21,25 +21,39 @@
             />
           </svg>
         </label>
-        <div class="flex-grow">Home</div>
+        <div class="flex-grow"></div>
       </div>
     </div>
 
-    <div class="flex-grow rounded-t-lg bg-base-100 shadow-lg">
+    <div class="flex-grow rounded-t-lg bg-base-100 shadow-lg p-4">
       <slot />
     </div>
   </div>
   <div class="drawer-side">
-    <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"
+    <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"
     ></label>
 
-    <div class="flex flex-row items-center mx-6 my-3 hidden lg:flex">
-      <img src="/logo.svg" alt="logo" class="w-8 h-8" />
-      <div class="text-lg font-bold ml-1">Kiln AI</div>
-    </div>
-    <ul class="menu bg-base-200 text-base-content min-h-full w-60 p-4">
-      <li><a href="/">Sidebar Item 1</a></li>
-      <li><a href="/">Sidebar Item 2</a></li>
+    <ul
+      class="menu bg-base-200 text-base-content min-h-full w-72 lg:w-60 p-4 pt-1 lg:pt-4"
+    >
+      <li class="hover:bg-transparent flex flex-row justify-end">
+        <label
+          for="main-drawer"
+          class="lg:hidden ml-3 text-2xl cursor-pointer ml-4 pt-[5px]"
+        >
+          &#x2715;
+        </label>
+      </li>
+      <li class="mb-4">
+        <a href="https://kiln-ai.com" target="_blank">
+          <div class="flex flex-row items-center mx-[-5px] p-0">
+            <img src="/logo.svg" alt="logo" class="w-8 h-8" />
+            <div class="text-lg font-bold ml-1">Kiln AI</div>
+          </div>
+        </a>
+      </li>
+      <li><a href="/?1">Sidebar Item 1</a></li>
+      <li><a href="/?2">Sidebar Item 2</a></li>
     </ul>
   </div>
 </div>

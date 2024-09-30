@@ -5,3 +5,5 @@
   <title>Kiln Studio</title>
   <meta name="description" content="The open source ML product platform" />
 </svelte:head>
+
+<h1>Home</h1>
