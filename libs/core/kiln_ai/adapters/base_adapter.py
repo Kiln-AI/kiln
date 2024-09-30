@@ -69,14 +69,45 @@ class BaseAdapter(metaclass=ABCMeta):
         input_str = json.dumps(input) if isinstance(input, dict) else input
         output_str = json.dumps(output) if isinstance(output, dict) else output
 
-        # TODO P2: check for existing example with this input, and use it instead of creating a new one
-        example = Example(
-            parent=self.kiln_task,
-            input=input_str,
-            source=input_source,
+        # Check for existing example with matching parent.id, input, and source
+        existing_example = next(
+            (
+                example
+                for example in self.kiln_task.examples()
+                if (parent_task := example.parent_task()) is not None
+                and parent_task.id == self.kiln_task.id
+                and example.input == input_str
+                and example.source == input_source
+            ),
+            None,
         )
-        example.save_to_file()
 
+        if existing_example:
+            example = existing_example
+        else:
+            example = Example(
+                parent=self.kiln_task,
+                input=input_str,
+                source=input_source,
+            )
+            example.save_to_file()
+
+        # Check for existing ExampleOutput with matching parent.id, input, and source
+        existing_output = next(
+            (
+                output
+                for output in example.outputs()
+                if (parent_example := output.parent_example()) is not None
+                and parent_example.id == example.id
+                and output.output == output_str
+            ),
+            None,
+        )
+
+        if existing_output:
+            return example
+
+        # Create a new ExampleOutput for the existing or new Example
         example_output = ExampleOutput(
             parent=example,
             output=output_str,

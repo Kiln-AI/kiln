@@ -96,6 +96,11 @@ class ExampleOutput(KilnParentedModel):
     def parent_type(cls):
         return Example
 
+    def parent_example(self) -> Example | None:
+        if not isinstance(self.parent, Example):
+            return None
+        return self.parent
+
     # TODO validators for output and fixed_output: validate they follow the tas
 
     @model_validator(mode="after")
@@ -185,6 +190,11 @@ class Example(KilnParentedModel):
 
     def outputs(self) -> list[ExampleOutput]:
         return ExampleOutput.all_children_of_parent_path(self.path)
+
+    def parent_task(self) -> Task | None:
+        if not isinstance(self.parent, Task):
+            return None
+        return self.parent
 
     @model_validator(mode="after")
     def validate_input_format(self) -> Self:

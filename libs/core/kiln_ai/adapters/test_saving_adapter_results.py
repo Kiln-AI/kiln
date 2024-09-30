@@ -66,6 +66,30 @@ def test_save_example_isolation(test_task):
     assert reloaded_output.source_properties == {"creator": Config.shared().user_id}
     assert reloaded_output.requirement_ratings == {}
 
+    # Run again, with same input and different output. Should create a new ExampleOutput under the same Example.
+    example = adapter.save_example(input_data, ExampleSource.human, "Different output")
+    assert len(test_task.examples()) == 1
+    assert len(example.outputs()) == 2
+    outputs = example.outputs()
+    assert len(outputs) == 2
+    assert set(output.output for output in outputs) == {output_data, "Different output"}
+
+    # run again with same input and same output. Should not create a new ExampleOutput.
+    example = adapter.save_example(input_data, ExampleSource.human, output_data)
+    assert len(test_task.examples()) == 1
+    assert len(example.outputs()) == 2
+    outputs = example.outputs()
+    assert len(outputs) == 2
+    assert set(output.output for output in outputs) == {output_data, "Different output"}
+
+    # run again with input of different type. Should create a new Example and ExampleOutput.
+    example = adapter.save_example(input_data, ExampleSource.synthetic, output_data)
+    assert len(test_task.examples()) == 2
+    assert len(example.outputs()) == 1
+    outputs = example.outputs()
+    assert len(outputs) == 1
+    assert outputs[0].output == output_data
+
 
 @pytest.mark.asyncio
 async def test_autosave_false(test_task):
