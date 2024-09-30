@@ -1,7 +1,8 @@
 import random
 
-import desktop_server
 import requests
+
+import app.desktop.desktop_server as desktop_server
 
 
 def test_desktop_app_server():

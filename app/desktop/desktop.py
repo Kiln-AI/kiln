@@ -7,7 +7,7 @@ import webbrowser
 import pystray
 from PIL import Image
 
-from .desktop_server import ThreadedServer, server_config
+from app.desktop.desktop_server import ThreadedServer, server_config
 
 # TODO: remove this and all other globals in this file
 root = None  # type: tk.Tk | None
