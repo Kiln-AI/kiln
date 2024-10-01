@@ -6,20 +6,32 @@ import pytest
 import requests
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from kiln_studio.server import HTMLStaticFiles, studio_path
+from kiln_studio.server import HTMLStaticFiles
 
-from libs.studio.kiln_studio.server import app
-
-client = TestClient(app)
+from libs.studio.kiln_studio.server import make_app
 
 
-def test_ping():
+@pytest.fixture
+def client():
+    # a client based on a mock studio path
+    with tempfile.TemporaryDirectory() as temp_dir:
+        os.makedirs(temp_dir, exist_ok=True)
+        with patch("libs.studio.kiln_studio.server.studio_path", new=lambda: temp_dir):
+            from libs.studio.kiln_studio.server import studio_path
+
+            assert studio_path() == temp_dir  # Verify the patch is working
+            app = make_app()
+            client = TestClient(app)
+            yield client
+
+
+def test_ping(client):
     response = client.get("/ping")
     assert response.status_code == 200
     assert response.json() == "pong"
 
 
-def test_connect_ollama_success():
+def test_connect_ollama_success(client):
     with patch("requests.get") as mock_get:
         mock_get.return_value.json.return_value = {
             "models": [{"model": "model1"}, {"model": "model2"}]
@@ -32,7 +44,7 @@ def test_connect_ollama_success():
         }
 
 
-def test_connect_ollama_connection_error():
+def test_connect_ollama_connection_error(client):
     with patch("requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError
         response = client.post("/provider/ollama/connect")
@@ -42,7 +54,7 @@ def test_connect_ollama_connection_error():
         }
 
 
-def test_connect_ollama_general_exception():
+def test_connect_ollama_general_exception(client):
     with patch("requests.get") as mock_get:
         mock_get.side_effect = Exception("Test exception")
         response = client.post("/provider/ollama/connect")
@@ -52,7 +64,7 @@ def test_connect_ollama_general_exception():
         }
 
 
-def test_connect_ollama_no_models():
+def test_connect_ollama_no_models(client):
     with patch("requests.get") as mock_get:
         mock_get.return_value.json.return_value = {"models": []}
         response = client.post("/provider/ollama/connect")
@@ -73,7 +85,7 @@ def test_connect_ollama_no_models():
         "https://127.0.0.1:8443",
     ],
 )
-def test_cors_allowed_origins(origin):
+def test_cors_allowed_origins(client, origin):
     response = client.get("/ping", headers={"Origin": origin})
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == origin
@@ -90,20 +102,15 @@ def test_cors_allowed_origins(origin):
         "http://127.0.0.2.com",
     ],
 )
-def test_cors_blocked_origins(origin):
+def test_cors_blocked_origins(client, origin):
     response = client.get("/ping", headers={"Origin": origin})
     assert response.status_code == 200
     assert "access-control-allow-origin" not in response.headers
 
 
-@pytest.fixture
-def mock_studio_path():
-    with tempfile.TemporaryDirectory() as temp_dir:
-        with patch("kiln_studio.server.studio_path", return_value=temp_dir):
-            yield temp_dir
-
-
 def create_studio_test_file(relative_path):
+    from libs.studio.kiln_studio.server import studio_path
+
     full_path = os.path.join(studio_path(), relative_path)
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     with open(full_path, "w") as f:
@@ -111,7 +118,7 @@ def create_studio_test_file(relative_path):
     return full_path
 
 
-def test_cors_no_origin(mock_studio_path):
+def test_cors_no_origin(client):
     # Create index.html in the mock studio path
     create_studio_test_file("index.html")
 
@@ -171,25 +178,30 @@ class TestHTMLStaticFiles:
             with pytest.raises(HTTPException):
                 await html_static_files.get_response("non_existing_file", {})
 
-    @pytest.mark.asyncio
-    async def test_setup_route(self, mock_studio_path):
-        import os
 
-        # Ensure studio_path exists
-        os.makedirs(studio_path(), exist_ok=True)
-        create_studio_test_file("index.html")
-        create_studio_test_file("setup.html")
-        create_studio_test_file("setup/connect_providers/index.html")
+@pytest.mark.asyncio
+async def test_setup_route(client):
+    # Ensure studio_path exists
+    create_studio_test_file("index.html")
+    create_studio_test_file("path.html")
+    create_studio_test_file("nested/index.html")
 
-        # root index.html
-        response = client.get("/")
-        assert response.status_code == 200
-        # setup.html
-        response = client.get("/setup")
-        assert response.status_code == 200
-        # nested index.html
-        response = client.get("/setup/connect_providers")
-        assert response.status_code == 200
-        # non existing file
-        response = client.get("/setup/non_existing_file")
-        assert response.status_code == 404
+    # root index.html
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.text == "<html><body>Test</body></html>"
+    # setup.html
+    response = client.get("/path")
+    assert response.status_code == 200
+    assert response.text == "<html><body>Test</body></html>"
+    # nested index.html
+    response = client.get("/nested")
+    assert response.status_code == 200
+    assert response.text == "<html><body>Test</body></html>"
+    # non existing file
+
+    # expected 404
+    with pytest.raises(Exception):
+        client.get("/non_existing_file")
+    with pytest.raises(Exception):
+        client.get("/nested/non_existing_file")

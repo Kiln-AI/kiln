@@ -8,7 +8,7 @@ import uvicorn
 
 def server_config(port=8757):
     return uvicorn.Config(
-        kiln_server.app,
+        kiln_server.make_app(),
         host="127.0.0.1",
         port=port,
         log_level="warning",
