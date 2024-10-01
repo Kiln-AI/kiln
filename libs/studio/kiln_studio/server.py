@@ -106,7 +106,24 @@ def read_item(item_id: int, q: Union[str, None] = None):
 
 
 # Web UI
-app.mount("/", StaticFiles(directory=studio_path(), html=True), name="studio")
+# File server that maps /foo/bar to /foo/bar.html (Starlette StaticFiles only does index.html)
+class HTMLStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        try:
+            response = await super().get_response(path, scope)
+            return response
+        except Exception as e:
+            # catching HTTPException explicitly not working for some reason
+            if getattr(e, "status_code", None) == 404:
+                # Return the .html version of the file if the .html version exists
+                return await super().get_response(f"{path}.html", scope)
+            raise e
+
+
+# Ensure studio_path exists (test servers don't necessarily create it)
+os.makedirs(studio_path(), exist_ok=True)
+# Serves the web UI at root
+app.mount("/", HTMLStaticFiles(directory=studio_path(), html=True), name="studio")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8757)
