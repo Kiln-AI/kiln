@@ -104,3 +104,59 @@ def test_clear_setting(client, temp_home):
     response = client.get("/settings")
     assert response.status_code == 200
     assert "test_key" not in response.json()
+
+
+@pytest.fixture
+def mock_config(monkeypatch):
+    mock_settings = {
+        "public_setting": "visible",
+        "sensitive_setting": "secret",
+    }
+
+    class MockConfig:
+        @staticmethod
+        def shared():
+            return MockConfig()
+
+        def settings(self, hide_sensitive=False):
+            if hide_sensitive:
+                return {
+                    k: "[hidden]" if k == "sensitive_setting" else v
+                    for k, v in mock_settings.items()
+                }
+            return mock_settings
+
+        def update_settings(self, new_settings):
+            mock_settings.update(new_settings)
+
+    monkeypatch.setattr(Config, "shared", MockConfig.shared)
+    return MockConfig()
+
+
+# Confirm secrets are hidden
+def test_settings_endpoints(client, mock_config):
+    # Test GET /settings
+    response = client.get("/settings")
+    assert response.status_code == 200
+    assert response.json() == {
+        "public_setting": "visible",
+        "sensitive_setting": "[hidden]",
+    }
+
+    # Test POST /settings
+    new_settings = {"public_setting": "new_value", "sensitive_setting": "new_secret"}
+    response = client.post("/settings", json=new_settings)
+    assert response.status_code == 200
+    assert response.json() == {
+        "public_setting": "new_value",
+        "sensitive_setting": "[hidden]",
+    }
+
+    # Test GET /settings/{item_id}
+    response = client.get("/settings/public_setting")
+    assert response.status_code == 200
+    assert response.json() == {"public_setting": "new_value"}
+
+    response = client.get("/settings/sensitive_setting")
+    assert response.status_code == 200
+    assert response.json() == {"sensitive_setting": "[hidden]"}

@@ -216,3 +216,27 @@ def test_yaml_type_conversion(config_with_yaml, mock_yaml_file):
     # Check that the value is loaded from YAML and converted to int
     assert new_config.int_property == 42
     assert isinstance(new_config.int_property, int)
+
+
+def test_settings_hide_sensitive():
+    config = Config(
+        {
+            "public_key": ConfigProperty(str, default="public_value"),
+            "secret_key": ConfigProperty(str, default="secret_value", sensitive=True),
+        }
+    )
+
+    # Set values
+    config.public_key = "public_test"
+    config.secret_key = "secret_test"
+
+    # Test without hiding sensitive data
+    visible_settings = config.settings(hide_sensitive=False)
+    assert visible_settings == {
+        "public_key": "public_test",
+        "secret_key": "secret_test",
+    }
+
+    # Test with hiding sensitive data
+    hidden_settings = config.settings(hide_sensitive=True)
+    assert hidden_settings == {"public_key": "public_test", "secret_key": "[hidden]"}

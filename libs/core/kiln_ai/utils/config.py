@@ -13,11 +13,13 @@ class ConfigProperty:
         default: Any = None,
         env_var: Optional[str] = None,
         default_lambda: Optional[Callable[[], Any]] = None,
+        sensitive: bool = False,
     ):
         self.type = type_
         self.default = default
         self.env_var = env_var
         self.default_lambda = default_lambda
+        self.sensitive = sensitive
 
 
 class Config:
@@ -39,10 +41,12 @@ class Config:
             "open_ai_api_key": ConfigProperty(
                 str,
                 env_var="OPENAI_API_KEY",
+                sensitive=True,
             ),
             "groq_api_key": ConfigProperty(
                 str,
                 env_var="GROQ_API_KEY",
+                sensitive=True,
             ),
         }
         self._settings = self.load_settings()
@@ -96,7 +100,14 @@ class Config:
             settings = yaml.safe_load(f.read()) or {}
         return settings
 
-    def settings(self):
+    def settings(self, hide_sensitive=False):
+        if hide_sensitive:
+            return {
+                k: "[hidden]"
+                if k in self._properties and self._properties[k].sensitive
+                else v
+                for k, v in self._settings.items()
+            }
         return self._settings
 
     def save_setting(self, name: str, value: Any):
