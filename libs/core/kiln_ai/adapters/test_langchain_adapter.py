@@ -28,7 +28,7 @@ def test_langchain_adapter_munge_response(tmp_path):
 
 def test_langchain_adapter_infer_model_name(tmp_path):
     task = build_test_task(tmp_path)
-    custom = ChatGroq(model="llama-3.1-8b-instant")
+    custom = ChatGroq(model="llama-3.1-8b-instant", groq_api_key="test")
 
     lca = LangChainPromptAdapter(kiln_task=task, custom_model=custom)
 
