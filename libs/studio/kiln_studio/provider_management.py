@@ -73,38 +73,37 @@ def connect_provider_management(app: FastAPI):
             content={"message": f"Provider {provider} not supported"},
         )
 
-    async def connect_openai(key: str):
-        try:
-            headers = {
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-            }
-            response = requests.get("https://api.openai.com/v1/models", headers=headers)
 
-            # 401 def means invalid API key, so special case it
-            if response.status_code == 401:
-                return JSONResponse(
-                    status_code=401,
-                    content={
-                        "message": "Failed to connect to OpenAI. Invalid API key."
-                    },
-                )
+async def connect_openai(key: str):
+    try:
+        headers = {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
+        response = requests.get("https://api.openai.com/v1/models", headers=headers)
 
-            # Any non-200 status code is an error
-            response.raise_for_status()
-            # If the request is successful, the function will continue
-        except requests.RequestException as e:
+        # 401 def means invalid API key, so special case it
+        if response.status_code == 401:
             return JSONResponse(
-                status_code=400,
-                content={
-                    "message": f"Failed to connect to OpenAI. Likely invalid API key. Error: {str(e)}"
-                },
+                status_code=401,
+                content={"message": "Failed to connect to OpenAI. Invalid API key."},
             )
 
-        # It worked! Save the key and return success
-        Config.shared().open_ai_api_key = key
-
+        # Any non-200 status code is an error
+        response.raise_for_status()
+        # If the request is successful, the function will continue
+    except Exception as e:
         return JSONResponse(
-            status_code=200,
-            content={"message": "Connected to OpenAI"},
+            status_code=400,
+            content={
+                "message": f"Failed to connect to OpenAI. Likely invalid API key. Error: {str(e)}"
+            },
         )
+
+    # It worked! Save the key and return success
+    Config.shared().open_ai_api_key = key
+
+    return JSONResponse(
+        status_code=200,
+        content={"message": "Connected to OpenAI"},
+    )
