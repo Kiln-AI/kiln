@@ -59,7 +59,7 @@
       </ul>
     </div>
     <a
-      href={$next_enabled ? next_link : "#"}
+      href={$next_enabled ? next_link : ""}
       class="flex-none {$next_enabled ? '' : 'cursor-default'}"
     >
       <button
