@@ -30,7 +30,7 @@
     },
     {
       name: "Amazon Bedrock",
-      description: "Because your company has an AWS contract.",
+      description: "So your company has an AWS contract?",
       image: "/images/aws.svg",
       featured: false,
     },
