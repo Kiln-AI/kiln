@@ -1,6 +1,9 @@
 import os
 import pwd
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional
+
+import yaml
 
 
 class ConfigProperty:
@@ -42,6 +45,7 @@ class Config:
                 env_var="GROQ_API_KEY",
             ),
         }
+        self._settings = self.load_settings()
 
     @classmethod
     def shared(cls):
@@ -56,7 +60,9 @@ class Config:
         if name not in self._values:
             prop = self._properties[name]
             value = None
-            if prop.env_var and prop.env_var in os.environ:
+            if name in self._settings:
+                value = self._settings[name]
+            elif prop.env_var and prop.env_var in os.environ:
                 value = os.environ[prop.env_var]
             elif prop.default is not None:
                 value = prop.default
@@ -67,12 +73,44 @@ class Config:
         return self._values[name]
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name in ("_values", "_properties"):
+        if name in ("_values", "_properties", "_settings"):
             super().__setattr__(name, value)
         elif name in self._properties:
             self._values[name] = self._properties[name].type(value)
+            self.save_setting(name, value)
         else:
             raise AttributeError(f"Config has no attribute '{name}'")
+
+    @classmethod
+    def settings_path(cls, create=True):
+        settings_dir = os.path.join(Path.home(), ".kiln_ai")
+        if create and not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+        return os.path.join(settings_dir, "settings.yaml")
+
+    @classmethod
+    def load_settings(cls):
+        if not os.path.isfile(cls.settings_path(create=False)):
+            return {}
+        with open(cls.settings_path(), "r") as f:
+            settings = yaml.safe_load(f.read()) or {}
+        return settings
+
+    def settings(self):
+        return self._settings
+
+    def save_setting(self, name: str, value: Any):
+        self.update_settings({name: value})
+
+    def update_settings(self, new_settings: Dict[str, Any]):
+        # fresh load so we don't clobber other instances
+        self._settings = self.load_settings()
+        self._settings.update(new_settings)
+        for name, value in new_settings.items():
+            if value is None:
+                del self._settings[name]
+        with open(self.settings_path(), "w") as f:
+            yaml.dump(self._settings, f)
 
 
 def _get_user_id():
