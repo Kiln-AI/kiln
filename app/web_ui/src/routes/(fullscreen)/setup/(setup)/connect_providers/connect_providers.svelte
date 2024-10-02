@@ -64,22 +64,24 @@
 
   const connect_ollama = async () => {
     status.Ollama.connecting = true
-    const res = await fetch("http://localhost:8757/provider/ollama/connect", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
     let data: { message: string | null; models: [] | null }
+    let res: Response
     try {
+      res = await fetch("http://localhost:8757/provider/ollama/connect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
       data = await res.json()
     } catch (e) {
-      status.Ollama.error = "Failed to connect to Ollama: JSON parse error"
+      status.Ollama.error =
+        "Failed to connect to Ollama. Ensure Ollama is running."
       return
     } finally {
       status.Ollama.connecting = false
     }
-    if (res.status !== 200) {
+    if (!res || res.status !== 200 || !data) {
       status.Ollama.error = data.message || "Failed to connect to Ollama"
       return
     }
