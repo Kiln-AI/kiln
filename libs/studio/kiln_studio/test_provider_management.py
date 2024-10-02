@@ -1,10 +1,14 @@
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from libs.studio.kiln_studio.provider_management import connect_provider_management
+from libs.studio.kiln_studio.provider_management import (
+    connect_groq,
+    connect_provider_management,
+)
 
 
 @pytest.fixture
@@ -95,7 +99,80 @@ def test_connect_openai_request_exception(mock_requests_get, client):
     )
 
     assert response.status_code == 400
-    assert (
-        "Failed to connect to OpenAI. Likely invalid API key. Error:"
-        in response.json()["message"]
+    assert "Failed to connect to OpenAI. Error:" in response.json()["message"]
+
+
+@pytest.fixture
+def mock_requests_get():
+    with patch("libs.studio.kiln_studio.provider_management.requests.get") as mock_get:
+        yield mock_get
+
+
+@pytest.fixture
+def mock_config():
+    with patch("libs.studio.kiln_studio.provider_management.Config") as mock_config:
+        mock_config.shared.return_value = MagicMock()
+        yield mock_config
+
+
+@patch("libs.studio.kiln_studio.provider_management.requests.get")
+@patch("libs.studio.kiln_studio.provider_management.Config.shared")
+async def test_connect_groq_success(mock_config_shared, mock_requests_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = '{"models": []}'
+    mock_requests_get.return_value = mock_response
+
+    mock_config = MagicMock()
+    mock_config_shared.return_value = mock_config
+
+    assert mock_config.shared.return_value.groq_api_key != "test_api_key"
+    result = await connect_groq("test_api_key")
+
+    assert result.status_code == 200
+    assert result.body == b'{"message":"Connected to Groq"}'
+    mock_config.shared.return_value.groq_api_key = "test_api_key"
+    mock_requests_get.assert_called_once_with(
+        "https://api.groq.com/openai/v1/models",
+        headers={
+            "Authorization": "Bearer test_api_key",
+            "Content-Type": "application/json",
+        },
     )
+    assert mock_config.shared.return_value.groq_api_key == "test_api_key"
+
+
+async def test_connect_groq_invalid_api_key(mock_requests_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 401
+    mock_response.text = "{a:'invalid_api_key'}"
+    mock_requests_get.return_value = mock_response
+
+    result = await connect_groq("invalid_key")
+
+    assert result.status_code == 401
+    response_data = json.loads(result.body)
+    assert "Invalid API key" in response_data["message"]
+
+
+async def test_connect_groq_request_error(mock_requests_get):
+    mock_requests_get.side_effect = Exception("Connection error")
+
+    result = await connect_groq("test_api_key")
+
+    assert result.status_code == 400
+    response_data = json.loads(result.body)
+    assert "Failed to connect to Groq" in response_data["message"]
+
+
+async def test_connect_groq_non_200_response(mock_requests_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.raise_for_status.side_effect = Exception("Server error")
+    mock_requests_get.return_value = mock_response
+
+    result = await connect_groq("test_api_key")
+
+    assert result.status_code == 400
+    response_data = json.loads(result.body)
+    assert "Failed to connect to Groq" in response_data["message"]

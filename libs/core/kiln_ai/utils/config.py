@@ -37,6 +37,10 @@ class Config:
                 str,
                 env_var="OPENAI_API_KEY",
             ),
+            "groq_api_key": ConfigProperty(
+                str,
+                env_var="GROQ_API_KEY",
+            ),
         }
 
     @classmethod

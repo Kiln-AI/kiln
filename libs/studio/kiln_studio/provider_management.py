@@ -67,6 +67,8 @@ def connect_provider_management(app: FastAPI):
         print(f"Connecting API key for {provider}: {key_data}")
         if provider == "openai" and isinstance(key_data["API Key"], str):
             return await connect_openai(key_data["API Key"])
+        elif provider == "groq" and isinstance(key_data["API Key"], str):
+            return await connect_groq(key_data["API Key"])
 
         return JSONResponse(
             status_code=400,
@@ -95,9 +97,7 @@ async def connect_openai(key: str):
     except Exception as e:
         return JSONResponse(
             status_code=400,
-            content={
-                "message": f"Failed to connect to OpenAI. Likely invalid API key. Error: {str(e)}"
-            },
+            content={"message": f"Failed to connect to OpenAI. Error: {str(e)}"},
         )
 
     # It worked! Save the key and return success
@@ -106,4 +106,38 @@ async def connect_openai(key: str):
     return JSONResponse(
         status_code=200,
         content={"message": "Connected to OpenAI"},
+    )
+
+
+async def connect_groq(key: str):
+    try:
+        headers = {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
+        response = requests.get(
+            "https://api.groq.com/openai/v1/models", headers=headers
+        )
+
+        if "invalid_api_key" in response.text:
+            return JSONResponse(
+                status_code=401,
+                content={"message": "Failed to connect to Groq. Invalid API key."},
+            )
+
+        # Any non-200 status code is an error
+        response.raise_for_status()
+        # If the request is successful, the function will continue
+    except Exception as e:
+        return JSONResponse(
+            status_code=400,
+            content={"message": f"Failed to connect to Groq. Error: {str(e)}"},
+        )
+
+    # It worked! Save the key and return success
+    Config.shared().groq_api_key = key
+
+    return JSONResponse(
+        status_code=200,
+        content={"message": "Connected to Groq"},
     )
