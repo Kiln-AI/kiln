@@ -80,6 +80,17 @@ def connect_provider_management(app: FastAPI):
                 "Content-Type": "application/json",
             }
             response = requests.get("https://api.openai.com/v1/models", headers=headers)
+
+            # 401 def means invalid API key, so special case it
+            if response.status_code == 401:
+                return JSONResponse(
+                    status_code=401,
+                    content={
+                        "message": "Failed to connect to OpenAI. Invalid API key."
+                    },
+                )
+
+            # Any non-200 status code is an error
             response.raise_for_status()
             # If the request is successful, the function will continue
         except requests.RequestException as e:
@@ -90,7 +101,7 @@ def connect_provider_management(app: FastAPI):
                 },
             )
 
-        # Save the key
+        # It worked! Save the key and return success
         Config.shared().open_ai_api_key = key
 
         return JSONResponse(
