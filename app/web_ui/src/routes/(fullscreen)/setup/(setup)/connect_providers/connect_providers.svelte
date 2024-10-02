@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fade } from "svelte/transition"
+  import { onMount } from "svelte"
 
   const providers = [
     {
@@ -39,6 +40,7 @@
   type ProviderStatus = {
     connected: boolean
     error: string | null
+    custom_description: string | null
     connecting: boolean
   }
   let status: { [key: string]: ProviderStatus } = {
@@ -46,24 +48,47 @@
       connected: false,
       connecting: false,
       error: null,
+      custom_description: null,
+    },
+    OpenAI: {
+      connected: false,
+      connecting: false,
+      error: null,
+      custom_description: null,
+    },
+    "OpenRouter.ai": {
+      connected: false,
+      connecting: false,
+      error: null,
+      custom_description: null,
+    },
+    Groq: {
+      connected: false,
+      connecting: false,
+      error: null,
+      custom_description: null,
+    },
+    "Amazon Bedrock": {
+      connected: false,
+      connecting: false,
+      error: null,
+      custom_description: null,
     },
   }
 
   export let has_connected_providers = false
 
   const connect_provider = (provider: (typeof providers)[number]) => {
-    // TODO: connect provider
     if (status[provider.name].connected) {
       return
     }
-    console.log("connect_provider", provider)
     if (provider.name === "Ollama") {
       connect_ollama()
     }
   }
 
-  const connect_ollama = async () => {
-    status.Ollama.connecting = true
+  const connect_ollama = async (user_initated: boolean = true) => {
+    status.Ollama.connecting = user_initated
     let data: { message: string | null; models: [] | null }
     let res: Response
     try {
@@ -75,8 +100,7 @@
       })
       data = await res.json()
     } catch (e) {
-      status.Ollama.error =
-        "Failed to connect to Ollama. Ensure Ollama is running."
+      status.Ollama.error = "Failed to connect. Ensure Ollama app is running."
       return
     } finally {
       status.Ollama.connecting = false
@@ -90,8 +114,19 @@
       return
     }
     status.Ollama.connected = true
+    status.Ollama.custom_description =
+      "Ollama connected. The following supported models are available: " +
+      data.models.join(", ") +
+      "."
     has_connected_providers = true
   }
+
+  onMount(() => {
+    connect_ollama(false).then(() => {
+      // Clear the error as the user didn't initiate this run
+      status["Ollama"].error = null
+    })
+  })
 </script>
 
 <div class="flex flex-col gap-6 max-w-lg mx-auto">
@@ -100,9 +135,7 @@
       <img
         src={provider.image}
         alt={provider.name}
-        class="text-grey-500 p-1 {provider.featured
-          ? 'size-12'
-          : 'size-10 mx-1'}"
+        class="flex-none p-1 {provider.featured ? 'size-12' : 'size-10 mx-1'}"
       />
       <div class="flex flex-col grow pr-4">
         <h3
@@ -122,7 +155,9 @@
             {status[provider.name].error}
           </p>
         {:else}
-          <p class="text-sm text-gray-500">{provider.description}</p>
+          <p class="text-sm text-gray-500">
+            {status[provider.name].custom_description || provider.description}
+          </p>
         {/if}
       </div>
       <button

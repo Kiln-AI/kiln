@@ -106,7 +106,7 @@ built_in_models: List[KilnModel] = [
             ),
             KilnModelProvider(
                 name=ModelProviderName.ollama,
-                provider_options={"model": "llama3.1"},
+                provider_options={"model": "llama3.1"},  # 8b is default
             ),
             KilnModelProvider(
                 name=ModelProviderName.openrouter,

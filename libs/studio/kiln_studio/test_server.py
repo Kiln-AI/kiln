@@ -34,13 +34,13 @@ def test_ping(client):
 def test_connect_ollama_success(client):
     with patch("requests.get") as mock_get:
         mock_get.return_value.json.return_value = {
-            "models": [{"model": "model1"}, {"model": "model2"}]
+            "models": [{"model": "phi3.5:latest"}]
         }
         response = client.post("/provider/ollama/connect")
         assert response.status_code == 200
         assert response.json() == {
             "message": "Ollama connected",
-            "models": ["model1", "model2"],
+            "models": ["phi3.5:latest"],
         }
 
 
@@ -50,7 +50,7 @@ def test_connect_ollama_connection_error(client):
         response = client.post("/provider/ollama/connect")
         assert response.status_code == 417
         assert response.json() == {
-            "message": "Failed to connect to Ollama. Ensure Ollama app is running."
+            "message": "Failed to connect. Ensure Ollama app is running."
         }
 
 
@@ -69,9 +69,10 @@ def test_connect_ollama_no_models(client):
         mock_get.return_value.json.return_value = {"models": []}
         response = client.post("/provider/ollama/connect")
         assert response.status_code == 417
-        assert response.json() == {
-            "message": "Ollama not connected, or no Ollama models installed."
-        }
+        assert (
+            "Ollama is running, but no supported models are installed"
+            in response.json()["message"]
+        )
 
 
 @pytest.mark.parametrize(
