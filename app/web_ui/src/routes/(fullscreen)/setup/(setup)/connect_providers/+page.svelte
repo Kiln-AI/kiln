@@ -7,12 +7,13 @@
   step_number.set(1)
 
   const next_enabled = getContext("setup_next_enabled") as Writable<boolean>
+  const next_visible = getContext("setup_next_visible") as Writable<boolean>
   let has_connected_providers = false
+  let intermediate_step = false
   $: {
     next_enabled.set(has_connected_providers)
+    next_visible.set(!intermediate_step)
   }
 </script>
 
-<div class="py-4">
-  <ConnectProviders bind:has_connected_providers />
-</div>
+<ConnectProviders bind:has_connected_providers bind:intermediate_step />

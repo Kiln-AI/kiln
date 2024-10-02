@@ -13,3 +13,11 @@ Coming soon...
 Running the desktop app without building executable:
 
 `python -m app.desktop.desktop`
+
+Run the API server with auto-reload for development:
+
+`AUTO_RELOAD=true python -m libs.studio.kiln_studio.server`
+
+Run the web UI with auto-reload for development (Node and `npm install` required):
+
+In /app/web_ui: `npm run dev --`

@@ -33,6 +33,10 @@ class Config:
                 env_var="KILN_AUTOSAVE_EXAMPLES",
                 default=True,
             ),
+            "open_ai_api_key": ConfigProperty(
+                str,
+                env_var="OPENAI_API_KEY",
+            ),
         }
 
     @classmethod

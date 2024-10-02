@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from libs.core.kiln_ai.adapters.ml_model_list import ModelProviderName, built_in_models
+from libs.core.kiln_ai.utils.config import Config
 
 
 def connect_provider_management(app: FastAPI):
@@ -51,4 +52,48 @@ def connect_provider_management(app: FastAPI):
             content={
                 "message": "Ollama is running, but no supported models are installed. Install one or more supported model, like 'ollama pull phi3.5'."
             },
+        )
+
+    @app.post("/provider/connect_api_key")
+    async def connect_api_key(payload: dict):
+        provider = payload.get("provider")
+        key_data = payload.get("key_data")
+        if not isinstance(key_data, dict) or not isinstance(provider, str):
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Invalid key_data or provider"},
+            )
+
+        print(f"Connecting API key for {provider}: {key_data}")
+        if provider == "openai" and isinstance(key_data["API Key"], str):
+            return await connect_openai(key_data["API Key"])
+
+        return JSONResponse(
+            status_code=400,
+            content={"message": f"Provider {provider} not supported"},
+        )
+
+    async def connect_openai(key: str):
+        try:
+            headers = {
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+            }
+            response = requests.get("https://api.openai.com/v1/models", headers=headers)
+            response.raise_for_status()
+            # If the request is successful, the function will continue
+        except requests.RequestException as e:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": f"Failed to connect to OpenAI. Likely invalid API key. Error: {str(e)}"
+                },
+            )
+
+        # Save the key
+        Config.shared().open_ai_api_key = key
+
+        return JSONResponse(
+            status_code=200,
+            content={"message": "Connected to OpenAI"},
         )

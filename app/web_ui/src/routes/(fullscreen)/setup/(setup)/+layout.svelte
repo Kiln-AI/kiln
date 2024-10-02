@@ -5,6 +5,9 @@
   setContext("setup_step_number", step_number)
   const next_enabled = writable(false)
   setContext("setup_next_enabled", next_enabled)
+  const next_visible = writable(true)
+  next_visible.set(true)
+  setContext("setup_next_visible", next_visible)
 
   const steps = [
     {
@@ -42,7 +45,7 @@
     {step_description}
   </h3>
 
-  <div class="flex-none min-h-[50vh] py-8">
+  <div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col">
     <slot />
   </div>
 
@@ -60,7 +63,9 @@
     </div>
     <a
       href={$next_enabled ? next_link : ""}
-      class="flex-none {$next_enabled ? '' : 'cursor-default'}"
+      class="flex-none {$next_enabled ? '' : 'cursor-default'} {$next_visible
+        ? ''
+        : 'hidden'}"
     >
       <button
         class="btn btn-primary w-full min-w-[130px]"

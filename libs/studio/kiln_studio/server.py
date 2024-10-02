@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +32,12 @@ def make_app():
     return app
 
 
+app = make_app()
 if __name__ == "__main__":
-    app = make_app()
-    uvicorn.run(app, host="127.0.0.1", port=8757)
+    auto_reload = os.environ.get("AUTO_RELOAD", "").lower() in ("true", "1", "yes")
+    uvicorn.run(
+        "libs.studio.kiln_studio.server:app",
+        host="127.0.0.1",
+        port=8757,
+        reload=auto_reload,
+    )
