@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte"
+  import { goto } from "$app/navigation"
 
   export let created = false
+  // Prevents flash of complete UI if we're going to redirect
+  export let redirect_on_created: string | null = null
   let project_name = ""
   let project_name_error = false
   let project_description = ""
@@ -32,6 +35,9 @@
         throw new Error(
           data["message"] || "Unknown error (status: " + response.status + ")",
         )
+      }
+      if (redirect_on_created) {
+        goto(redirect_on_created)
       }
       created = true
     } catch (error) {
@@ -89,7 +95,7 @@
         on:click={create_project}>Create Project</button
       >
     </form>
-  {:else}
+  {:else if !redirect_on_created}
     <h2 class="text-xl font-medium text-center">Project Created!</h2>
     <p class="text-sm text-center">
       Your new project "{project_name}" has been created.

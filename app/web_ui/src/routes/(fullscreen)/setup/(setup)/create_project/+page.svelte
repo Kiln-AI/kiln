@@ -1,12 +1,5 @@
 <script lang="ts">
   import NewProject from "./new_project.svelte"
-  import { goto } from "$app/navigation"
-
-  let created = false
-
-  $: if (created) {
-    goto("/")
-  }
 </script>
 
 <div class="grow"></div>
@@ -21,5 +14,5 @@
 </h3>
 
 <div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col pt-24">
-  <NewProject bind:created />
+  <NewProject redirect_on_created="/" />
 </div>
