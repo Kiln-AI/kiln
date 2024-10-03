@@ -1,10 +1,23 @@
+from unittest.mock import patch
+
 import pytest
 from dotenv import load_dotenv
+
+from libs.core.kiln_ai.utils.config import Config
 
 
 @pytest.fixture(scope="session", autouse=True)
 def load_env():
     load_dotenv()
+
+
+# mock out the settings path so we don't clobber the user's actual settings during tests
+@pytest.fixture(autouse=True)
+def use_temp_settings_dir(tmp_path):
+    with patch.object(
+        Config, "settings_path", return_value=str(tmp_path / "settings.yaml")
+    ):
+        yield
 
 
 def pytest_addoption(parser):

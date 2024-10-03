@@ -8,15 +8,6 @@ import yaml
 from libs.core.kiln_ai.utils.config import Config, ConfigProperty, _get_user_id
 
 
-# mock out the settings path so we don't clobber the user's actual settings
-@pytest.fixture(autouse=True)
-def use_temp_settings_dir(tmp_path):
-    with patch.object(
-        Config, "settings_path", return_value=str(tmp_path / "settings.yaml")
-    ):
-        yield
-
-
 @pytest.fixture
 def mock_yaml_file(tmp_path):
     yaml_file = tmp_path / "test_settings.yaml"
@@ -240,3 +231,35 @@ def test_settings_hide_sensitive():
     # Test with hiding sensitive data
     hidden_settings = config.settings(hide_sensitive=True)
     assert hidden_settings == {"public_key": "public_test", "secret_key": "[hidden]"}
+
+
+def test_list_property(config_with_yaml, mock_yaml_file):
+    # Add a list property to the config
+    config_with_yaml._properties["list_property"] = ConfigProperty(list, default=[])
+
+    # Set initial values
+    config_with_yaml.list_property = ["item1", "item2"]
+
+    # Check that the property returns a list
+    assert isinstance(config_with_yaml.list_property, list)
+    assert config_with_yaml.list_property == ["item1", "item2"]
+
+    # Update the list
+    config_with_yaml.list_property = ["item1", "item2", "item3"]
+    assert config_with_yaml.list_property == ["item1", "item2", "item3"]
+
+    # Check that the value was saved to the YAML file
+    with open(mock_yaml_file, "r") as f:
+        saved_settings = yaml.safe_load(f)
+    assert saved_settings["list_property"] == ["item1", "item2", "item3"]
+
+    # Create a new config instance to test loading from YAML
+    new_config = Config(
+        properties={
+            "list_property": ConfigProperty(list, default=[]),
+        }
+    )
+
+    # Check that the value is loaded from YAML and is a list
+    assert isinstance(new_config.list_property, list)
+    assert new_config.list_property == ["item1", "item2", "item3"]

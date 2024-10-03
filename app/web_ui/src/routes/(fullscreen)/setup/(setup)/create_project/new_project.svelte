@@ -3,10 +3,47 @@
 
   export let created = false
   let project_name = ""
+  let project_name_error = false
+  let project_description = ""
+  let error_message = ""
 
-  const create_project = () => {
-    console.log("create_project", project_name)
-    created = true
+  const create_project = async () => {
+    try {
+      if (!project_name) {
+        project_name_error = true
+        error_message = "Project name is required"
+        return
+      } else {
+        project_name_error = false
+      }
+
+      const response = await fetch("http://localhost:8757/api/project", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          project_name: project_name,
+          project_description: project_description,
+        }),
+      })
+      const data = await response.json()
+      if (response.status !== 200) {
+        throw new Error(
+          data["message"] || "Unknown error (status: " + response.status + ")",
+        )
+      }
+      created = true
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "The string did not match the expected pattern."
+      ) {
+        error_message = "Unexpected response from server"
+      } else {
+        error_message = error instanceof Error ? error.message : "Unknown error"
+      }
+    }
   }
 
   onMount(() => {
@@ -17,9 +54,9 @@
   })
 </script>
 
-<div class="flex flex-col gap-2 max-w-[400px] mx-auto">
+<div class="flex flex-col gap-2 max-w-[800px] mx-auto">
   {#if !created}
-    <form class="flex flex-col gap-2">
+    <form class="flex flex-col gap-2 max-w-[800px] lg:w-96 mx-auto">
       <label for="project_name" class="text-sm font-medium text-left"
         >Project Name</label
       >
@@ -27,11 +64,29 @@
         type="text"
         placeholder="Project Name"
         id="project_name"
-        class="input input-bordered w-full max-w-[300px]"
+        class="input input-bordered w-full {project_name_error
+          ? 'input-error'
+          : ''}"
         bind:value={project_name}
       />
-      <button type="submit" class="btn btn-primary" on:click={create_project}
-        >Create</button
+      <label
+        for="project_description"
+        class="text-sm font-medium text-left pt-6">Project Description</label
+      >
+      <input
+        type="textarea"
+        placeholder="Project Description"
+        id="project_description"
+        class="textarea textarea-bordered w-full h-24 mb-6"
+        bind:value={project_description}
+      />
+      {#if error_message}
+        <div class="text-sm text-center text-error">{error_message}</div>
+      {/if}
+      <button
+        type="submit"
+        class="btn btn-primary mt-2"
+        on:click={create_project}>Create Project</button
       >
     </form>
   {:else}

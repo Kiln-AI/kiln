@@ -143,7 +143,7 @@
     let data: { message: string | null; models: [] | null }
     let res: Response
     try {
-      res = await fetch("http://localhost:8757/provider/ollama/connect", {
+      res = await fetch("http://localhost:8757/api/provider/ollama/connect", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -193,16 +193,19 @@
     api_key_submitting = true
     try {
       const provider_id = api_key_provider ? api_key_provider.id : ""
-      let res = await fetch("http://localhost:8757/provider/connect_api_key", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      let res = await fetch(
+        "http://localhost:8757/api/provider/connect_api_key",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            provider: provider_id,
+            key_data: apiKeyData,
+          }),
         },
-        body: JSON.stringify({
-          provider: provider_id,
-          key_data: apiKeyData,
-        }),
-      })
+      )
       let data = await res.json()
 
       if (res.status !== 200) {
@@ -228,7 +231,7 @@
   let loaded_initial_providers = true
   const check_existing_providers = async () => {
     try {
-      let res = await fetch("http://localhost:8757/settings")
+      let res = await fetch("http://localhost:8757/api/settings")
       let data = await res.json()
       if (data["open_ai_api_key"]) {
         status.openai.connected = true

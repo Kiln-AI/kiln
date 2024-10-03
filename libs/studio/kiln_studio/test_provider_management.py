@@ -27,7 +27,8 @@ def client(app):
 
 def test_connect_api_key_invalid_payload(client):
     response = client.post(
-        "/provider/connect_api_key", json={"provider": "openai", "key_data": "invalid"}
+        "/api/provider/connect_api_key",
+        json={"provider": "openai", "key_data": "invalid"},
     )
     assert response.status_code == 400
     assert response.json() == {"message": "Invalid key_data or provider"}
@@ -35,7 +36,7 @@ def test_connect_api_key_invalid_payload(client):
 
 def test_connect_api_key_unsupported_provider(client):
     response = client.post(
-        "/provider/connect_api_key",
+        "/api/provider/connect_api_key",
         json={"provider": "unsupported", "key_data": {"API Key": "test"}},
     )
     assert response.status_code == 400
@@ -46,7 +47,7 @@ def test_connect_api_key_unsupported_provider(client):
 def test_connect_api_key_openai_success(mock_connect_openai, client):
     mock_connect_openai.return_value = {"message": "Connected to OpenAI"}
     response = client.post(
-        "/provider/connect_api_key",
+        "/api/provider/connect_api_key",
         json={"provider": "openai", "key_data": {"API Key": "test_key"}},
     )
     assert response.status_code == 200
@@ -65,7 +66,7 @@ def test_connect_openai_success(mock_config_shared, mock_requests_get, client):
     mock_config_shared.return_value = mock_config
 
     response = client.post(
-        "/provider/connect_api_key",
+        "/api/provider/connect_api_key",
         json={"provider": "openai", "key_data": {"API Key": "test_key"}},
     )
 
@@ -81,7 +82,7 @@ def test_connect_openai_invalid_key(mock_requests_get, client):
     mock_requests_get.return_value = mock_response
 
     response = client.post(
-        "/provider/connect_api_key",
+        "/api/provider/connect_api_key",
         json={"provider": "openai", "key_data": {"API Key": "invalid_key"}},
     )
 
@@ -96,7 +97,7 @@ def test_connect_openai_request_exception(mock_requests_get, client):
     mock_requests_get.side_effect = Exception("Test error")
 
     response = client.post(
-        "/provider/connect_api_key",
+        "/api/provider/connect_api_key",
         json={"provider": "openai", "key_data": {"API Key": "test_key"}},
     )
 

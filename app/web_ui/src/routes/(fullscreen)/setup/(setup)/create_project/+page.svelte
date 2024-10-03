@@ -13,7 +13,7 @@
 <div class="flex-none flex flex-row items-center justify-center">
   <img src="/logo.svg" alt="logo" class="size-8 mb-3" />
 </div>
-<h1 class="text-2xl lg:text-4xl ml-4 flex-none font-bold text-center">
+<h1 class="text-2xl lg:text-4xl flex-none font-bold text-center">
   Create a Project
 </h1>
 <h3 class="text-base font-medium text-center mt-3 max-w-[600px] mx-auto">

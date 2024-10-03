@@ -10,8 +10,8 @@ from libs.core.kiln_ai.utils.config import Config
 
 
 def connect_provider_management(app: FastAPI):
-    @app.post("/provider/ollama/connect")
-    def connect_ollama():
+    @app.post("/api/provider/ollama/connect")
+    async def connect_ollama():
         # Tags is a list of Ollama models. Proves Ollama is running, and models are available.
         try:
             tags = requests.get("http://localhost:11434/api/tags", timeout=5).json()
@@ -58,7 +58,7 @@ def connect_provider_management(app: FastAPI):
             },
         )
 
-    @app.post("/provider/connect_api_key")
+    @app.post("/api/provider/connect_api_key")
     async def connect_api_key(payload: dict):
         provider = payload.get("provider")
         key_data = payload.get("key_data")

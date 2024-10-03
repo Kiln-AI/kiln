@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .project_management import connect_project_management
 from .provider_management import connect_provider_management
 from .settings import connect_settings
 from .webhost import connect_webhost
@@ -25,6 +26,7 @@ def make_app():
     def ping():
         return "pong"
 
+    connect_project_management(app)
     connect_provider_management(app)
     connect_settings(app)
     connect_webhost(app)
