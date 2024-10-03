@@ -62,6 +62,11 @@ class Config:
                 env_var="AWS_SECRET_ACCESS_KEY",
                 sensitive=True,
             ),
+            "open_router_api_key": ConfigProperty(
+                str,
+                env_var="OPENROUTER_API_KEY",
+                sensitive=True,
+            ),
         }
         self._settings = self.load_settings()
 

@@ -20,6 +20,11 @@
         "The easiest way to use Kiln. Proxies requests to OpenAI, Anthropic, Google, and more. Works with almost any model.",
       image: "/images/openrouter.svg",
       featured: true,
+      api_key_steps: [
+        "Go to https://openrouter.ai/settings/keys",
+        "Create a new API Key",
+        "Copy the new API Key, paste it below and click 'Connect'",
+      ],
     },
     {
       name: "OpenAI",
@@ -236,6 +241,9 @@
       }
       if (data["bedrock_access_key"] && data["bedrock_secret_key"]) {
         status.bedrock.connected = true
+      }
+      if (data["open_router_api_key"]) {
+        status.openrouter.connected = true
       }
     } catch (e) {
       console.error("check_existing_providers error", e)

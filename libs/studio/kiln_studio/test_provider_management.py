@@ -5,8 +5,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from libs.core.kiln_ai.utils.config import Config
 from libs.studio.kiln_studio.provider_management import (
     connect_groq,
+    connect_openrouter,
     connect_provider_management,
 )
 
@@ -176,3 +178,44 @@ async def test_connect_groq_non_200_response(mock_requests_get):
     assert result.status_code == 400
     response_data = json.loads(result.body)
     assert "Failed to connect to Groq" in response_data["message"]
+
+
+@pytest.mark.asyncio
+async def test_connect_openrouter():
+    # Test case 1: Valid API key
+    with patch("requests.post") as mock_post:
+        mock_response = MagicMock()
+        mock_response.status_code = (
+            400  # Simulating an expected error due to empty body
+        )
+        mock_post.return_value = mock_response
+
+        result = await connect_openrouter("valid_api_key")
+        assert result.status_code == 200
+        assert result.body == b'{"message":"Connected to OpenRouter"}'
+        assert Config.shared().open_router_api_key == "valid_api_key"
+
+    # Test case 2: Invalid API key
+    with patch("requests.post") as mock_post:
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_post.return_value = mock_response
+
+        result = await connect_openrouter("invalid_api_key")
+        assert result.status_code == 401
+        assert (
+            result.body
+            == b'{"message":"Failed to connect to OpenRouter. Invalid API key."}'
+        )
+        assert Config.shared().open_router_api_key != "invalid_api_key"
+
+    # Test case 3: Unexpected error
+    with patch("requests.post") as mock_post:
+        mock_post.side_effect = Exception("Unexpected error")
+
+        result = await connect_openrouter("api_key")
+        assert result.status_code == 400
+        assert (
+            b"Failed to connect to OpenRouter. Error: Unexpected error" in result.body
+        )
+        assert Config.shared().open_router_api_key != "api_key"

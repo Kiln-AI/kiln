@@ -68,7 +68,7 @@ def connect_provider_management(app: FastAPI):
                 content={"message": "Invalid key_data or provider"},
             )
 
-        api_key_providers = ["openai", "groq", "bedrock"]
+        api_key_providers = ["openai", "groq", "bedrock", "openrouter"]
         if provider not in api_key_providers:
             return JSONResponse(
                 status_code=400,
@@ -79,6 +79,8 @@ def connect_provider_management(app: FastAPI):
             return await connect_openai(key_data["API Key"])
         elif provider == "groq" and isinstance(key_data["API Key"], str):
             return await connect_groq(key_data["API Key"])
+        elif provider == "openrouter" and isinstance(key_data["API Key"], str):
+            return await connect_openrouter(key_data["API Key"])
         elif (
             provider == "bedrock"
             and isinstance(key_data["Access Key"], str)
@@ -90,6 +92,44 @@ def connect_provider_management(app: FastAPI):
                 status_code=400,
                 content={"message": f"Provider {provider} missing API key"},
             )
+
+
+async def connect_openrouter(key: str):
+    try:
+        headers = {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
+        # invalid body, but we just want to see if the key is valid
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json={},
+        )
+
+        # 401 def means invalid API key
+        if response.status_code == 401:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "message": "Failed to connect to OpenRouter. Invalid API key."
+                },
+            )
+        else:
+            # No 401 means key is valid (even it it's an error, which we expect with empty body)
+            Config.shared().open_router_api_key = key
+
+            return JSONResponse(
+                status_code=200,
+                content={"message": "Connected to OpenRouter"},
+            )
+            # Any non-200 status code is an error
+    except Exception as e:
+        # unexpected error
+        return JSONResponse(
+            status_code=400,
+            content={"message": f"Failed to connect to OpenRouter. Error: {str(e)}"},
+        )
 
 
 async def connect_openai(key: str):
