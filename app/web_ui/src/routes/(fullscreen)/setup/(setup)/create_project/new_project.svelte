@@ -77,7 +77,10 @@
       />
       <label
         for="project_description"
-        class="text-sm font-medium text-left pt-6">Project Description</label
+        class="text-sm font-medium text-left pt-6 flex flex-row"
+        ><span class="grow">Project Description</span>
+        <span class="pl-1 text-xs text-gray-500 flex-none">Optional</span
+        ></label
       >
       <input
         type="textarea"

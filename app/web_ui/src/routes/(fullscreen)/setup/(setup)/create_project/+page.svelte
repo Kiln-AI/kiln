@@ -10,9 +10,11 @@
   Create a Project
 </h1>
 <h3 class="text-base font-medium text-center mt-3 max-w-[600px] mx-auto">
-  You can always create more later!
+  "Example" is fine if you're just trying things out.
 </h3>
 
-<div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col pt-24">
+<div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18">
   <NewProject redirect_on_created="/" />
 </div>
+
+<div class="grow-[1.5]"></div>
