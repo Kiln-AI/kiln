@@ -111,8 +111,11 @@
   }
 
   export let has_connected_providers = false
+  $: has_connected_providers = Object.values(status).some(
+    (provider) => provider.connected,
+  )
   export let intermediate_step = false
-  let api_key_provider: Provider | null = providers[1]
+  let api_key_provider: Provider | null = null
   $: {
     intermediate_step = api_key_provider != null
   }
@@ -131,7 +134,7 @@
   }
 
   const connect_ollama = async (user_initated: boolean = true) => {
-    status.Ollama.connecting = user_initated
+    status.ollama.connecting = user_initated
     let data: { message: string | null; models: [] | null }
     let res: Response
     try {
@@ -143,25 +146,24 @@
       })
       data = await res.json()
     } catch (e) {
-      status.Ollama.error = "Failed to connect. Ensure Ollama app is running."
+      status.ollama.error = "Failed to connect. Ensure Ollama app is running."
       return
     } finally {
-      status.Ollama.connecting = false
+      status.ollama.connecting = false
     }
     if (!res || res.status !== 200 || !data) {
-      status.Ollama.error = data.message || "Failed to connect to Ollama"
+      status.ollama.error = data.message || "Failed to connect to Ollama"
       return
     }
     if (!data.models || data.models.length === 0) {
-      status.Ollama.error = "Ollama running, but no models available"
+      status.ollama.error = "Ollama running, but no models available"
       return
     }
-    status.Ollama.connected = true
-    status.Ollama.custom_description =
+    status.ollama.connected = true
+    status.ollama.custom_description =
       "Ollama connected. The following supported models are available: " +
       data.models.join(", ") +
       "."
-    has_connected_providers = true
   }
 
   let api_key_issue = false
@@ -185,18 +187,18 @@
     api_key_message = null
     api_key_submitting = true
     try {
+      const provider_id = api_key_provider ? api_key_provider.id : ""
       let res = await fetch("http://localhost:8757/provider/connect_api_key", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          provider: api_key_provider ? api_key_provider.id : "",
+          provider: provider_id,
           key_data: apiKeyData,
         }),
       })
       let data = await res.json()
-      console.log("submit_api_key", data)
 
       if (res.status !== 200) {
         api_key_message =
@@ -206,6 +208,7 @@
 
       api_key_issue = false
       api_key_message = null
+      status[provider_id].connected = true
       api_key_provider = null
     } catch (e) {
       console.error("submit_api_key error", e)
@@ -217,11 +220,36 @@
     }
   }
 
+  let loaded_initial_providers = true
+  const check_existing_providers = async () => {
+    try {
+      let res = await fetch("http://localhost:8757/settings")
+      let data = await res.json()
+      if (data["open_ai_api_key"]) {
+        status.openai.connected = true
+      }
+      if (data["groq_api_key"]) {
+        status.groq.connected = true
+      }
+      if (data["ollama_base_url"]) {
+        status.ollama.connected = true
+      }
+      if (data["bedrock_access_key"] && data["bedrock_secret_key"]) {
+        status.bedrock.connected = true
+      }
+    } catch (e) {
+      console.error("check_existing_providers error", e)
+    } finally {
+      loaded_initial_providers = false
+    }
+  }
+
   onMount(() => {
     connect_ollama(false).then(() => {
       // Clear the error as the user didn't initiate this run
       status["ollama"].error = null
     })
+    check_existing_providers()
   })
 </script>
 
@@ -343,13 +371,15 @@
             class="btn md:min-w-[100px]"
             on:click={() => connect_provider(provider)}
           >
-            {#if status[provider.id] && status[provider.id].connected}
+            {#if loaded_initial_providers}
+              &nbsp;
+            {:else if status[provider.id] && status[provider.id].connected}
               <img
                 src="/images/circle-check.svg"
                 class="size-6"
                 alt="Connected"
               />
-            {:else if status[provider.id] && status[provider.id].connecting}
+            {:else if status[provider.id].connecting}
               <div class="loading loading-spinner loading-md"></div>
             {:else}
               Connect
