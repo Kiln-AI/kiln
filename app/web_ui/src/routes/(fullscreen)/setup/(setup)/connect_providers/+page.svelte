@@ -3,10 +3,8 @@
 
   let has_connected_providers = false
   let intermediate_step = false
-  let next_enabled = false
-  $: next_enabled = has_connected_providers
   let next_visible = false
-  $: next_visible = !intermediate_step
+  $: next_visible = !intermediate_step && has_connected_providers
 </script>
 
 <div class="grow"></div>
@@ -25,18 +23,10 @@
 </div>
 
 <div class="flex-none flex flex-col place-content-center md:flex-row gap-4">
-  <div class="md:grow"></div>
   <a
-    href={next_enabled ? "/setup/create_project" : ""}
-    class="flex-none {next_enabled ? '' : 'cursor-default'} {next_visible
-      ? ''
-      : 'hidden'}"
+    href="/setup/create_project"
+    class="flex-none {next_visible ? '' : 'hidden'}"
   >
-    <button
-      class="btn btn-primary w-full min-w-[130px]"
-      disabled={!next_enabled}
-    >
-      Next
-    </button>
+    <button class="btn btn-primary w-full min-w-[130px]"> Continue </button>
   </a>
 </div>
