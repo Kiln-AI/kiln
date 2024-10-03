@@ -3,6 +3,33 @@
   import { navigating } from "$app/stores"
   import { expoOut } from "svelte/easing"
   import { slide } from "svelte/transition"
+  import { onMount } from "svelte"
+  import { goto } from "$app/navigation"
+  import { page } from "$app/stores"
+
+  const check_needs_setup = async () => {
+    if ($page.url.pathname.startsWith("/setup")) {
+      // We're already on a setup page, no need to redirect
+      return
+    }
+
+    try {
+      let res = await fetch("http://localhost:8757/api/settings")
+      let data = await res.json()
+      let projects = data["projects"]
+
+      if (!projects || projects.length === 0) {
+        goto("/setup")
+      }
+    } catch (e) {
+      console.error("check_needs_setup error", e)
+    }
+  }
+
+  onMount(() => {
+    // Check if we need setup (async okay)
+    check_needs_setup()
+  })
 </script>
 
 {#if $navigating}
