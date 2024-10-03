@@ -1,19 +1,42 @@
 <script lang="ts">
   import ConnectProviders from "./connect_providers.svelte"
-  import { getContext } from "svelte"
-  import { type Writable } from "svelte/store"
 
-  const step_number = getContext("setup_step_number") as Writable<number>
-  step_number.set(1)
-
-  const next_enabled = getContext("setup_next_enabled") as Writable<boolean>
-  const next_visible = getContext("setup_next_visible") as Writable<boolean>
   let has_connected_providers = false
   let intermediate_step = false
-  $: {
-    next_enabled.set(has_connected_providers)
-    next_visible.set(!intermediate_step)
-  }
+  let next_enabled = false
+  $: next_enabled = has_connected_providers
+  let next_visible = false
+  $: next_visible = !intermediate_step
 </script>
 
-<ConnectProviders bind:has_connected_providers bind:intermediate_step />
+<div class="grow"></div>
+<div class="flex-none flex flex-row items-center justify-center">
+  <img src="/logo.svg" alt="logo" class="size-8 mb-3" />
+</div>
+<h1 class="text-2xl lg:text-4xl ml-4 flex-none font-bold text-center">
+  Connect AI Providers
+</h1>
+<h3 class="text-base font-medium text-center mt-3 max-w-[600px] mx-auto">
+  Kiln is free, but your need to connect API keys to use AI services.
+</h3>
+
+<div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col">
+  <ConnectProviders bind:has_connected_providers bind:intermediate_step />
+</div>
+
+<div class="flex-none flex flex-col place-content-center md:flex-row gap-4">
+  <div class="md:grow"></div>
+  <a
+    href={next_enabled ? "/setup/create_project" : ""}
+    class="flex-none {next_enabled ? '' : 'cursor-default'} {next_visible
+      ? ''
+      : 'hidden'}"
+  >
+    <button
+      class="btn btn-primary w-full min-w-[130px]"
+      disabled={!next_enabled}
+    >
+      Next
+    </button>
+  </a>
+</div>
