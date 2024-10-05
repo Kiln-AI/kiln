@@ -1,5 +1,5 @@
 <script lang="ts">
-  import NewProject from "./new_project.svelte"
+  import EditProject from "./edit_project.svelte"
 
   let project_name = ""
   let project_description = ""
@@ -28,7 +28,7 @@
 </h3>
 
 <div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18">
-  <NewProject
+  <EditProject
     redirect_on_created="/setup/create_task"
     bind:project_name
     bind:project_description
