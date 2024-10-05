@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation"
   import { onMount } from "svelte"
   import { type TaskRequirement } from "./task_types"
+  import { dev } from "$app/environment"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -111,16 +112,31 @@
     console.log("redirect_on_created", redirect_on_created)
   }
 
-  // Prevent losing data on refresh/navigation, without confirmation
   onMount(() => {
+    // Add onchange handlers to all inputs and textareas to clear errors
+    const inputElements = document.querySelectorAll("input, textarea")
+    inputElements.forEach((element) => {
+      element.addEventListener("input", field_edited)
+    })
+
+    // Prevent losing data on refresh/navigation, without confirmation
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   })
   function handleBeforeUnload(event: BeforeUnloadEvent) {
-    if (has_edits()) {
+    if (!dev && has_edits()) {
       event.preventDefault()
+    }
+  }
+
+  // Clear errors after editing a field to remove red
+  function field_edited(e: Event) {
+    const field = (e.target as HTMLElement).id
+    if (error_fields[field]) {
+      delete error_fields[field]
+      error_fields = error_fields // Trigger reactivity
     }
   }
 </script>
@@ -204,7 +220,7 @@
                 <label
                   for="requirement_name_{req_index}"
                   class="text-xs font-medium text-left text-gray-500"
-                  >Requirement #{req_index + 1} Name</label
+                  >Requirement #{req_index + 1}: Name</label
                 >
                 <input
                   type="text"
