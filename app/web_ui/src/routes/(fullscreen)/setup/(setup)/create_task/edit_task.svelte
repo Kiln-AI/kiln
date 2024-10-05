@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
+  import { onMount } from "svelte"
   import { type TaskRequirement } from "./task_types"
 
   // Prevents flash of complete UI if we're going to redirect
@@ -108,6 +109,19 @@
     }
     console.log("create_task", task_name, task_description)
     console.log("redirect_on_created", redirect_on_created)
+  }
+
+  // Prevent losing data on refresh/navigation, without confirmation
+  onMount(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  })
+  function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (has_edits()) {
+      event.preventDefault()
+    }
   }
 </script>
 
