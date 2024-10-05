@@ -5,9 +5,9 @@
   export let created = false
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
-  let project_name = ""
+  export let project_name = ""
   let project_name_error = false
-  let project_description = ""
+  export let project_description = ""
   let error_message = ""
 
   const create_project = async () => {
@@ -82,13 +82,12 @@
         <span class="pl-1 text-xs text-gray-500 flex-none">Optional</span
         ></label
       >
-      <input
-        type="textarea"
+      <textarea
         placeholder="Project Description"
         id="project_description"
-        class="textarea textarea-bordered w-full h-24 mb-6"
+        class="textarea textarea-bordered w-full h-24 mb-6 wrap-pre text-left align-top"
         bind:value={project_description}
-      />
+      ></textarea>
       {#if error_message}
         <div class="text-sm text-center text-error">{error_message}</div>
       {/if}
