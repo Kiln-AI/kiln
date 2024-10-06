@@ -30,7 +30,6 @@
   }
 
   function add_requirement(focus = true) {
-    console.log("add_requirement")
     task_requirements = [
       ...task_requirements,
       {
@@ -77,23 +76,52 @@
     }
   }
 
+  function validate_field_setting_error(
+    field: HTMLInputElement | HTMLTextAreaElement,
+  ) {
+    let error = validate_field(field)
+    if (error !== null) {
+      error_fields[field.id] = error
+    } else if (error_fields[field.id]) {
+      delete error_fields[field.id]
+      // trigger reactivitiy
+      error_fields = error_fields
+    }
+  }
+
+  function validate_field(
+    field: HTMLInputElement | HTMLTextAreaElement,
+  ): string | null {
+    if (field.id === "task_name") {
+      return !field.value.trim() ? "Task name is required" : null
+    }
+    if (field.id === "task_instructions") {
+      return !field.value.trim() ? "Task instructions are required" : null
+    }
+    if (field.id.startsWith("requirement_name_")) {
+      const index = parseInt(field.id.split("_")[2])
+      return !field.value.trim()
+        ? "Requirement #" + (index + 1) + " missing name"
+        : null
+    }
+    if (field.id.startsWith("requirement_instructions_")) {
+      const index = parseInt(field.id.split("_")[2])
+      return !field.value.trim()
+        ? "Requirement #" + (index + 1) + " missing instructions"
+        : null
+    }
+    return null
+  }
+
   function validate(focus_on_error = false) {
-    console.log("validate", task_name, task_description, task_instructions)
     error_fields = {}
-    if (!task_name.trim()) {
-      error_fields["task_name"] = "Task name is required"
-    }
-    if (!task_instructions.trim()) {
-      error_fields["task_instructions"] = "Task instructions are required"
-    }
-    task_requirements.forEach((requirement, index) => {
-      if (!requirement.name.trim()) {
-        error_fields[`requirement_name_${index}`] =
-          "Requirement #" + (index + 1) + " missing name"
-      }
-      if (!requirement.instructions.trim()) {
-        error_fields[`requirement_instructions_${index}`] =
-          "Requirement #" + (index + 1) + " missing instructions"
+    const inputElements = document.querySelectorAll("input, textarea")
+    inputElements.forEach((element) => {
+      if (
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLTextAreaElement
+      ) {
+        validate_field_setting_error(element)
       }
     })
 
@@ -103,13 +131,11 @@
   }
 
   function create_task() {
-    console.log("create_task", task_name, task_description)
     validate(true)
     if (Object.keys(error_fields).length > 0) {
       return
     }
-    console.log("create_task", task_name, task_description)
-    console.log("redirect_on_created", redirect_on_created)
+    console.log("TODO_P0 redirect_on_created", redirect_on_created)
   }
 
   onMount(() => {
@@ -133,10 +159,11 @@
 
   // Clear errors after editing a field to remove red
   function field_edited(e: Event) {
-    const field = (e.target as HTMLElement).id
-    if (error_fields[field]) {
-      delete error_fields[field]
-      error_fields = error_fields // Trigger reactivity
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement
+    ) {
+      validate_field_setting_error(e.target)
     }
   }
 </script>
