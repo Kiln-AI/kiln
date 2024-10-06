@@ -1,25 +1,23 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { goto } from "$app/navigation"
+  import FormContainer from "$lib/utils/form_container.svelte"
+  import FormElement from "$lib/utils/form_element.svelte"
 
   export let created = false
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
   export let project_name = ""
-  let project_name_error = false
   export let project_description = ""
-  let error_message = ""
+  let custom_error_message: string | null = null
+  let submitting = false
+
+  $: warn_before_unload = [project_name, project_description].some(
+    (value) => !!value,
+  )
 
   const create_project = async () => {
     try {
-      if (!project_name) {
-        project_name_error = true
-        error_message = "Project name is required"
-        return
-      } else {
-        project_name_error = false
-      }
-
       const response = await fetch("http://localhost:8757/api/project", {
         method: "POST",
         headers: {
@@ -39,16 +37,20 @@
       if (redirect_on_created) {
         goto(redirect_on_created)
       }
+      custom_error_message = null
       created = true
     } catch (error) {
       if (
         error instanceof Error &&
         error.message === "The string did not match the expected pattern."
       ) {
-        error_message = "Unexpected response from server"
+        custom_error_message = "Unexpected response from server"
       } else {
-        error_message = error instanceof Error ? error.message : "Unknown error"
+        custom_error_message =
+          error instanceof Error ? error.message : "Unknown error"
       }
+    } finally {
+      submitting = false
     }
   }
 
@@ -60,43 +62,29 @@
   })
 </script>
 
-<div class="flex flex-col gap-2 max-w-[800px] mx-auto">
+<div class="flex flex-col gap-2 w-full max-w-400 sm:w-[400px] mx-auto">
   {#if !created}
-    <form class="flex flex-col gap-2 max-w-[800px] lg:w-96 mx-auto">
-      <label for="project_name" class="text-sm font-medium text-left"
-        >Project Name</label
-      >
-      <input
-        type="text"
-        placeholder="Project Name"
+    <FormContainer
+      submit_label="Create Project"
+      on:submit={create_project}
+      bind:warn_before_unload
+      bind:submitting
+      bind:custom_error_message
+    >
+      <FormElement
+        label="Project Name"
         id="project_name"
-        class="input input-bordered w-full {project_name_error
-          ? 'input-error'
-          : ''}"
+        inputType="input"
         bind:value={project_name}
       />
-      <label
-        for="project_description"
-        class="text-sm font-medium text-left pt-6 flex flex-row"
-        ><span class="grow">Project Description</span>
-        <span class="pl-1 text-xs text-gray-500 flex-none">Optional</span
-        ></label
-      >
-      <textarea
-        placeholder="Project Description"
+      <FormElement
+        label="Project Description"
         id="project_description"
-        class="textarea textarea-bordered w-full h-24 mb-6 wrap-pre text-left align-top"
+        inputType="textarea"
+        optional={true}
         bind:value={project_description}
-      ></textarea>
-      {#if error_message}
-        <div class="text-sm text-center text-error">{error_message}</div>
-      {/if}
-      <button
-        type="submit"
-        class="btn btn-primary mt-2"
-        on:click={create_project}>Create Project</button
-      >
-    </form>
+      />
+    </FormContainer>
   {:else if !redirect_on_created}
     <h2 class="text-xl font-medium text-center">Project Created!</h2>
     <p class="text-sm text-center">

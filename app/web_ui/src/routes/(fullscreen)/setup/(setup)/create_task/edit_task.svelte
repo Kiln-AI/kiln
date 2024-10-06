@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { goto } from "$app/navigation"
-  import { onMount } from "svelte"
   import { type TaskRequirement } from "./task_types"
-  import { dev } from "$app/environment"
+  import FormElement from "$lib/utils/form_element.svelte"
+  import FormList from "$lib/utils/form_list.svelte"
+  import FormContainer from "$lib/utils/form_container.svelte"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -12,322 +12,106 @@
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
 
-  export function has_edits() {
-    let edited_requirement = false
-    task_requirements.forEach((requirement) => {
-      if (
-        requirement.name ||
-        requirement.description ||
-        requirement.instructions
-      ) {
-        edited_requirement = true
-      }
-    })
-    if (task_name || task_description || edited_requirement) {
-      return true
-    }
-    return false
-  }
-
-  function add_requirement(focus = true) {
-    task_requirements = [
-      ...task_requirements,
-      {
-        name: "",
-        description: "",
-        instructions: "",
-        priority: 1,
-      },
-    ]
-    if (focus) {
-      focus_field("requirement_name_" + (task_requirements.length - 1))
-    }
-  }
-
-  // Add one empty requirement to start so the form isn't empty
-  if (task_requirements.length === 0) {
-    add_requirement(false)
-  }
-
-  function remove_requirement(index: number) {
-    if (
-      confirm(
-        "Are you sure you want to remove requirement #" + (index + 1) + "?",
-      )
-    ) {
-      task_requirements = task_requirements.filter((_, i) => i !== index)
-      // Move the page to the "requirements_part" anchor
-      const requirementsPart = document.getElementById("requirements_part")
-      if (requirementsPart) {
-        goto("#requirements_part")
-        requirementsPart.scrollIntoView({ behavior: "smooth", block: "start" })
-      }
-    }
-  }
-
-  let error_fields: Record<string, string> = {}
-
-  async function focus_field(field: string) {
-    // Async as the forms' validation is also trying to set focus
-    await new Promise((resolve) => setTimeout(resolve, 10))
-    const input = document.getElementById(field)
-    if (input) {
-      input.focus()
-    }
-  }
-
-  function validate_field_setting_error(
-    field: HTMLInputElement | HTMLTextAreaElement,
-  ) {
-    let error = validate_field(field)
-    if (error !== null) {
-      error_fields[field.id] = error
-    } else if (error_fields[field.id]) {
-      delete error_fields[field.id]
-      // trigger reactivitiy
-      error_fields = error_fields
-    }
-  }
-
-  function validate_field(
-    field: HTMLInputElement | HTMLTextAreaElement,
-  ): string | null {
-    if (field.id === "task_name") {
-      return !field.value.trim() ? "Task name is required" : null
-    }
-    if (field.id === "task_instructions") {
-      return !field.value.trim() ? "Task instructions are required" : null
-    }
-    if (field.id.startsWith("requirement_name_")) {
-      const index = parseInt(field.id.split("_")[2])
-      return !field.value.trim()
-        ? "Requirement #" + (index + 1) + " missing name"
-        : null
-    }
-    if (field.id.startsWith("requirement_instructions_")) {
-      const index = parseInt(field.id.split("_")[2])
-      return !field.value.trim()
-        ? "Requirement #" + (index + 1) + " missing instructions"
-        : null
-    }
-    return null
-  }
-
-  function validate(focus_on_error = false) {
-    error_fields = {}
-    const inputElements = document.querySelectorAll("input, textarea")
-    inputElements.forEach((element) => {
-      if (
-        element instanceof HTMLInputElement ||
-        element instanceof HTMLTextAreaElement
-      ) {
-        validate_field_setting_error(element)
-      }
-    })
-
-    if (focus_on_error && Object.keys(error_fields).length > 0) {
-      focus_field(Object.keys(error_fields)[0])
-    }
-  }
+  // Warn before unload if there's any user input
+  $: warn_before_unload =
+    [task_name, task_description, task_instructions].some((value) => !!value) ||
+    task_requirements.some((req) => !!req.name || !!req.instructions)
 
   function create_task() {
-    validate(true)
-    if (Object.keys(error_fields).length > 0) {
-      return
-    }
     console.log("TODO_P0 redirect_on_created", redirect_on_created)
-  }
-
-  onMount(() => {
-    // Add onchange handlers to all inputs and textareas to clear errors
-    const inputElements = document.querySelectorAll("input, textarea")
-    inputElements.forEach((element) => {
-      element.addEventListener("input", field_edited)
-    })
-
-    // Prevent losing data on refresh/navigation, without confirmation
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-    }
-  })
-  function handleBeforeUnload(event: BeforeUnloadEvent) {
-    if (!dev && has_edits()) {
-      event.preventDefault()
-    }
-  }
-
-  // Clear errors after editing a field to remove red
-  function field_edited(e: Event) {
-    if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
-    ) {
-      validate_field_setting_error(e.target)
-    }
   }
 </script>
 
-<div class="flex flex-col gap-2 max-w-[800px] mx-auto">
-  <form class="flex flex-col gap-2 max-w-[800px] lg:w-[500px] mx-auto">
-    <div class="text-xl font-bold">Part 1: Task Overview</div>
-    <label for="task_name" class="text-sm font-medium text-left"
-      >Task Name
-      <div class="text-xs text-gray-500">
-        A description for you and your team, not used by the model.
-      </div>
-    </label>
-    <input
-      type="text"
-      placeholder="Task Name"
+<div class="flex flex-col gap-2 max-w-[500px] lg:w-[500px] mx-auto">
+  <FormContainer
+    submit_label="Create Task"
+    on:submit={create_task}
+    bind:warn_before_unload
+  >
+    <div class="text-xl font-bold">Part 1: Overview</div>
+    <FormElement
+      label="Task Name"
       id="task_name"
-      class="input input-bordered w-full {error_fields['task_name']
-        ? 'input-error'
-        : ''}"
-      required
+      description="A description for you and your team, not used by the model."
       bind:value={task_name}
     />
 
-    <label
-      for="task_description"
-      class="text-sm font-medium text-left pt-6 flex flex-col gap-1"
-    >
-      <div class="flex flex-row">
-        <span class="grow">Task Description</span>
-        <span class="pl-1 text-xs text-gray-500 flex-none">Optional</span>
-      </div>
-      <div class="text-xs text-gray-500">
-        A description for you and your team, not used by the model.
-      </div>
-    </label>
-    <textarea
-      placeholder="Task Description"
+    <FormElement
+      label="Task Description"
+      inputType="textarea"
       id="task_description"
-      class="textarea textarea-bordered w-full h-18 wrap-pre text-left align-top
-       {error_fields['task_description'] ? 'textarea-error' : ''}"
+      description="A description for you and your team, not used by the model."
+      optional={true}
       bind:value={task_description}
     />
 
-    <label
-      for="task_instructions"
-      class="text-sm font-medium text-left pt-6 flex flex-col gap-1"
-    >
-      <div class="flex flex-row">
-        <span class="grow">Task Instructions</span>
-      </div>
-      <div class="text-xs text-gray-500">
-        Required. This will form the basis of the model's prompt. Keep this high
-        level, and define any details in the 'Requirements' section below.
-      </div>
-    </label>
-    <textarea
-      placeholder="Task Instructions"
+    <FormElement
+      label="Task Instructions"
+      inputType="textarea"
       id="task_instructions"
-      class="textarea textarea-bordered w-full h-18 wrap-pre text-left align-top
-       {error_fields['task_instructions'] ? 'textarea-error' : ''}"
+      description="This will form the basis of the model's prompt. Keep this high level, and define any details in the 'Requirements' section below."
       bind:value={task_instructions}
-      required
     />
 
     <div class="text-sm font-medium text-left pt-6 flex flex-col gap-1">
       <div class="text-xl font-bold" id="requirements_part">
-        Part 2: Task Requirements
+        Part 2: Requirements
       </div>
       <div class="text-xs text-gray-500">
         Define any requirements for the task. These will become part of the
         prompt, but are also broken out for model evals and training.
       </div>
     </div>
-    {#if task_requirements.length > 0}
-      <div class="flex flex-col gap-3 mt-6">
-        {#each task_requirements as requirement, req_index}
-          <div class="flex flex-col gap-3">
-            <div class="flex flex-row gap-1">
-              <div class="grow flex flex-col gap-1">
-                <label
-                  for="requirement_name_{req_index}"
-                  class="text-xs font-medium text-left text-gray-500"
-                  >Requirement #{req_index + 1}: Name</label
-                >
-                <input
-                  type="text"
-                  placeholder="Requirement Name"
-                  id="requirement_name_{req_index}"
-                  class="input input-bordered w-full {error_fields[
-                    'requirement_name_' + req_index
-                  ]
-                    ? 'input-error'
-                    : ''}"
-                  bind:value={requirement.name}
-                />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label
-                  for="requirement_priority_{req_index}"
-                  class="text-xs font-medium text-left text-gray-500"
-                  >Priority</label
-                >
-                <select
-                  id="requirement_priority_{req_index}"
-                  class="select select-bordered"
-                  bind:value={requirement.priority}
-                >
-                  <option value={0}>P0 - Critical</option>
-                  <option value={1}>P1 - High</option>
-                  <option value={2}>P2 - Medium</option>
-                  <option value={3}>P3 - Low</option>
-                </select>
-              </div>
-            </div>
-            <div class="grow flex flex-col gap-1">
-              <label
-                for="requirement_instructions_{req_index}"
-                class="text-xs font-medium text-left text-gray-500"
-                >Instructions</label
-              >
-              <textarea
-                placeholder="Requirement Instructions"
-                id="requirement_instructions_{req_index}"
-                class="textarea textarea-bordered w-full h-18 wrap-pre text-left align-top
-                 {error_fields['requirement_instructions_' + req_index]
-                  ? 'textarea-error'
-                  : ''}"
-                bind:value={requirement.instructions}
-              />
-            </div>
-            <div class="text-right text-xs pb-2">
-              <button
-                class="link"
-                on:click={() => remove_requirement(req_index)}
-              >
-                Remove Requirement #{req_index + 1}
-              </button>
-            </div>
-          </div>
-        {/each}
-      </div>
-    {/if}
 
-    <div class="flex place-content-center">
-      <button class="btn btn-sm" on:click={() => add_requirement(true)}>
-        Add Requirement
-      </button>
-    </div>
-
-    <div class="h-4" />
-
-    {#if Object.keys(error_fields).length > 0}
-      <div class="text-sm text-center text-error flex flex-col gap-1">
-        <div>Please correct the following errors:</div>
-        {#each Object.entries(error_fields) as [field, error]}
-          <button class="text-xs link" on:click={() => focus_field(field)}
-            >{error}</button
-          >
-        {/each}
-      </div>
-    {/if}
-    <button type="submit" class="btn btn-primary mt-2" on:click={create_task}
-      >Create Task</button
+    <!-- Requirements Section -->
+    <FormList
+      content={task_requirements}
+      content_label="Requirement"
+      start_with_one={true}
+      empty_content={{
+        name: "",
+        description: "",
+        instructions: "",
+        priority: 1,
+      }}
+      let:item_index
     >
-  </form>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-row gap-1">
+          <div class="grow flex flex-col gap-1">
+            <FormElement
+              label="Requirement Name"
+              id="requirement_name_{item_index}"
+              light_label={true}
+              bind:value={task_requirements[item_index].name}
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <FormElement
+              label="Priority"
+              inputType="select"
+              id="requirement_priority_{item_index}"
+              light_label={true}
+              select_options={[
+                [0, "P0 - Critical"],
+                [1, "P1 - High"],
+                [2, "P2 - Medium"],
+                [3, "P3 - Low"],
+              ]}
+              bind:value={task_requirements[item_index].priority}
+            />
+          </div>
+        </div>
+        <div class="grow flex flex-col gap-1">
+          <FormElement
+            label="Instructions"
+            inputType="textarea"
+            id="requirement_instructions_{item_index}"
+            light_label={true}
+            bind:value={task_requirements[item_index].instructions}
+          />
+        </div>
+      </div>
+    </FormList>
+  </FormContainer>
 </div>

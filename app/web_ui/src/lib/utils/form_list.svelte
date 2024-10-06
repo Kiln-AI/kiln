@@ -1,0 +1,101 @@
+<script lang="ts">
+  export let content: unknown[] = []
+  export let content_label: string = "Item"
+  export let start_with_one: boolean = true
+  export let empty_content: unknown = {}
+
+  // Unique ID for the list, for scrolling to top after removal
+  let id = "form_list_" + Math.random().toString(36).substring(2, 15)
+
+  function remove_item(index: number) {
+    let item = content[index]
+    let isItemUnedited = false
+
+    if (item === null || item === undefined) {
+      return
+    } else if (item instanceof Object && empty_content instanceof Object) {
+      // Compare item to empty_content to check if it's unedited
+      isItemUnedited = Object.keys(item).every((key) => {
+        return (
+          item[key as keyof typeof item] ===
+          empty_content[key as keyof typeof empty_content]
+        )
+      })
+    }
+
+    if (
+      isItemUnedited ||
+      confirm(
+        "Are you sure you want to remove " +
+          content_label +
+          " #" +
+          (index + 1) +
+          "?\n\nYou've set content and it hasn't been saved.",
+      )
+    ) {
+      content.splice(index, 1)
+      // trigger reactivity
+      content = content
+      // Move the page to the top anchor
+      const list = document.getElementById(id)
+      if (list) {
+        // Scroll to the top of the list because removing sets focus to first form element for some reason
+        setTimeout(() => {
+          list.scrollIntoView()
+        }, 1)
+      }
+    }
+  }
+
+  async function add_item(focus: boolean = true) {
+    content.push(structuredClone(empty_content))
+    // Trigger reactivity
+    content = content
+    if (focus) {
+      // scroll the add button back into view, which is just past the new item
+      const list = document.getElementById(id + "_add_button")
+      if (list) {
+        // Async to allow rendering first
+        setTimeout(() => {
+          list.scrollIntoView()
+        }, 1)
+      }
+    }
+  }
+
+  // Add one empty item to start so the list isn't empty
+  if (start_with_one && content.length === 0) {
+    add_item(false)
+  }
+</script>
+
+{#if content.length > 0}
+  <div class="flex flex-col gap-8" {id}>
+    {#each content as item, item_index}
+      <div>
+        <div class="flex flex-row gap-3 font-medium text-sm pb-2">
+          <div class="grow">
+            {content_label} #{item_index + 1}
+          </div>
+          <button
+            class="link text-xs text-gray-500"
+            on:click={() => remove_item(item_index)}
+          >
+            remove
+          </button>
+        </div>
+        <slot {item} {item_index} />
+      </div>
+    {/each}
+  </div>
+{/if}
+
+<div class="flex place-content-center">
+  <button
+    class="btn btn-sm"
+    on:click={() => add_item(true)}
+    id={id + "_add_button"}
+  >
+    Add {content_label}
+  </button>
+</div>
