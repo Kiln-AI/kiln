@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte"
   import { goto } from "$app/navigation"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
@@ -53,13 +52,6 @@
       submitting = false
     }
   }
-
-  onMount(() => {
-    const projectNameInput = document.getElementById("project_name")
-    if (projectNameInput) {
-      projectNameInput.focus()
-    }
-  })
 </script>
 
 <div class="flex flex-col gap-2 w-full max-w-400 sm:w-[400px] mx-auto">

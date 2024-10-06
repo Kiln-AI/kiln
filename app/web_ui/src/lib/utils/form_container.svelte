@@ -75,6 +75,15 @@
   }
 
   onMount(() => {
+    // focus first form element
+    const form = document.getElementById(id)
+    if (form) {
+      const firstInput = form.querySelector("input, textarea, select")
+      if (firstInput && firstInput instanceof HTMLElement) {
+        firstInput.focus()
+      }
+    }
+
     // Prevent losing data on refresh/navigation, without confirmation
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => {
