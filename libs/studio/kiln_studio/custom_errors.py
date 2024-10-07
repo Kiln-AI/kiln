@@ -13,6 +13,11 @@ def connect_custom_errors(app: FastAPI):
         for error in exc.errors():
             field = error["loc"][-1]  # Get the field name
             message = error["msg"]
+
+            # Custom helpers for common errors
+            if "String should match pattern '^[A-Za-z0-9 _-]+$'" == message:
+                message = "must consist of only letters, numbers, spaces, hyphens, and underscores"
+
             error_messages.append(f"{field.capitalize()}: {message}")
 
         return JSONResponse(
