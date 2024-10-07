@@ -110,9 +110,11 @@
       </div>
     {/if}
     {#if custom_error_message}
-      <div class="text-sm text-center text-error">
-        {custom_error_message}
-      </div>
+      {#each custom_error_message.split("\n") as error_line}
+        <div class="text-sm text-center text-error">
+          {error_line}
+        </div>
+      {/each}
     {/if}
     <button
       type="submit"

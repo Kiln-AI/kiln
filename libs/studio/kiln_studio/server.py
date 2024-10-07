@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .custom_errors import connect_custom_errors
 from .project_management import connect_project_management
 from .provider_management import connect_provider_management
 from .settings import connect_settings
@@ -30,6 +31,7 @@ def make_app():
     connect_provider_management(app)
     connect_settings(app)
     connect_webhost(app)
+    connect_custom_errors(app)
 
     return app
 
