@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
+  import { current_project } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
 
@@ -33,10 +34,11 @@
           data["message"] || "Unknown error (status: " + response.status + ")",
         )
       }
+      current_project.set(data["project_path"])
+      custom_error_message = null
       if (redirect_on_created) {
         goto(redirect_on_created)
       }
-      custom_error_message = null
       created = true
     } catch (error) {
       if (

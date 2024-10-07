@@ -10,6 +10,7 @@ from libs.core.kiln_ai.datamodel import Project
 from libs.core.kiln_ai.utils.config import Config
 from libs.studio.kiln_studio.project_management import (
     connect_project_management,
+    default_project_path,
 )
 
 
@@ -37,7 +38,12 @@ def test_create_project_success(client):
             },
         )
 
-    assert response.json() == {"message": "Project created successfully"}
+    assert response.json() == {
+        "message": "Project created successfully",
+        "project_path": os.path.join(
+            default_project_path(), "Test Project", "project.json"
+        ),
+    }
     assert response.status_code == 200
 
 
@@ -93,7 +99,10 @@ def test_create_and_load_project(client):
             )
 
             assert response.status_code == 200
-            assert response.json() == {"message": "Project created successfully"}
+            assert response.json() == {
+                "message": "Project created successfully",
+                "project_path": os.path.join(temp_dir, "Test Project", "project.json"),
+            }
 
             # Verify the project file was created
             project_path = os.path.join(temp_dir, "Test Project")

@@ -3,6 +3,7 @@
   import FormElement from "$lib/utils/form_element.svelte"
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
+  import { current_project } from "$lib/stores"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -11,6 +12,8 @@
   export let task_description: string = ""
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
+  let custom_error_message: string | null = null
+  let submitting = false
 
   // Warn before unload if there's any user input
   $: warn_before_unload =
@@ -18,7 +21,18 @@
     task_requirements.some((req) => !!req.name || !!req.instructions)
 
   function create_task() {
-    console.log("TODO_P0 redirect_on_created", redirect_on_created)
+    try {
+      if (!$current_project) {
+        custom_error_message =
+          "You must create a project before creating a task"
+        return
+      }
+      console.log("TODO_P0 redirect_on_created", redirect_on_created)
+    } catch (error) {
+      custom_error_message = "Unknown error creating task: " + error
+    } finally {
+      submitting = false
+    }
   }
 </script>
 
@@ -27,6 +41,8 @@
     submit_label="Create Task"
     on:submit={create_task}
     bind:warn_before_unload
+    bind:custom_error_message
+    bind:submitting
   >
     <div class="text-xl font-bold">Part 1: Overview</div>
     <FormElement

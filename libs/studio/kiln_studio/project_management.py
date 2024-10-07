@@ -67,5 +67,8 @@ def connect_project_management(app: FastAPI):
 
         return JSONResponse(
             status_code=200,
-            content={"message": "Project created successfully"},
+            content={
+                "message": "Project created successfully",
+                "project_path": project_file,
+            },
         )

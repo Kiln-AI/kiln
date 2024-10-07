@@ -1,5 +1,6 @@
 <script>
   import "../../app.css"
+  import { current_project } from "$lib/stores"
 </script>
 
 <div class="drawer lg:drawer-open">
@@ -54,6 +55,7 @@
       </li>
       <li><a href="/?1">Sidebar Item 1</a></li>
       <li><a href="/?2">Sidebar Item 2</a></li>
+      <li>{$current_project}</li>
     </ul>
   </div>
 </div>
