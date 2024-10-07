@@ -8,6 +8,7 @@ from .custom_errors import connect_custom_errors
 from .project_management import connect_project_management
 from .provider_management import connect_provider_management
 from .settings import connect_settings
+from .task_management import connect_task_management
 from .webhost import connect_webhost
 
 
@@ -29,9 +30,12 @@ def make_app():
 
     connect_project_management(app)
     connect_provider_management(app)
+    connect_task_management(app)
     connect_settings(app)
-    connect_webhost(app)
     connect_custom_errors(app)
+
+    # Important: webhost must be last, it handles all other URLs
+    connect_webhost(app)
 
     return app
 
