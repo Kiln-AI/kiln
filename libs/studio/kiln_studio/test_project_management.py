@@ -33,37 +33,39 @@ def test_create_project_success(client):
         response = client.post(
             "/api/project",
             json={
-                "project_name": "Test Project",
-                "project_description": "A test project",
+                "name": "Test Project",
+                "description": "A test project",
             },
         )
 
-    assert response.json() == {
-        "message": "Project created successfully",
-        "project_path": os.path.join(
-            default_project_path(), "Test Project", "project.json"
-        ),
-    }
     assert response.status_code == 200
+    res = response.json()
+    assert res["name"] == "Test Project"
+    assert res["description"] == "A test project"
+    assert res["path"] == os.path.join(
+        default_project_path(), "Test Project", "project.json"
+    )
+    assert res["v"] == 1
+    assert res["model_type"] == "project"
+    assert res["created_by"] == Config.shared().user_id
+    assert res["created_at"] is not None
 
 
 def test_create_project_missing_name(client):
-    response = client.post(
-        "/api/project", json={"project_description": "A test project"}
-    )
+    response = client.post("/api/project", json={"description": "A test project"})
 
-    assert response.status_code == 400
-    assert response.json() == {"message": "Project name is required"}
+    assert response.status_code == 422
+    assert '"Field required"' in response.text
 
 
 def test_create_project_invalid_description(client):
     response = client.post(
         "/api/project",
-        json={"project_name": "Test Project", "project_description": 123},
+        json={"name": "Test Project", "description": 123},
     )
 
-    assert response.status_code == 400
-    assert response.json() == {"message": "Project description must be a string"}
+    assert response.status_code == 422
+    assert "Input should be a valid string" in response.text
 
 
 def test_create_project_existing_name(client):
@@ -71,8 +73,8 @@ def test_create_project_existing_name(client):
         response = client.post(
             "/api/project",
             json={
-                "project_name": "Existing Project",
-                "project_description": "This project already exists",
+                "name": "Existing Project",
+                "description": "This project already exists",
             },
         )
 
@@ -93,16 +95,20 @@ def test_create_and_load_project(client):
             response = client.post(
                 "/api/project",
                 json={
-                    "project_name": "Test Project",
-                    "project_description": "A test project description",
+                    "name": "Test Project",
+                    "description": "A test project description",
                 },
             )
 
             assert response.status_code == 200
-            assert response.json() == {
-                "message": "Project created successfully",
-                "project_path": os.path.join(temp_dir, "Test Project", "project.json"),
-            }
+            res = response.json()
+            assert res["name"] == "Test Project"
+            assert res["description"] == "A test project description"
+            assert res["path"] == os.path.join(temp_dir, "Test Project", "project.json")
+            assert res["v"] == 1
+            assert res["model_type"] == "project"
+            assert res["created_by"] == Config.shared().user_id
+            assert res["created_at"] is not None
 
             # Verify the project file was created
             project_path = os.path.join(temp_dir, "Test Project")

@@ -18,14 +18,15 @@
 
   const create_project = async () => {
     try {
+      custom_error_message = null
       const response = await fetch("http://localhost:8757/api/project", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          project_name: project_name,
-          project_description: project_description,
+          name: project_name,
+          description: project_description,
         }),
       })
       const data = await response.json()
@@ -34,7 +35,11 @@
           data["message"] || "Unknown error (status: " + response.status + ")",
         )
       }
-      current_project.set(data["project_path"])
+      if (data["path"]) {
+        current_project.set(data["path"])
+      } else {
+        throw new Error("Project created, but failed to return location.")
+      }
       custom_error_message = null
       if (redirect_on_created) {
         goto(redirect_on_created)

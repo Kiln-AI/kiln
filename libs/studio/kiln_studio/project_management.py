@@ -14,30 +14,8 @@ def default_project_path():
 
 def connect_project_management(app: FastAPI):
     @app.post("/api/project")
-    async def create_project(project: dict):
-        project_name = project.get("project_name")
-        if not project_name or not isinstance(project_name, str):
-            return JSONResponse(
-                status_code=400, content={"message": "Project name is required"}
-            )
-        project_description = project.get("project_description")
-        if not isinstance(project_description, str):
-            return JSONResponse(
-                status_code=400,
-                content={"message": "Project description must be a string"},
-            )
-        # Check if project name is alphanumeric and under 65 characters
-        if (
-            not all(c.isalnum() or c.isspace() for c in project_name)
-            or len(project_name) > 64
-        ):
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "message": "Project name must contain only alphanumeric characters and spaces, and be at most 64 characters"
-                },
-            )
-        project_path = os.path.join(default_project_path(), project_name)
+    async def create_project(project: Project):
+        project_path = os.path.join(default_project_path(), project.name)
         if os.path.exists(project_path):
             return JSONResponse(
                 status_code=400,
@@ -48,12 +26,8 @@ def connect_project_management(app: FastAPI):
 
         os.makedirs(project_path)
         project_file = os.path.join(project_path, "project.json")
-        kiln_project = Project(
-            name=project_name,
-            description=project_description,
-            path=Path(project_file),
-        )
-        kiln_project.save_to_file()
+        project.path = Path(project_file)
+        project.save_to_file()
 
         # add to projects list, and set as current project
         projects = Config.shared().projects
@@ -65,10 +39,7 @@ def connect_project_management(app: FastAPI):
             {"projects": projects, "current_project": project_file}
         )
 
-        return JSONResponse(
-            status_code=200,
-            content={
-                "message": "Project created successfully",
-                "project_path": project_file,
-            },
-        )
+        # Add path, which is usually excluded
+        returnProject = project.model_dump()
+        returnProject["path"] = project.path
+        return returnProject
