@@ -73,7 +73,7 @@ describe("schema_from_model", () => {
           description: "User's age in years",
         },
       },
-      required: ["User Name"],
+      required: ["user_name"],
     }
 
     expect(schema_from_model(model)).toEqual(expected)
@@ -118,7 +118,7 @@ describe("schema_from_model", () => {
     }
 
     const result = schema_from_model(model)
-    expect(result.required).toEqual(["Field1", "Field3"])
+    expect(result.required).toEqual(["field1", "field3"])
   })
 
   it("correctly converts property titles to names", () => {

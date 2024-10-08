@@ -4,7 +4,10 @@
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
   import SchemaSection from "./schema_section.svelte"
-  import { empty_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
+  import {
+    empty_schema_model,
+    schema_from_model,
+  } from "$lib/utils/json_schema_editor/json_schema_templates"
   import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
   import { current_project } from "$lib/stores"
   import { goto } from "$app/navigation"
@@ -43,6 +46,22 @@
         )
         return
       }
+      let body: Record<string, unknown> = {
+        name: task_name,
+        description: task_description,
+        instructions: task_instructions,
+        requirements: task_requirements,
+      }
+      if (!task_input_plaintext) {
+        body["input_json_schema"] = JSON.stringify(
+          schema_from_model(task_input_schema),
+        )
+      }
+      if (!task_output_plaintext) {
+        body["output_json_schema"] = JSON.stringify(
+          schema_from_model(task_output_schema),
+        )
+      }
       const encodedProjectPath = encodeURIComponent($current_project)
       const response = await fetch(
         `http://localhost:8757/api/task?project_path=${encodedProjectPath}`,
@@ -51,12 +70,7 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: task_name,
-            description: task_description,
-            instructions: task_instructions,
-            requirements: task_requirements,
-          }),
+          body: JSON.stringify(body),
         },
       )
       const data = await response.json()

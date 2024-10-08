@@ -1,3 +1,5 @@
+import { KilnError } from "../error_handlers"
+
 export type JsonSchema = {
   type: "object"
   properties: Record<string, JsonSchemaProperty>
@@ -42,6 +44,20 @@ export function title_to_name(title: string): string {
 }
 
 export function schema_from_model(m: SchemaModel): JsonSchema {
+  for (let i = 0; i < m.properties.length; i++) {
+    const title = m.properties[i].title
+    if (!title) {
+      throw new KilnError("Property is empty. Please provide a name.", null)
+    }
+    const safe_name = title_to_name(m.properties[i].title)
+    if (!safe_name) {
+      throw new KilnError(
+        "Property name only contains special characters. Must be alphanumeric. Provided name with issues: " +
+          m.properties[i].title,
+        null,
+      )
+    }
+  }
   return {
     type: "object",
     properties: Object.fromEntries(
@@ -54,7 +70,9 @@ export function schema_from_model(m: SchemaModel): JsonSchema {
         },
       ]),
     ),
-    required: m.properties.filter((p) => p.required).map((p) => p.title),
+    required: m.properties
+      .filter((p) => p.required)
+      .map((p) => title_to_name(p.title)),
   }
 }
 
