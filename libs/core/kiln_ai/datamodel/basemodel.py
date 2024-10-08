@@ -5,7 +5,16 @@ from abc import ABCMeta, abstractmethod
 from builtins import classmethod
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Self, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Self,
+    Type,
+    TypeVar,
+)
 
 from kiln_ai.utils.config import Config
 from pydantic import (
@@ -223,3 +232,75 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
             children.append(child)
 
         return children
+
+
+# Parent create methods for all child relationships
+# You must pass in parent_of in the subclass definition, defining the child relationships
+class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
+    @classmethod
+    def _create_child_method(
+        cls, relationship_name: str, child_class: Type[KilnParentedModel]
+    ):
+        def child_method(self) -> list[child_class]:
+            return child_class.all_children_of_parent_path(self.path)
+
+        child_method.__name__ = relationship_name
+        child_method.__annotations__ = {"return": List[child_class]}
+        setattr(cls, relationship_name, child_method)
+
+    @classmethod
+    def __init_subclass__(cls, parent_of: Dict[str, Type[KilnParentedModel]], **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._parent_of = parent_of
+        for relationship_name, child_class in parent_of.items():
+            cls._create_child_method(relationship_name, child_class)
+
+    @classmethod
+    def validate_and_save_with_subrelations(
+        cls, data: Dict[str, Any], path: Path | None = None
+    ):
+        # Validate first, then save. Don't want error half way through, and partly persisted
+        # TODO P2: save to tmp dir, then move atomically. But need to merge directories so later.
+        cls._validate_nested(data, save=False, path=path)
+        instance = cls._validate_nested(data, save=True, path=path)
+        return instance
+
+    @classmethod
+    def _validate_nested(
+        cls,
+        data: Dict[str, Any],
+        save: bool = False,
+        parent: KilnBaseModel | None = None,
+        path: Path | None = None,
+    ):
+        instance = cls.model_validate(data)
+        if path is not None:
+            instance.path = path
+        if parent is not None and isinstance(instance, KilnParentedModel):
+            instance.parent = parent
+        if save:
+            instance.save_to_file()
+        for key, value_list in data.items():
+            if key in cls._parent_of:
+                parent_type = cls._parent_of[key]
+                if not isinstance(value_list, list):
+                    raise ValueError(
+                        f"Expected a list for {key}, but got {type(value_list)}"
+                    )
+                for value in value_list:
+                    if issubclass(parent_type, KilnParentModel):
+                        parent_type._validate_nested(
+                            data=value, save=save, parent=instance
+                        )
+                    elif issubclass(parent_type, KilnBaseModel):
+                        # Root node
+                        subinstance = parent_type.model_validate(value)
+                        subinstance.parent = instance
+                        if save:
+                            subinstance.save_to_file()
+                    else:
+                        raise ValueError(
+                            f"Invalid type {parent_type}. Should be KilnBaseModel based."
+                        )
+
+        return instance

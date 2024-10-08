@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import json
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Dict, Self
+from typing import TYPE_CHECKING, Dict, Self, Type
 
 import jsonschema
 import jsonschema.exceptions
 from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
 from pydantic import Field, model_validator
 
-from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel
+from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel, KilnParentModel
 from .json_schema import validate_schema
 
 if TYPE_CHECKING:
@@ -191,7 +191,7 @@ class ExampleSource(str, Enum):
     synthetic = "synthetic"
 
 
-class Example(KilnParentedModel):
+class Example(KilnParentedModel, KilnParentModel, parent_of={"outputs": ExampleOutput}):
     """
     An example input to a specific Task.
     """
@@ -216,8 +216,9 @@ class Example(KilnParentedModel):
     def parent_type(cls):
         return Task
 
+    # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def outputs(self) -> list[ExampleOutput]:
-        return ExampleOutput.all_children_of_parent_path(self.path)
+        return super().outputs()  # type: ignore
 
     def parent_task(self) -> Task | None:
         if not isinstance(self.parent, Task):
@@ -267,7 +268,11 @@ class TaskDeterminism(str, Enum):
     flexible = "flexible"  # Flexible on semantic output. Eval should be custom based on parsing requirements.
 
 
-class Task(KilnParentedModel):
+class Task(
+    KilnParentedModel,
+    KilnParentModel,
+    parent_of={"requirements": TaskRequirement, "examples": Example},
+):
     name: str = NAME_FIELD
     description: str = Field(default="")
     priority: Priority = Field(default=Priority.p2)
@@ -295,16 +300,19 @@ class Task(KilnParentedModel):
     def parent_type(cls):
         return Project
 
+    # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def requirements(self) -> list[TaskRequirement]:
-        return TaskRequirement.all_children_of_parent_path(self.path)
+        return super().requirements()  # type: ignore
 
+    # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def examples(self) -> list[Example]:
-        return Example.all_children_of_parent_path(self.path)
+        return super().examples()  # type: ignore
 
 
-class Project(KilnBaseModel):
+class Project(KilnParentModel, parent_of={"tasks": Task}):
     name: str = NAME_FIELD
     description: str = Field(default="")
 
+    # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def tasks(self) -> list[Task]:
-        return Task.all_children_of_parent_path(self.path)
+        return super().tasks()  # type: ignore

@@ -123,8 +123,7 @@ def test_load_tasks(test_project_file):
     task3.save_to_file()
 
     # Load tasks from the project
-    # tasks = project.tasks()
-    tasks = Task.all_children_of_parent_path(test_project_file)
+    tasks = project.tasks()
 
     # Verify that all tasks are loaded correctly
     assert len(tasks) == 3
