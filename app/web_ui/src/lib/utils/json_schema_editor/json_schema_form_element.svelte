@@ -6,7 +6,7 @@
   let validation_errors: string[] = []
   let id = Math.random().toString(36)
 
-  export let schema_model: SchemaModel = empty_schema_model
+  export let schema_model: SchemaModel = empty_schema_model()
 
   async function add_property() {
     schema_model.properties.push({

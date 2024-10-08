@@ -8,8 +8,8 @@
   let task_description = ""
   let task_instructions = ""
   let task_requirements: TaskRequirement[] = []
-  let task_input_schema: SchemaModel = example_schema_model
-  let task_output_schema: SchemaModel = example_schema_model
+  let task_input_schema: SchemaModel = example_schema_model()
+  let task_output_schema: SchemaModel = example_schema_model()
   let task_input_plaintext = true
   let task_output_plaintext = true
   let editTaskComponent: EditTask

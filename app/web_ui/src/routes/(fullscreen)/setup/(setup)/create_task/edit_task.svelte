@@ -25,9 +25,9 @@
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
   export let task_input_plaintext = true
-  export let task_input_schema: SchemaModel = example_schema_model
+  export let task_input_schema: SchemaModel = example_schema_model()
   export let task_output_plaintext = true
-  export let task_output_schema: SchemaModel = example_schema_model
+  export let task_output_schema: SchemaModel = example_schema_model()
 
   let error: KilnError | null = null
   let submitting = false
