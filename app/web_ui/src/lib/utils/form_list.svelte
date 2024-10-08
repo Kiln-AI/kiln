@@ -52,14 +52,15 @@
     // Trigger reactivity
     content = content
     if (focus) {
-      // scroll the add button back into view, which is just past the new item
-      const list = document.getElementById(id + "_add_button")
-      if (list) {
-        // Async to allow rendering first
-        setTimeout(() => {
+      // Scroll into view. Async to allow rendering first
+      setTimeout(() => {
+        const list = document.getElementById(
+          "list_item_" + (content.length - 1) + "_" + id,
+        )
+        if (list) {
           list.scrollIntoView()
-        }, 1)
-      }
+        }
+      }, 1)
     }
   }
 
@@ -72,7 +73,7 @@
 {#if content.length > 0}
   <div class="flex flex-col gap-8" {id}>
     {#each content as item, item_index}
-      <div>
+      <div id={"list_item_" + item_index + "_" + id}>
         <div class="flex flex-row gap-3 font-medium text-sm pb-2">
           <div class="grow">
             {content_label} #{item_index + 1}
