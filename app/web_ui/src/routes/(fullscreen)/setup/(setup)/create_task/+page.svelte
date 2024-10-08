@@ -2,14 +2,14 @@
   import EditTask from "./edit_task.svelte"
   import { type TaskRequirement } from "./task_types"
   import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
-  import { empty_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
+  import { example_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
 
   let task_name = ""
   let task_description = ""
   let task_instructions = ""
   let task_requirements: TaskRequirement[] = []
-  let task_input_schema: SchemaModel = empty_schema_model
-  let task_output_schema: SchemaModel = empty_schema_model
+  let task_input_schema: SchemaModel = example_schema_model
+  let task_output_schema: SchemaModel = example_schema_model
   let task_input_plaintext = true
   let task_output_plaintext = true
   let editTaskComponent: EditTask

@@ -81,3 +81,14 @@ export const empty_schema_model: SchemaModel = {
 }
 
 export const empty_schema: JsonSchema = schema_from_model(empty_schema_model)
+
+export const example_schema_model: SchemaModel = {
+  properties: [
+    {
+      title: "Example Property",
+      description: "Replace this with your own property",
+      type: "string",
+      required: true,
+    },
+  ],
+}

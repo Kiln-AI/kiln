@@ -5,7 +5,7 @@
   import FormContainer from "$lib/utils/form_container.svelte"
   import SchemaSection from "./schema_section.svelte"
   import {
-    empty_schema_model,
+    example_schema_model,
     schema_from_model,
   } from "$lib/utils/json_schema_editor/json_schema_templates"
   import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
@@ -25,9 +25,9 @@
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
   export let task_input_plaintext = true
-  export let task_input_schema: SchemaModel = empty_schema_model
+  export let task_input_schema: SchemaModel = example_schema_model
   export let task_output_plaintext = true
-  export let task_output_schema: SchemaModel = empty_schema_model
+  export let task_output_schema: SchemaModel = example_schema_model
 
   let error: KilnError | null = null
   let submitting = false
