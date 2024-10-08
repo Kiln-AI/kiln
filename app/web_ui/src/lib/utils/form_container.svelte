@@ -2,12 +2,13 @@
   import { onMount } from "svelte"
   import { browser } from "$app/environment"
   import { createEventDispatcher } from "svelte"
+  import { KilnError } from "./error_handlers"
 
   const id = "form_container_" + Math.random().toString(36)
 
   export let submit_label: string = "Submit"
   export let warn_before_unload: boolean = false
-  export let custom_error_message: string | null = null
+  export let error: KilnError | null = null
   export let submitting = false
 
   async function focus_field(field: string) {
@@ -109,8 +110,8 @@
         >
       </div>
     {/if}
-    {#if custom_error_message}
-      {#each custom_error_message.split("\n") as error_line}
+    {#if error}
+      {#each error.getErrorMessages() as error_line}
         <div class="text-sm text-center text-error">
           {error_line}
         </div>

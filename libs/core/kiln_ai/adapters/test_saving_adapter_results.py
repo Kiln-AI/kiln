@@ -28,7 +28,11 @@ class TestAdapter(BaseAdapter):
 def test_task(tmp_path):
     project = Project(name="test_project", path=tmp_path / "test_project.kiln")
     project.save_to_file()
-    task = Task(parent=project, name="test_task")
+    task = Task(
+        parent=project,
+        name="test_task",
+        instruction="Task instruction",
+    )
     task.save_to_file()
     return task
 

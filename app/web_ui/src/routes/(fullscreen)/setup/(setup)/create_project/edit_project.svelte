@@ -3,13 +3,18 @@
   import { current_project } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
+  import {
+    KilnError,
+    post_error_handler,
+    createKilnError,
+  } from "$lib/utils/error_handlers"
 
   export let created = false
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
   export let project_name = ""
   export let project_description = ""
-  let custom_error_message: string | null = null
+  let error: KilnError | null = null
   let submitting = false
 
   $: warn_before_unload = [project_name, project_description].some(
@@ -18,7 +23,7 @@
 
   const create_project = async () => {
     try {
-      custom_error_message = null
+      error = null
       const response = await fetch("http://localhost:8757/api/project", {
         method: "POST",
         headers: {
@@ -30,31 +35,22 @@
         }),
       })
       const data = await response.json()
-      if (response.status !== 200) {
-        throw new Error(
-          data["message"] || "Unknown error (status: " + response.status + ")",
-        )
-      }
+      post_error_handler(response, data)
       if (data["path"]) {
         current_project.set(data["path"])
       } else {
-        throw new Error("Project created, but failed to return location.")
+        throw new KilnError(
+          "Project created, but failed to return location.",
+          null,
+        )
       }
-      custom_error_message = null
+      error = null
       if (redirect_on_created) {
         goto(redirect_on_created)
       }
       created = true
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "The string did not match the expected pattern."
-      ) {
-        custom_error_message = "Unexpected response from server"
-      } else {
-        custom_error_message =
-          error instanceof Error ? error.message : "Unknown error"
-      }
+    } catch (e) {
+      error = createKilnError(e)
     } finally {
       submitting = false
     }
@@ -68,7 +64,7 @@
       on:submit={create_project}
       bind:warn_before_unload
       bind:submitting
-      bind:custom_error_message
+      bind:error
     >
       <FormElement
         label="Project Name"

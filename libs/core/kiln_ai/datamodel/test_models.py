@@ -113,9 +113,9 @@ def test_load_tasks(test_project_file):
     project = Project.load_from_file(test_project_file)
 
     # Set up multiple task models under the project
-    task1 = Task(parent=project, name="Task1")
-    task2 = Task(parent=project, name="Task2")
-    task3 = Task(parent=project, name="Task3")
+    task1 = Task(parent=project, name="Task1", instruction="Task 1 instruction")
+    task2 = Task(parent=project, name="Task2", instruction="Task 2 instruction")
+    task3 = Task(parent=project, name="Task3", instruction="Task 3 instruction")
 
     # Ensure the tasks are saved correctly
     task1.save_to_file()
@@ -132,6 +132,7 @@ def test_load_tasks(test_project_file):
     assert "Task2" in names
     assert "Task3" in names
     assert all(task.model_type == "task" for task in tasks)
+    assert all(task.instruction != "" for task in tasks)
 
 
 # verify error on non-saved model

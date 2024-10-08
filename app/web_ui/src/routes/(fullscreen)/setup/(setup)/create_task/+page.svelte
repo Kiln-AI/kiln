@@ -22,7 +22,7 @@
       {
         name: "Example Requirement",
         description: "This is an example requirement",
-        instructions: "This is an example requirement",
+        instruction: "This is an example requirement",
         priority: 1,
       },
     ]

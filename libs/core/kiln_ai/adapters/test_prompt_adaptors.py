@@ -99,12 +99,13 @@ def build_test_task(tmp_path: Path):
     project.save_to_file()
     assert project.name == "test"
 
-    task = datamodel.Task(parent=project, name="test task")
+    task = datamodel.Task(
+        parent=project,
+        name="test task",
+        instruction="You are an assistant which performs math tasks provided in plain text.",
+    )
     task.save_to_file()
     assert task.name == "test task"
-    task.instruction = (
-        "You are an assistant which performs math tasks provided in plain text."
-    )
 
     r1 = datamodel.TaskRequirement(
         parent=task,

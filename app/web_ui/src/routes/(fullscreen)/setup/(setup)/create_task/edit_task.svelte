@@ -4,6 +4,12 @@
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
   import { current_project } from "$lib/stores"
+  import { goto } from "$app/navigation"
+  import {
+    KilnError,
+    post_error_handler,
+    createKilnError,
+  } from "$lib/utils/error_handlers"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -12,24 +18,47 @@
   export let task_description: string = ""
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
-  let custom_error_message: string | null = null
+  let error: KilnError | null = null
   let submitting = false
 
   // Warn before unload if there's any user input
   $: warn_before_unload =
     [task_name, task_description, task_instructions].some((value) => !!value) ||
-    task_requirements.some((req) => !!req.name || !!req.instructions)
+    task_requirements.some((req) => !!req.name || !!req.instruction)
 
-  function create_task() {
+  async function create_task() {
     try {
       if (!$current_project) {
-        custom_error_message =
-          "You must create a project before creating a task"
+        error = new KilnError(
+          "You must create a project before creating a task",
+          null,
+        )
         return
       }
-      console.log("TODO_P0 redirect_on_created", redirect_on_created)
-    } catch (error) {
-      custom_error_message = "Unknown error creating task: " + error
+      const encodedProjectPath = encodeURIComponent($current_project)
+      const response = await fetch(
+        `http://localhost:8757/api/task?project_path=${encodedProjectPath}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: task_name,
+            description: task_description,
+            instructions: task_instructions,
+            requirements: task_requirements,
+          }),
+        },
+      )
+      const data = await response.json()
+      post_error_handler(response, data)
+      error = null
+      if (redirect_on_created) {
+        goto(redirect_on_created)
+      }
+    } catch (e) {
+      error = createKilnError(e)
     } finally {
       submitting = false
     }
@@ -41,7 +70,7 @@
     submit_label="Create Task"
     on:submit={create_task}
     bind:warn_before_unload
-    bind:custom_error_message
+    bind:error
     bind:submitting
   >
     <div class="text-xl font-bold">Part 1: Overview</div>
@@ -124,7 +153,7 @@
             inputType="textarea"
             id="requirement_instructions_{item_index}"
             light_label={true}
-            bind:value={task_requirements[item_index].instructions}
+            bind:value={task_requirements[item_index].instruction}
           />
         </div>
       </div>

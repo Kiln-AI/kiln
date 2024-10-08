@@ -12,8 +12,8 @@ from libs.core.kiln_ai.datamodel import Project, Task
 
 def connect_task_management(app: FastAPI):
     @app.post("/api/task")
-    async def create_task(task_data: Dict[str, Any], project_path: str):
-        if not os.path.exists(project_path):
+    async def create_task(task_data: Dict[str, Any], project_path: str | None = None):
+        if project_path is None or not os.path.exists(project_path):
             return JSONResponse(
                 status_code=400,
                 content={

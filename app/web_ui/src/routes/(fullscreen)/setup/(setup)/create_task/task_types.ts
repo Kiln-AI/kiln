@@ -1,6 +1,6 @@
 export type TaskRequirement = {
   name: string
   description: string | null
-  instructions: string
+  instruction: string
   priority: number
 }

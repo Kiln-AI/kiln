@@ -93,6 +93,7 @@ def test_create_task_real_project(client, tmp_path):
     task_data = {
         "name": "Real Task",
         "description": "This is a real task",
+        "instruction": "Task instruction",
     }
 
     response = client.post(f"/api/task?project_path={project.path}", json=task_data)
@@ -101,6 +102,7 @@ def test_create_task_real_project(client, tmp_path):
     res = response.json()
     assert res["name"] == "Real Task"
     assert res["description"] == "This is a real task"
+    assert res["instruction"] == "Task instruction"
     assert "path" in res
     assert res["id"] is not None
     assert res["priority"] == 2
@@ -110,5 +112,6 @@ def test_create_task_real_project(client, tmp_path):
 
     assert task_from_disk.name == "Real Task"
     assert task_from_disk.description == "This is a real task"
+    assert task_from_disk.instruction == "Task instruction"
     assert task_from_disk.id == res["id"]
     assert task_from_disk.priority == 2
