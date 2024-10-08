@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -48,4 +48,12 @@ def connect_custom_errors(app: FastAPI):
                 "message": ".\n".join(error_messages),
                 "source_errors": exc.errors(),
             },
+        )
+
+    # Wrap in a format that the client can understand (message, and error_messages)
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"message": exc.detail},
         )

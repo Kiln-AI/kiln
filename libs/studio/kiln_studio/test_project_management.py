@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from libs.core.kiln_ai.datamodel import Project
 from libs.core.kiln_ai.utils.config import Config
+from libs.studio.kiln_studio.custom_errors import connect_custom_errors
 from libs.studio.kiln_studio.project_management import (
     connect_project_management,
     default_project_path,
@@ -18,6 +19,7 @@ from libs.studio.kiln_studio.project_management import (
 def app():
     app = FastAPI()
     connect_project_management(app)
+    connect_custom_errors(app)
     return app
 
 

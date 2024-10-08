@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 
 from libs.core.kiln_ai.datamodel import Project
 from libs.core.kiln_ai.utils.config import Config
@@ -17,11 +16,9 @@ def connect_project_management(app: FastAPI):
     async def create_project(project: Project):
         project_path = os.path.join(default_project_path(), project.name)
         if os.path.exists(project_path):
-            return JSONResponse(
+            raise HTTPException(
                 status_code=400,
-                content={
-                    "message": "Project with this name already exists. Please choose a different name."
-                },
+                detail="Project with this name already exists. Please choose a different name.",
             )
 
         os.makedirs(project_path)

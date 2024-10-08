@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from libs.core.kiln_ai.datamodel import Project, Task
+from libs.studio.kiln_studio.custom_errors import connect_custom_errors
 from libs.studio.kiln_studio.task_management import connect_task_management
 
 
@@ -14,6 +15,7 @@ from libs.studio.kiln_studio.task_management import connect_task_management
 def app():
     app = FastAPI()
     connect_task_management(app)
+    connect_custom_errors(app)
     return app
 
 
