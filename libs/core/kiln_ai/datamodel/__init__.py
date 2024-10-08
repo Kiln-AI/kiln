@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Dict, Self, Type
+from typing import TYPE_CHECKING, Dict, Self
 
 import jsonschema
 import jsonschema.exceptions

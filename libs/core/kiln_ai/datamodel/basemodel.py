@@ -21,9 +21,11 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    ValidationError,
     computed_field,
     model_validator,
 )
+from pydantic_core import ErrorDetails
 
 # ID is a 10 digit hex string
 ID_FIELD = Field(default_factory=lambda: uuid.uuid4().hex[:10].upper())
@@ -257,12 +259,15 @@ class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
 
     @classmethod
     def validate_and_save_with_subrelations(
-        cls, data: Dict[str, Any], path: Path | None = None
+        cls,
+        data: Dict[str, Any],
+        path: Path | None = None,
+        parent: KilnBaseModel | None = None,
     ):
         # Validate first, then save. Don't want error half way through, and partly persisted
         # TODO P2: save to tmp dir, then move atomically. But need to merge directories so later.
-        cls._validate_nested(data, save=False, path=path)
-        instance = cls._validate_nested(data, save=True, path=path)
+        cls._validate_nested(data, save=False, path=path, parent=parent)
+        instance = cls._validate_nested(data, save=True, path=path, parent=parent)
         return instance
 
     @classmethod
@@ -273,13 +278,22 @@ class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
         parent: KilnBaseModel | None = None,
         path: Path | None = None,
     ):
-        instance = cls.model_validate(data)
-        if path is not None:
-            instance.path = path
-        if parent is not None and isinstance(instance, KilnParentedModel):
-            instance.parent = parent
-        if save:
-            instance.save_to_file()
+        # Collect all validation errors so we can report them all at once
+        validation_errors = []
+
+        try:
+            instance = cls.model_validate(data)
+            if path is not None:
+                instance.path = path
+            if parent is not None and isinstance(instance, KilnParentedModel):
+                instance.parent = parent
+            if save:
+                instance.save_to_file()
+        except ValidationError as e:
+            instance = None
+            for suberror in e.errors():
+                validation_errors.append(suberror)
+
         for key, value_list in data.items():
             if key in cls._parent_of:
                 parent_type = cls._parent_of[key]
@@ -287,20 +301,48 @@ class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
                     raise ValueError(
                         f"Expected a list for {key}, but got {type(value_list)}"
                     )
-                for value in value_list:
-                    if issubclass(parent_type, KilnParentModel):
-                        parent_type._validate_nested(
-                            data=value, save=save, parent=instance
-                        )
-                    elif issubclass(parent_type, KilnBaseModel):
-                        # Root node
-                        subinstance = parent_type.model_validate(value)
-                        subinstance.parent = instance
-                        if save:
-                            subinstance.save_to_file()
-                    else:
-                        raise ValueError(
-                            f"Invalid type {parent_type}. Should be KilnBaseModel based."
-                        )
+                for value_index, value in enumerate(value_list):
+                    try:
+                        if issubclass(parent_type, KilnParentModel):
+                            kwargs = {"data": value, "save": save}
+                            if instance is not None:
+                                kwargs["parent"] = instance
+                            parent_type._validate_nested(**kwargs)
+                        elif issubclass(parent_type, KilnParentedModel):
+                            # Root node
+                            subinstance = parent_type.model_validate(value)
+                            if instance is not None:
+                                subinstance.parent = instance
+                            if save:
+                                subinstance.save_to_file()
+                        else:
+                            raise ValueError(
+                                f"Invalid type {parent_type}. Should be KilnBaseModel based."
+                            )
+                    except ValidationError as e:
+                        for suberror in e.errors():
+                            cls._append_loc(suberror, key, value_index)
+                            validation_errors.append(suberror)
+
+        if len(validation_errors) > 0:
+            raise ValidationError.from_exception_data(
+                title=f"Validation failed for {cls.__name__}",
+                line_errors=validation_errors,
+                input_type="json",
+            )
 
         return instance
+
+    @classmethod
+    def _append_loc(
+        cls, error: ErrorDetails, current_loc: str, value_index: int | None = None
+    ):
+        orig_loc = error["loc"] if "loc" in error else None
+        new_loc: list[str | int] = [current_loc]
+        if value_index is not None:
+            new_loc.append(value_index)
+        if isinstance(orig_loc, tuple):
+            new_loc.extend(list(orig_loc))
+        elif isinstance(orig_loc, list):
+            new_loc.extend(orig_loc)
+        error["loc"] = tuple(new_loc)

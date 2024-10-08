@@ -149,3 +149,36 @@ def test_validate_without_saving(tmp_path):
 
     with pytest.raises(ValidationError):
         ModelA._validate_nested(data, save=False)
+
+
+def test_validation_error_in_multiple_levels():
+    data = {
+        "missing_name": "Root",
+        "bs": [
+            {
+                "value": -1,
+                "cs": [
+                    {"code": "ABC"},
+                    {"code": "DEF"},
+                    {"code": "invalid"},
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(ValidationError) as exc_info:
+        ModelA.validate_and_save_with_subrelations(data)
+
+    assert len(exc_info.value.errors()) == 3
+
+    first = exc_info.value.errors()[0]
+    assert "Field required" in first["msg"]
+    assert first["loc"] == ("name",)
+
+    second = exc_info.value.errors()[1]
+    assert "Input should be greater than or equal to 0" in second["msg"]
+    assert second["loc"] == ("bs", 0, "value")
+
+    third = exc_info.value.errors()[2]
+    assert "String should match pattern" in third["msg"]
+    assert third["loc"] == ("bs", 0, "cs", 2, "code")
