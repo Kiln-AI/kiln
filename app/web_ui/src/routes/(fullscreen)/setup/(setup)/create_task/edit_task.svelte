@@ -4,7 +4,7 @@
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
   import SchemaSection from "./schema_section.svelte"
-  //import { empty_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
+  import { empty_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
   import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
   import { current_project } from "$lib/stores"
   import { goto } from "$app/navigation"
@@ -21,34 +21,10 @@
   export let task_description: string = ""
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
-  export let input_scheme_plaintext = false
-  export let task_input_schema: SchemaModel = {
-    properties: [
-      {
-        title: "Input",
-        description: "The input to the model",
-        type: "string",
-        required: true,
-      },
-      {
-        title: "Int input",
-        description: "An integer input",
-        type: "integer",
-        required: false,
-      },
-    ],
-  }
-  export let task_output_schema: SchemaModel = {
-    properties: [
-      {
-        title: "Output",
-        description: "The output from the model",
-        type: "string",
-        required: true,
-      },
-    ],
-  }
-  export let output_scheme_plaintext = false
+  export let task_input_plaintext = true
+  export let task_input_schema: SchemaModel = empty_schema_model
+  export let task_output_plaintext = true
+  export let task_output_schema: SchemaModel = empty_schema_model
 
   let error: KilnError | null = null
   let submitting = false
@@ -94,6 +70,22 @@
     } finally {
       submitting = false
     }
+  }
+
+  export function has_edits(): boolean {
+    let has_edited_requirements = task_requirements.some(
+      (req) => !!req.name || !!req.instruction,
+    )
+    return (
+      !!task_name ||
+      !!task_description ||
+      !!task_instructions ||
+      has_edited_requirements ||
+      !task_input_plaintext ||
+      task_input_schema.properties.length > 0 ||
+      !task_output_plaintext ||
+      task_output_schema.properties.length > 0
+    )
   }
 </script>
 
@@ -202,7 +194,7 @@
 
     <SchemaSection
       bind:schema_model={task_input_schema}
-      bind:plaintext={input_scheme_plaintext}
+      bind:plaintext={task_input_plaintext}
     />
 
     <div class="text-sm font-medium text-left pt-6 flex flex-col gap-1">
@@ -216,7 +208,7 @@
 
     <SchemaSection
       bind:schema_model={task_output_schema}
-      bind:plaintext={output_scheme_plaintext}
+      bind:plaintext={task_output_plaintext}
     />
   </FormContainer>
 </div>

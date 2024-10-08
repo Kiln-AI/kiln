@@ -1,10 +1,17 @@
 <script lang="ts">
   import EditTask from "./edit_task.svelte"
   import { type TaskRequirement } from "./task_types"
+  import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
+  import { empty_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
 
   let task_name = ""
   let task_description = ""
+  let task_instructions = ""
   let task_requirements: TaskRequirement[] = []
+  let task_input_schema: SchemaModel = empty_schema_model
+  let task_output_schema: SchemaModel = empty_schema_model
+  let task_input_plaintext = true
+  let task_output_plaintext = true
   let editTaskComponent: EditTask
 
   function example_task() {
@@ -16,16 +23,48 @@
       }
     }
 
-    task_name = "Example Task"
-    task_description = "This is an example task"
+    task_name = "Joke Generator"
+    task_description = "An example task from the KilnAI team."
+    task_instructions =
+      "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. The output should include a setup, punchline, and a rating of how funny it is on a scale of 1 to 10."
     task_requirements = [
       {
-        name: "Example Requirement",
-        description: "This is an example requirement",
-        instruction: "This is an example requirement",
+        name: "Keep on topic",
+        instruction:
+          "Keep the joke on topic. If the user specifies a theme, the joke must be related to that theme.",
         priority: 1,
       },
+      {
+        name: "Follow the style specified",
+        instruction:
+          "Follow the style specified in the input. For example, if the user specifies 'This joke should be for young children', follow that stylistic instruction.",
+        priority: 2,
+      },
     ]
+    task_input_plaintext = true
+    task_output_plaintext = false
+    task_output_schema = {
+      properties: [
+        {
+          title: "Setup",
+          description: "The setup to the joke",
+          type: "string",
+          required: true,
+        },
+        {
+          title: "Punchline",
+          description: "The punchline to the joke",
+          type: "string",
+          required: true,
+        },
+        {
+          title: "Rating",
+          description: "The rating of the joke, from 1 to 10",
+          type: "integer",
+          required: true,
+        },
+      ],
+    }
   }
 </script>
 
@@ -53,6 +92,11 @@
     bind:task_name
     bind:task_description
     bind:task_requirements
+    bind:task_input_schema
+    bind:task_output_schema
+    bind:task_input_plaintext
+    bind:task_output_plaintext
+    bind:task_instructions
     bind:this={editTaskComponent}
   />
 </div>

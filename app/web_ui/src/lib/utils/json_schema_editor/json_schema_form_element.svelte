@@ -23,9 +23,6 @@
 <code class="font-mono whitespace-pre text-xs">
   schema: {schema_json}
 </code>
-<div>
-  schema: {schema_json}
-</div>
 
 {#if validation_errors.length > 0}
   <div class="validation-errors">

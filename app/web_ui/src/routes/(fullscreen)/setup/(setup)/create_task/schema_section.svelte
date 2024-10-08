@@ -13,7 +13,7 @@
     <label class="label cursor-pointer flex flex-row gap-3">
       <input
         type="radio"
-        name="radio-input-schema"
+        name="radio-input-schema-{id}"
         class="radio"
         value={true}
         bind:group={plaintext}
