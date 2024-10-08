@@ -3,6 +3,9 @@
   import FormElement from "$lib/utils/form_element.svelte"
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
+  import SchemaSection from "./schema_section.svelte"
+  //import { empty_schema_model } from "$lib/utils/json_schema_editor/json_schema_templates"
+  import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
   import { current_project } from "$lib/stores"
   import { goto } from "$app/navigation"
   import {
@@ -18,6 +21,35 @@
   export let task_description: string = ""
   export let task_instructions: string = ""
   export let task_requirements: TaskRequirement[] = []
+  export let input_scheme_plaintext = false
+  export let task_input_schema: SchemaModel = {
+    properties: [
+      {
+        title: "Input",
+        description: "The input to the model",
+        type: "string",
+        required: true,
+      },
+      {
+        title: "Int input",
+        description: "An integer input",
+        type: "integer",
+        required: false,
+      },
+    ],
+  }
+  export let task_output_schema: SchemaModel = {
+    properties: [
+      {
+        title: "Output",
+        description: "The output from the model",
+        type: "string",
+        required: true,
+      },
+    ],
+  }
+  export let output_scheme_plaintext = false
+
   let error: KilnError | null = null
   let submitting = false
 
@@ -158,5 +190,33 @@
         </div>
       </div>
     </FormList>
+
+    <div class="text-sm font-medium text-left pt-6 flex flex-col gap-1">
+      <div class="text-xl font-bold" id="requirements_part">
+        Part 3: Input Schema
+      </div>
+      <div class="text-xs text-gray-500">
+        What kind of input will the model receive?
+      </div>
+    </div>
+
+    <SchemaSection
+      bind:schema_model={task_input_schema}
+      bind:plaintext={input_scheme_plaintext}
+    />
+
+    <div class="text-sm font-medium text-left pt-6 flex flex-col gap-1">
+      <div class="text-xl font-bold" id="requirements_part">
+        Part 4: Output Schema
+      </div>
+      <div class="text-xs text-gray-500">
+        What kind of output will the model produce?
+      </div>
+    </div>
+
+    <SchemaSection
+      bind:schema_model={task_output_schema}
+      bind:plaintext={output_scheme_plaintext}
+    />
   </FormContainer>
 </div>

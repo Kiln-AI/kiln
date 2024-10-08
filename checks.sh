@@ -29,6 +29,7 @@ if [[ "$changed_files" == *"app/web_ui/"* ]]; then
     npm run format_check
     npm run lint
     npm run check
+    npm run test_run
     echo "Running vite build"
     npm run build > /dev/null
     cd ../..
