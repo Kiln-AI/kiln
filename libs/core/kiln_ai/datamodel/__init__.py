@@ -88,14 +88,6 @@ class ExampleOutput(KilnParentedModel):
         description="An version of the output with issues fixed by a human evaluator. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output example for this task unrelated to this output, generate a new ExampleOutput with type 'human' instead of using this field.",
     )
 
-    @classmethod
-    def relationship_name(cls):
-        return "outputs"
-
-    @classmethod
-    def parent_type(cls):
-        return Example
-
     def parent_example(self) -> Example | None:
         if not isinstance(self.parent, Example):
             return None
@@ -208,14 +200,6 @@ class Example(KilnParentedModel, KilnParentModel, parent_of={"outputs": ExampleO
         description="Additional properties of the source, e.g. the name of the human who provided the input or the model that generated the input.",
     )
 
-    @classmethod
-    def relationship_name(cls):
-        return "examples"
-
-    @classmethod
-    def parent_type(cls):
-        return Task
-
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def outputs(self) -> list[ExampleOutput]:
         return super().outputs()  # type: ignore
@@ -253,14 +237,6 @@ class TaskRequirement(KilnParentedModel):
     instruction: str = Field(default="", min_length=1)
     priority: Priority = Field(default=Priority.p2)
 
-    @classmethod
-    def relationship_name(cls):
-        return "requirements"
-
-    @classmethod
-    def parent_type(cls):
-        return Task
-
 
 class TaskDeterminism(str, Enum):
     deterministic = "deterministic"  # Expect exact match
@@ -291,14 +267,6 @@ class Task(
         if self.input_json_schema is None:
             return None
         return schema_from_json_str(self.input_json_schema)
-
-    @classmethod
-    def relationship_name(cls):
-        return "tasks"
-
-    @classmethod
-    def parent_type(cls):
-        return Project
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def requirements(self) -> list[TaskRequirement]:

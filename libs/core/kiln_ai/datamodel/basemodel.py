@@ -137,32 +137,33 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
             return None
         # TODO: this only works with base_filename. If we every support custom names, we need to change this.
         parent_path = (
-            self.path.parent.parent.parent / self.parent_type().base_filename()
+            self.path.parent.parent.parent
+            / self.__class__.parent_type().base_filename()
         )
         if parent_path is None:
             return None
-        self._parent = self.parent_type().load_from_file(parent_path)
+        self._parent = self.__class__.parent_type().load_from_file(parent_path)
         return self._parent
 
     @parent.setter
     def parent(self, value: Optional[KilnBaseModel]):
         if value is not None:
-            expected_parent_type = self.parent_type()
+            expected_parent_type = self.__class__.parent_type()
             if not isinstance(value, expected_parent_type):
                 raise ValueError(
                     f"Parent must be of type {expected_parent_type}, but was {type(value)}"
                 )
         self._parent = value
 
+    # Dynamically implemented by KilnParentModel method injection
     @classmethod
-    @abstractmethod
     def relationship_name(cls) -> str:
-        pass
+        raise NotImplementedError("Relationship name must be implemented")
 
+    # Dynamically implemented by KilnParentModel method injection
     @classmethod
-    @abstractmethod
     def parent_type(cls) -> Type[KilnBaseModel]:
-        pass
+        raise NotImplementedError("Parent type must be implemented")
 
     @model_validator(mode="after")
     def check_parent_type(self) -> Self:
@@ -200,7 +201,7 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
             return None
         return (
             parent_folder
-            / self.relationship_name()
+            / self.__class__.relationship_name()
             / self.build_child_dirname()
             / self.__class__.base_filename()
         )
@@ -251,11 +252,30 @@ class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
         setattr(cls, relationship_name, child_method)
 
     @classmethod
+    def _create_parent_methods(
+        cls, targetCls: Type[KilnParentedModel], relationship_name: str
+    ):
+        def parent_class_method() -> Type[KilnParentModel]:
+            return cls
+
+        parent_class_method.__name__ = "parent_type"
+        parent_class_method.__annotations__ = {"return": Type[KilnParentModel]}
+        setattr(targetCls, "parent_type", parent_class_method)
+
+        def relationship_name_method() -> str:
+            return relationship_name
+
+        relationship_name_method.__name__ = "relationship_name"
+        relationship_name_method.__annotations__ = {"return": str}
+        setattr(targetCls, "relationship_name", relationship_name_method)
+
+    @classmethod
     def __init_subclass__(cls, parent_of: Dict[str, Type[KilnParentedModel]], **kwargs):
         super().__init_subclass__(**kwargs)
         cls._parent_of = parent_of
         for relationship_name, child_class in parent_of.items():
             cls._create_child_method(relationship_name, child_class)
+            cls._create_parent_methods(child_class, relationship_name)
 
     @classmethod
     def validate_and_save_with_subrelations(

@@ -61,8 +61,8 @@ def test_example_relationship(tmp_path):
         source=ExampleSource.human,
         source_properties={},
     )
-    assert example.relationship_name() == "examples"
-    assert example.parent_type().__name__ == "Task"
+    assert example.__class__.relationship_name() == "examples"
+    assert example.__class__.parent_type().__name__ == "Task"
 
 
 def test_example_output_model_validation(tmp_path):
