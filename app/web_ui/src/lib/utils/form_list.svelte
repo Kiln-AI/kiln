@@ -58,7 +58,7 @@
           "list_item_" + (content.length - 1) + "_" + id,
         )
         if (list) {
-          list.scrollIntoView()
+          list.scrollIntoView({ block: "center" })
         }
       }, 1)
     }

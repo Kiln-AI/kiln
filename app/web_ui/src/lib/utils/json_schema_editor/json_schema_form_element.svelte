@@ -17,14 +17,16 @@
     })
     // Trigger reactivity
     schema_model = schema_model
-    // scroll the add button back into view, which is just past the new item
-    const list = document.getElementById("add_button_" + id)
-    if (list) {
-      // Async to allow rendering first
-      setTimeout(() => {
-        list.scrollIntoView()
-      }, 1)
-    }
+    console.log(schema_model)
+    // Scroll new item into view. Async to allow rendering first
+    setTimeout(() => {
+      const property = document.getElementById(
+        "property_" + (schema_model.properties.length - 1) + "_" + id,
+      )
+      if (property) {
+        property.scrollIntoView({ block: "center" })
+      }
+    }, 1)
   }
 
   function remove_property(index: number) {
@@ -61,23 +63,27 @@
     {/each}
   </div>
 {:else}
-  <div class="flex flex-col gap-6 pt-6" {id}>
+  <div class="flex flex-col gap-8 pt-6" {id}>
     {#each schema_model.properties as property, index}
       {#if property}
-        <!-- ignore we don't use this var-->
+        <!-- ignore that we don't use this var-->
       {/if}
-      <div class="flex flex-row gap-3 font-medium text-sm pb-2">
-        <div class="grow">
-          Property #{index + 1}
-        </div>
-        <button
-          class="link text-xs text-gray-500"
-          on:click={() => remove_property(index)}
-        >
-          remove
-        </button>
-      </div>
+
       <div class="flex flex-col gap-2">
+        <div
+          class="flex flex-row gap-3 font-medium text-sm pb-2"
+          id={"property_" + index + "_" + id}
+        >
+          <div class="grow">
+            Property #{index + 1}
+          </div>
+          <button
+            class="link text-xs text-gray-500"
+            on:click={() => remove_property(index)}
+          >
+            remove
+          </button>
+        </div>
         <div class="flex flex-row gap-3">
           <div class="grow">
             <FormElement
