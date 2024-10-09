@@ -18,6 +18,7 @@
   } from "$lib/utils/error_handlers"
   import { ui_state } from "$lib/stores"
   import { get } from "svelte/store"
+  import { browser } from "$app/environment"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -39,9 +40,22 @@
     [task_name, task_description, task_instructions].some((value) => !!value) ||
     task_requirements.some((req) => !!req.name || !!req.instruction)
 
+  let target_project_path: string | null = null
+
+  $: {
+    if (browser) {
+      target_project_path =
+        new URLSearchParams(window.location.search).get("project_path") ||
+        $current_project?.path ||
+        null
+    } else {
+      target_project_path = $current_project?.path || null
+    }
+  }
+
   async function create_task() {
     try {
-      if (!$current_project) {
+      if (!target_project_path) {
         error = new KilnError(
           "You must create a project before creating a task",
           null,
@@ -64,7 +78,7 @@
           schema_from_model(task_output_schema),
         )
       }
-      const project_path = $current_project?.path
+      const project_path = target_project_path
       if (!project_path) {
         throw new KilnError("Current project not found", null)
       }
@@ -86,6 +100,7 @@
       ui_state.set({
         ...get(ui_state),
         current_task_id: data.id,
+        current_project_path: target_project_path,
       })
       if (redirect_on_created) {
         goto(redirect_on_created)
