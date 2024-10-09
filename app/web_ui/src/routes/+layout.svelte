@@ -5,7 +5,13 @@
   import { slide } from "svelte/transition"
   import { onMount } from "svelte"
   import { goto } from "$app/navigation"
-  import { current_project, load_projects, projects } from "$lib/stores"
+  import {
+    current_project,
+    load_projects,
+    projects,
+    load_current_task,
+    current_task,
+  } from "$lib/stores"
   import { get } from "svelte/store"
   import { KilnError } from "$lib/utils/error_handlers"
   import { createKilnError } from "$lib/utils/error_handlers"
@@ -19,8 +25,14 @@
       if (all_projects?.error) {
         throw new KilnError(all_projects.error, null)
       }
-      if (!current_project()) {
+      // No projects, go to setup to create one
+      if (!$current_project) {
         goto("/setup")
+      }
+      // No current task, go to setup to create one
+      await load_current_task($current_project)
+      if (!$current_task) {
+        goto("/setup/create_task")
       }
     } catch (e: unknown) {
       load_error = createKilnError(e).getMessage()

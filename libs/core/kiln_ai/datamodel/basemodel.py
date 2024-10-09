@@ -302,7 +302,7 @@ class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
         validation_errors = []
 
         try:
-            instance = cls.model_validate(data)
+            instance = cls.model_validate(data, strict=True)
             if path is not None:
                 instance.path = path
             if parent is not None and isinstance(instance, KilnParentedModel):
@@ -330,7 +330,7 @@ class KilnParentModel(KilnBaseModel, metaclass=ABCMeta):
                             parent_type._validate_nested(**kwargs)
                         elif issubclass(parent_type, KilnParentedModel):
                             # Root node
-                            subinstance = parent_type.model_validate(value)
+                            subinstance = parent_type.model_validate(value, strict=True)
                             if instance is not None:
                                 subinstance.parent = instance
                             if save:

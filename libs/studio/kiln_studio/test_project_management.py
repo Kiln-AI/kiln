@@ -126,9 +126,6 @@ def test_create_and_load_project(client):
             # Verify the project is in the list of projects
             assert project_file in Config.shared().projects
 
-            # Skipping this assert as it's broken
-            # assert Config.shared().current_project == project_file
-
 
 @pytest.fixture
 def mock_projects():
@@ -148,7 +145,7 @@ def test_get_projects_empty(client):
         response = client.get("/api/projects")
 
     assert response.status_code == 200
-    assert response.json() == {"projects": [], "current_project_path": None}
+    assert response.json() == []
 
 
 def test_get_projects_success(client, mock_projects):
@@ -162,10 +159,9 @@ def test_get_projects_success(client, mock_projects):
 
     assert response.status_code == 200
     result = response.json()
-    assert "projects" in result
-    assert len(result["projects"]) == 2
+    assert len(result) == 2
 
-    for i, project in enumerate(result["projects"]):
+    for i, project in enumerate(result):
         assert project["name"] == f"Project {i+1}"
         assert project["description"] == f"Description {i+1}"
         assert project["path"] == str(mock_projects[i].path)
@@ -182,9 +178,8 @@ def test_get_projects_file_not_found(client, mock_projects):
 
     assert response.status_code == 200
     result = response.json()
-    assert "projects" in result
-    assert len(result["projects"]) == 1
-    assert result["projects"][0]["name"] == "Project 1"
+    assert len(result) == 1
+    assert result[0]["name"] == "Project 1"
 
 
 def test_get_projects_with_current_project(client, mock_projects):
@@ -199,10 +194,7 @@ def test_get_projects_with_current_project(client, mock_projects):
 
     assert response.status_code == 200
     result = response.json()
-    assert "projects" in result
-    assert len(result["projects"]) == 2
-    assert "current_project_path" in result
-    assert result["current_project_path"] == str(mock_projects[1].path)
+    assert len(result) == 2
 
 
 def test_get_projects_with_invalid_current_project(client, mock_projects):
@@ -217,10 +209,7 @@ def test_get_projects_with_invalid_current_project(client, mock_projects):
 
     assert response.status_code == 200
     result = response.json()
-    assert "projects" in result
-    assert len(result["projects"]) == 2
-    assert "current_project_path" in result
-    assert result["current_project_path"] == str(mock_projects[0].path)
+    assert len(result) == 2
 
 
 def test_get_projects_with_no_projects(client):
@@ -232,4 +221,4 @@ def test_get_projects_with_no_projects(client):
 
     assert response.status_code == 200
     result = response.json()
-    assert result["projects"] == []
+    assert result == []

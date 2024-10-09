@@ -43,7 +43,7 @@ export function createKilnError(e: unknown): KilnError {
  * @throws {KilnError} Throws a KilnError with appropriate error messages.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function post_error_handler(response: Response, json: any) {
+export function api_error_handler(response: Response, json: any) {
   if (response.status == 200) {
     return
   }

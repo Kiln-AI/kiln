@@ -1,5 +1,6 @@
 <script>
   import "../../app.css"
+  import { current_project, current_task } from "$lib/stores"
 </script>
 
 <div class="drawer lg:drawer-open">
@@ -25,7 +26,7 @@
       </div>
     </div>
 
-    <div class="flex-grow rounded-t-lg bg-base-100 shadow-lg p-4">
+    <div class="flex-grow rounded-t-lg bg-base-100 shadow-lg px-12 py-8">
       <slot />
     </div>
   </div>
@@ -45,10 +46,20 @@
         </label>
       </li>
       <li class="mb-4">
-        <a href="https://kiln-ai.com" target="_blank">
+        <a href="/">
           <div class="flex flex-row items-center mx-[-5px] p-0">
             <img src="/logo.svg" alt="logo" class="w-8 h-8" />
             <div class="text-lg font-bold ml-1">Kiln AI</div>
+          </div>
+        </a>
+      </li>
+      <li>
+        <a href="/select_task">
+          <div class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
+            <span class="font-bold whitespace-nowrap">Project:</span>
+            <span class="truncate">{$current_project?.name}</span>
+            <span class="font-bold whitespace-nowrap">Task:</span>
+            <span class="truncate">{$current_task?.name}</span>
           </div>
         </a>
       </li>

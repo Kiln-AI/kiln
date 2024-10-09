@@ -1,11 +1,12 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
-  import { load_projects } from "$lib/stores"
+  import { load_projects, ui_state } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
+  import { get } from "svelte/store"
   import {
     KilnError,
-    post_error_handler,
+    api_error_handler,
     createKilnError,
   } from "$lib/utils/error_handlers"
 
@@ -35,11 +36,16 @@
         }),
       })
       const data = await response.json()
-      post_error_handler(response, data)
+      api_error_handler(response, data)
 
       // now reload the projects, which should fetch the new project as current_project
       await load_projects()
       error = null
+      // set this as the current project for the UI
+      ui_state.set({
+        ...get(ui_state),
+        current_project_path: data.path,
+      })
       if (redirect_on_created) {
         goto(redirect_on_created)
       }

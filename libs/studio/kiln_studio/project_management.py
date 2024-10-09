@@ -32,9 +32,7 @@ def connect_project_management(app: FastAPI):
             projects = []
         if project_file not in projects:
             projects.append(project_file)
-        Config.shared().update_settings(
-            {"projects": projects, "current_project": project_file}
-        )
+        Config.shared().save_setting("projects", projects)
 
         # Add path, which is usually excluded
         returnProject = project.model_dump()
@@ -57,17 +55,4 @@ def connect_project_management(app: FastAPI):
             except Exception as e:
                 print(f"Error loading project, skipping: {project_path}: {e}")
 
-        current_project_path = None
-        if Config.shared().current_project is not None:
-            current_project_path = str(Config.shared().current_project)
-
-        # Check if the current project path is in the list of projects
-        if not current_project_path or current_project_path not in [
-            project["path"] for project in projects
-        ]:
-            current_project_path = projects[0]["path"] if len(projects) > 0 else None
-
-        return {
-            "projects": projects,
-            "current_project_path": current_project_path,
-        }
+        return projects

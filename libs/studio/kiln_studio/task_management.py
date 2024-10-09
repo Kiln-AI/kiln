@@ -36,3 +36,21 @@ def connect_task_management(app: FastAPI):
         returnTask = task.model_dump()
         returnTask["path"] = task.path
         return returnTask
+
+    @app.get("/api/tasks")
+    async def get_tasks(project_path: str | None = None):
+        if project_path is None or not os.path.exists(project_path):
+            raise HTTPException(
+                status_code=400,
+                detail="Parent project not found. Can't get tasks.",
+            )
+
+        try:
+            parent_project = Project.load_from_file(Path(project_path))
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to load parent project: {e}",
+            )
+
+        return parent_project.tasks()

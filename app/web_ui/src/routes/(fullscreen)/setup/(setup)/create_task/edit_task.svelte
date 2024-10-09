@@ -13,9 +13,11 @@
   import { goto } from "$app/navigation"
   import {
     KilnError,
-    post_error_handler,
+    api_error_handler,
     createKilnError,
   } from "$lib/utils/error_handlers"
+  import { ui_state } from "$lib/stores"
+  import { get } from "svelte/store"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -39,7 +41,7 @@
 
   async function create_task() {
     try {
-      if (!current_project()) {
+      if (!$current_project) {
         error = new KilnError(
           "You must create a project before creating a task",
           null,
@@ -49,7 +51,7 @@
       let body: Record<string, unknown> = {
         name: task_name,
         description: task_description,
-        instructions: task_instructions,
+        instruction: task_instructions,
         requirements: task_requirements,
       }
       if (!task_input_plaintext) {
@@ -62,7 +64,7 @@
           schema_from_model(task_output_schema),
         )
       }
-      const project_path = current_project()?.path
+      const project_path = $current_project?.path
       if (!project_path) {
         throw new KilnError("Current project not found", null)
       }
@@ -78,8 +80,13 @@
         },
       )
       const data = await response.json()
-      post_error_handler(response, data)
+      api_error_handler(response, data)
       error = null
+      // Make this the current task
+      ui_state.set({
+        ...get(ui_state),
+        current_task_id: data.id,
+      })
       if (redirect_on_created) {
         goto(redirect_on_created)
       }

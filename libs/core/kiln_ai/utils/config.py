@@ -71,9 +71,6 @@ class Config:
                 list,
                 default_lambda=lambda: [],
             ),
-            "current_project": ConfigProperty(
-                str,
-            ),
         }
         self._settings = self.load_settings()
 
