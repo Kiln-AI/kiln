@@ -148,6 +148,7 @@ class Config:
                 del self._settings[name]
         with open(self.settings_path(), "w") as f:
             yaml.dump(self._settings, f)
+        self._settings = self.load_settings()
 
 
 def _get_user_id():
