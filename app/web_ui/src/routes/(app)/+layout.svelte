@@ -1,6 +1,7 @@
 <script>
   import "../../app.css"
   import { current_project, current_task } from "$lib/stores"
+  import SelectTasksMenu from "./select_tasks_menu.svelte"
 </script>
 
 <div class="drawer lg:drawer-open">
@@ -54,14 +55,17 @@
         </a>
       </li>
       <li>
-        <a href="/select_task">
-          <div class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
-            <span class="font-bold whitespace-nowrap">Project:</span>
-            <span class="truncate">{$current_project?.name}</span>
-            <span class="font-bold whitespace-nowrap">Task:</span>
-            <span class="truncate">{$current_task?.name}</span>
-          </div>
-        </a>
+        <details>
+          <summary>
+            <div class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
+              <span class="font-bold whitespace-nowrap">Project:</span>
+              <span class="truncate">{$current_project?.name}</span>
+              <span class="font-bold whitespace-nowrap">Task:</span>
+              <span class="truncate">{$current_task?.name}</span>
+            </div>
+          </summary>
+          <SelectTasksMenu />
+        </details>
       </li>
       <li><a href="/?1">Sidebar Item 1</a></li>
       <li><a href="/?2">Sidebar Item 2</a></li>
