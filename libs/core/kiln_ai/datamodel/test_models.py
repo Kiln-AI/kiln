@@ -20,7 +20,12 @@ def test_project_file(tmp_path):
 @pytest.fixture
 def test_task_file(tmp_path):
     test_file_path = tmp_path / "task.json"
-    data = {"v": 1, "name": "Test Task", "model_type": "task"}
+    data = {
+        "v": 1,
+        "name": "Test Task",
+        "instruction": "Test Instruction",
+        "model_type": "task",
+    }
 
     with open(test_file_path, "w") as file:
         json.dump(data, file, indent=4)
@@ -55,9 +60,8 @@ def test_save_to_file(test_project_file):
 
 
 def test_task_defaults():
-    task = Task(name="Test Task")
+    task = Task(name="Test Task", instruction="Test Instruction")
     assert task.description == ""
-    assert task.instruction == ""
     assert task.priority == Priority.p2
     assert task.determinism == TaskDeterminism.flexible
 
@@ -147,6 +151,7 @@ def test_check_model_type(test_project_file, test_task_file):
     task = Task.load_from_file(test_task_file)
     assert project.model_type == "project"
     assert task.model_type == "task"
+    assert task.instruction == "Test Instruction"
 
     with pytest.raises(ValueError):
         project = Project.load_from_file(test_task_file)
@@ -157,11 +162,12 @@ def test_check_model_type(test_project_file, test_task_file):
 
 def test_task_output_schema(tmp_path):
     path = tmp_path / "task.kiln"
-    task = Task(name="Test Task", path=path)
+    task = Task(name="Test Task", path=path, instruction="Test Instruction")
     task.save_to_file()
     assert task.output_schema() is None
     task = Task(
         name="Test Task",
+        instruction="Test Instruction",
         output_json_schema=json_joke_schema,
         input_json_schema=json_joke_schema,
         path=path,

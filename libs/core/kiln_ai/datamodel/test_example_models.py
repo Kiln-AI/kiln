@@ -17,7 +17,11 @@ from pydantic import ValidationError
 
 def test_example_model_validation(tmp_path):
     # Valid example
-    task = Task(name="Test Task", path=tmp_path / Task.base_filename())
+    task = Task(
+        name="Test Task",
+        instruction="test instruction",
+        path=tmp_path / Task.base_filename(),
+    )
     task.save_to_file()
     valid_example = Example(
         parent=task,
@@ -53,7 +57,11 @@ def test_example_model_validation(tmp_path):
 
 
 def test_example_relationship(tmp_path):
-    task = Task(name="Test Task", path=tmp_path / Task.base_filename())
+    task = Task(
+        name="Test Task",
+        instruction="test instruction",
+        path=tmp_path / Task.base_filename(),
+    )
     task.save_to_file()
     example = Example(
         parent=task,
@@ -67,7 +75,11 @@ def test_example_relationship(tmp_path):
 
 def test_example_output_model_validation(tmp_path):
     # Valid example output
-    task = Task(name="Test Task", path=tmp_path / Task.base_filename())
+    task = Task(
+        name="Test Task",
+        instruction="test instruction",
+        path=tmp_path / Task.base_filename(),
+    )
     task.save_to_file()
     example = Example(input="Test input", source=ExampleSource.human, parent=task)
     example.save_to_file()
@@ -280,6 +292,7 @@ def test_example_output_schema_validation(tmp_path):
     project.save_to_file()
     task = Task(
         name="Test Task",
+        instruction="test instruction",
         parent=project,
         output_json_schema=json.dumps(
             {
@@ -330,6 +343,7 @@ def test_example_input_schema_validation(tmp_path):
     task = Task(
         name="Test Task",
         parent=project,
+        instruction="test instruction",
         input_json_schema=json.dumps(
             {
                 "type": "object",

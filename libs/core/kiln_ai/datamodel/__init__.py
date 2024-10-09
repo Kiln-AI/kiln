@@ -234,7 +234,7 @@ class Example(KilnParentedModel, KilnParentModel, parent_of={"outputs": ExampleO
 class TaskRequirement(KilnParentedModel):
     name: str = NAME_FIELD
     description: str = Field(default="")
-    instruction: str = Field(default="", min_length=1)
+    instruction: str = Field(min_length=1)
     priority: Priority = Field(default=Priority.p2)
 
 
@@ -253,7 +253,7 @@ class Task(
     description: str = Field(default="")
     priority: Priority = Field(default=Priority.p2)
     determinism: TaskDeterminism = Field(default=TaskDeterminism.flexible)
-    instruction: str = Field(default="", min_length=1)
+    instruction: str = Field(min_length=1)
     # TODO: make this required, or formalize the default message output schema
     output_json_schema: JsonObjectSchema | None = None
     input_json_schema: JsonObjectSchema | None = None

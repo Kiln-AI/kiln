@@ -88,7 +88,11 @@ async def test_mock_unstructred_response(tmp_path):
 
     # Should error, expecting a string, not a dict
     project = datamodel.Project(name="test", path=tmp_path / "test.kiln")
-    task = datamodel.Task(parent=project, name="test task")
+    task = datamodel.Task(
+        parent=project,
+        name="test task",
+        instruction="You are an assistant which performs math tasks provided in plain text.",
+    )
     task.instruction = (
         "You are an assistant which performs math tasks provided in plain text."
     )

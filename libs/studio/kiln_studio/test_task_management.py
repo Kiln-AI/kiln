@@ -30,6 +30,7 @@ def test_create_task_success(client, tmp_path):
     task_data = {
         "name": "Test Task",
         "description": "This is a test task",
+        "instruction": "This is a test instruction",
     }
 
     with patch(

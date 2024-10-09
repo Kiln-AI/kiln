@@ -182,3 +182,24 @@ def test_validation_error_in_multiple_levels():
     third = exc_info.value.errors()[2]
     assert "String should match pattern" in third["msg"]
     assert third["loc"] == ("bs", 0, "cs", 2, "code")
+
+
+def test_validation_error_in_c_level_length():
+    data = {
+        "name": "Root",
+        "bs": [
+            {
+                "value": 10,
+                "cs": [
+                    {"code": "ABC"},
+                    {"code": "DEF"},
+                    {"code": "GE"},  # This should cause a validation error
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(ValidationError) as exc_info:
+        ModelA.validate_and_save_with_subrelations(data)
+
+    assert "String should match pattern" in str(exc_info.value)
