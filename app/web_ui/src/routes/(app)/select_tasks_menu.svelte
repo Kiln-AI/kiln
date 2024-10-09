@@ -8,17 +8,26 @@
   let id = "select-tasks-menu-" + Math.random().toString(36)
 
   $: project_list = $projects?.projects || []
-  let manually_selected_project: ProjectInfo | null = null
+  // Undefined should fallback. Null is manually selected none
+  let manually_selected_project: ProjectInfo | null | undefined = undefined
   let tasks_loading = false
   let tasks_loading_error: string | null = null
   let selected_project_tasks: Task[] = []
 
+  $: selected_project =
+    manually_selected_project === null
+      ? null
+      : manually_selected_project || $current_project
+
   function select_project(project: ProjectInfo) {
+    if (project?.path == selected_project?.path) {
+      // Actually deselect it
+      manually_selected_project = null
+      return
+    }
     manually_selected_project = project
     load_tasks(project)
   }
-
-  $: selected_project = manually_selected_project || $current_project
 
   $: load_tasks(selected_project)
 
@@ -77,14 +86,17 @@
 
 <ul class="menu menu-md bg-base-200 rounded-box" {id}>
   {#each project_list as project}
-    {#if project.path == selected_project?.path}
-      <li>
-        <h1 class="flex flex-row pr-1">
-          <div class="grow">
-            <span class="badge badge-secondary badge-outline">Project</span>
-            {project.name}
-          </div>
-          <div>
+    <li>
+      <button
+        on:click={() => select_project(project)}
+        class="flex flex-row pr-1"
+      >
+        <div class="grow">
+          <span class="badge badge-secondary badge-outline">Project</span>
+          {project.name}
+        </div>
+        <div>
+          {#if project.path == selected_project?.path}
             <svg
               fill="#000000"
               class="w-3 h-3"
@@ -99,8 +111,25 @@
                 points="386.258,91.567 203.718,273.512 21.179,91.567 0,112.815 203.718,315.87 407.437,112.815 "
               />
             </svg>
-          </div>
-        </h1>
+          {:else}
+            <svg
+              fill="#000000"
+              class="w-3 h-3"
+              version="1.1"
+              id="Layer_1"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              viewBox="0 0 407.436 407.436"
+              xml:space="preserve"
+            >
+              <polygon
+                points="203.718,91.567 0,294.621 21.179,315.869 203.718,133.924 386.258,315.869 407.436,294.621 "
+              />
+            </svg>
+          {/if}
+        </div>
+      </button>
+      {#if project.path == selected_project?.path}
         <ul>
           {#if tasks_loading}
             <li
@@ -150,36 +179,8 @@
             </a>
           </li>
         </ul>
-      </li>
-    {:else}
-      <li>
-        <button
-          on:click={() => select_project(project)}
-          class="flex flex-row pr-1"
-        >
-          <div class="grow">
-            <span class="badge badge-secondary badge-outline">Project</span>
-            {project.name}
-          </div>
-          <div>
-            <svg
-              fill="#000000"
-              class="w-3 h-3"
-              version="1.1"
-              id="Layer_1"
-              xmlns="http://www.w3.org/2000/svg"
-              xmlns:xlink="http://www.w3.org/1999/xlink"
-              viewBox="0 0 407.436 407.436"
-              xml:space="preserve"
-            >
-              <polygon
-                points="203.718,91.567 0,294.621 21.179,315.869 203.718,133.924 386.258,315.869 407.436,294.621 "
-              />
-            </svg>
-          </div>
-        </button>
-      </li>
-    {/if}
+      {/if}
+    </li>
   {/each}
   <li class="pt-4">
     <a href="/setup/create_project">

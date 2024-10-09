@@ -54,7 +54,7 @@
           </div>
         </a>
       </li>
-      <li>
+      <li class="mb-4">
         <details>
           <summary>
             <div class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
