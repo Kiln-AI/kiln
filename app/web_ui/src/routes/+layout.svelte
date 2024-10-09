@@ -5,31 +5,55 @@
   import { slide } from "svelte/transition"
   import { onMount } from "svelte"
   import { goto } from "$app/navigation"
-  import { current_project } from "$lib/stores"
+  import { current_project, load_projects, projects } from "$lib/stores"
+  import { get } from "svelte/store"
+  import { KilnError } from "$lib/utils/error_handlers"
+  import { createKilnError } from "$lib/utils/error_handlers"
+  let loading = true
+  let load_error: string | null = null
 
   const check_needs_setup = async () => {
     try {
-      let res = await fetch("http://localhost:8757/api/settings")
-      let data = await res.json()
-      let projects = data["projects"]
-      let current_project_path = data["current_project"]
-
-      if (!projects || projects.length === 0) {
-        goto("/setup")
-      } else {
-        // Set the current_project to the current project, or first project
-        current_project.set(current_project_path || projects[0])
+      await load_projects()
+      const all_projects = get(projects)
+      if (all_projects?.error) {
+        throw new KilnError(all_projects.error, null)
       }
-    } catch (e) {
-      console.error("check_needs_setup error", e)
+      if (!current_project()) {
+        goto("/setup")
+      }
+    } catch (e: unknown) {
+      load_error = createKilnError(e).getMessage()
+    } finally {
+      loading = false
     }
   }
 
   onMount(() => {
-    // Check if we need setup (async okay)
     check_needs_setup()
   })
 </script>
+
+{#if loading || load_error}
+  <div
+    class="fixed w-full top-0 right-0 left-0 bottom-0 bg-base-200 z-[1000] flex place-items-center place-content-center"
+  >
+    {#if load_error}
+      <span class="text-center flex flex-col gap-4">
+        <h1 class="text-2xl font-bold">Error loading projects</h1>
+        <p class="text-error">{load_error}</p>
+        <button
+          class="btn btn-primary btn-sm"
+          on:click={() => window.location.reload()}
+        >
+          Retry
+        </button>
+      </span>
+    {:else}
+      <span class="loading loading-spinner loading-lg"></span>
+    {/if}
+  </div>
+{/if}
 
 {#if $navigating}
   <!--

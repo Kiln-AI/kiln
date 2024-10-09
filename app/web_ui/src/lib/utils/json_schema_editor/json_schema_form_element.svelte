@@ -17,7 +17,6 @@
     })
     // Trigger reactivity
     schema_model = schema_model
-    console.log(schema_model)
     // Scroll new item into view. Async to allow rendering first
     setTimeout(() => {
       const property = document.getElementById(

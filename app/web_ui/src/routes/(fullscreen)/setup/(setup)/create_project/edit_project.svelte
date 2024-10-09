@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
-  import { current_project } from "$lib/stores"
+  import { load_projects } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import {
@@ -36,14 +36,9 @@
       })
       const data = await response.json()
       post_error_handler(response, data)
-      if (data["path"]) {
-        current_project.set(data["path"])
-      } else {
-        throw new KilnError(
-          "Project created, but failed to return location.",
-          null,
-        )
-      }
+
+      // now reload the projects, which should fetch the new project as current_project
+      await load_projects()
       error = null
       if (redirect_on_created) {
         goto(redirect_on_created)

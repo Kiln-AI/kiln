@@ -39,7 +39,7 @@
 
   async function create_task() {
     try {
-      if (!$current_project) {
+      if (!current_project()) {
         error = new KilnError(
           "You must create a project before creating a task",
           null,
@@ -62,7 +62,11 @@
           schema_from_model(task_output_schema),
         )
       }
-      const encodedProjectPath = encodeURIComponent($current_project)
+      const project_path = current_project()?.path
+      if (!project_path) {
+        throw new KilnError("Current project not found", null)
+      }
+      const encodedProjectPath = encodeURIComponent(project_path)
       const response = await fetch(
         `http://localhost:8757/api/task?project_path=${encodedProjectPath}`,
         {

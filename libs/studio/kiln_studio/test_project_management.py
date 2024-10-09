@@ -126,3 +126,108 @@ def test_create_and_load_project(client):
             # Verify the project is in the list of projects
             assert project_file in Config.shared().projects
             assert Config.shared().current_project == project_file
+
+
+@pytest.fixture
+def mock_projects():
+    return [
+        Project(
+            name="Project 1", description="Description 1", path="/path/to/project1.json"
+        ),
+        Project(
+            name="Project 2", description="Description 2", path="/path/to/project2.json"
+        ),
+    ]
+
+
+def test_get_projects_empty(client):
+    with patch.object(Config, "shared") as mock_config:
+        mock_config.return_value.projects = []
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    assert response.json() == {"projects": [], "current_project_path": None}
+
+
+def test_get_projects_success(client, mock_projects):
+    with patch.object(Config, "shared") as mock_config, patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file"
+    ) as mock_load:
+        mock_config.return_value.projects = [p.path for p in mock_projects]
+        mock_load.side_effect = mock_projects
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert "projects" in result
+    assert len(result["projects"]) == 2
+
+    for i, project in enumerate(result["projects"]):
+        assert project["name"] == f"Project {i+1}"
+        assert project["description"] == f"Description {i+1}"
+        assert project["path"] == str(mock_projects[i].path)
+
+
+def test_get_projects_file_not_found(client, mock_projects):
+    with patch.object(Config, "shared") as mock_config, patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file"
+    ) as mock_load:
+        mock_config.return_value.projects = [p.path for p in mock_projects]
+        mock_load.side_effect = [mock_projects[0], FileNotFoundError]
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert "projects" in result
+    assert len(result["projects"]) == 1
+    assert result["projects"][0]["name"] == "Project 1"
+
+
+def test_get_projects_with_current_project(client, mock_projects):
+    with patch.object(Config, "shared") as mock_config, patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file"
+    ) as mock_load:
+        mock_config.return_value.projects = [p.path for p in mock_projects]
+        mock_config.return_value.current_project = mock_projects[1].path
+        mock_load.side_effect = mock_projects
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert "projects" in result
+    assert len(result["projects"]) == 2
+    assert "current_project_path" in result
+    assert result["current_project_path"] == str(mock_projects[1].path)
+
+
+def test_get_projects_with_invalid_current_project(client, mock_projects):
+    with patch.object(Config, "shared") as mock_config, patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file"
+    ) as mock_load:
+        mock_config.return_value.projects = [p.path for p in mock_projects]
+        mock_config.return_value.current_project = "/invalid/path"
+        mock_load.side_effect = mock_projects
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert "projects" in result
+    assert len(result["projects"]) == 2
+    assert "current_project_path" in result
+    assert result["current_project_path"] == str(mock_projects[0].path)
+
+
+def test_get_projects_with_no_projects(client):
+    with patch.object(Config, "shared") as mock_config:
+        mock_config.return_value.projects = []
+        mock_config.return_value.current_project = None
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["projects"] == []
