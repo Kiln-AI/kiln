@@ -1,9 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
-  import { load_projects, ui_state } from "$lib/stores"
+  import { load_projects } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
-  import { get } from "svelte/store"
   import {
     KilnError,
     api_error_handler,
@@ -41,13 +40,9 @@
       // now reload the projects, which should fetch the new project as current_project
       await load_projects()
       error = null
-      // set this as the current project for the UI
-      ui_state.set({
-        ...get(ui_state),
-        current_project_path: data.path,
-      })
       if (redirect_on_created) {
-        goto(redirect_on_created)
+        const project_path = encodeURIComponent(data.path)
+        goto(redirect_on_created + `?project_path=${project_path}`)
       }
       created = true
     } catch (e) {
@@ -58,7 +53,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-2 w-full max-w-400 sm:w-[400px] mx-auto">
+<div class="flex flex-col gap-2 w-full">
   {#if !created}
     <FormContainer
       submit_label="Create Project"

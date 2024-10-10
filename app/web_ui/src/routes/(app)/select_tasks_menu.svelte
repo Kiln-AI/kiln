@@ -157,7 +157,7 @@
           {/if}
           <li class="">
             <a
-              href="/setup/create_task?project_path={encodeURIComponent(
+              href="/create_task?project_path={encodeURIComponent(
                 project.path,
               )}"
             >
@@ -183,7 +183,7 @@
     </li>
   {/each}
   <li class="pt-4">
-    <a href="/setup/create_project">
+    <a href="/create_project">
       <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. https://www.svgrepo.com/svg/491465/plus-circle -->
       <svg
         class="w-4 h-4"

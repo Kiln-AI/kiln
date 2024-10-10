@@ -85,7 +85,9 @@
   >
 </h3>
 
-<div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18">
+<div
+  class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18 w-full max-w-[600px] mx-auto"
+>
   <!-- TODO_P0 -->
   <EditTask
     redirect_on_created="/"

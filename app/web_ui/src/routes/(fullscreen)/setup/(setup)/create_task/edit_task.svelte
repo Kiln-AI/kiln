@@ -16,9 +16,10 @@
     api_error_handler,
     createKilnError,
   } from "$lib/utils/error_handlers"
-  import { ui_state } from "$lib/stores"
+  import { ui_state, projects } from "$lib/stores"
   import { get } from "svelte/store"
   import { browser } from "$app/environment"
+  import { page } from "$app/stores"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
@@ -40,16 +41,27 @@
     [task_name, task_description, task_instructions].some((value) => !!value) ||
     task_requirements.some((req) => !!req.name || !!req.instruction)
 
-  let target_project_path: string | null = null
+  export let target_project_path: string | null = null
 
   $: {
     if (browser) {
       target_project_path =
-        new URLSearchParams(window.location.search).get("project_path") ||
+        new URLSearchParams($page.url.searchParams).get("project_path") ||
         $current_project?.path ||
         null
     } else {
       target_project_path = $current_project?.path || null
+    }
+  }
+
+  export let project_target_name: string | null = null
+  $: {
+    if (!target_project_path) {
+      project_target_name = null
+    } else {
+      project_target_name =
+        $projects?.projects.find((p) => p.path === target_project_path)?.name ||
+        target_project_path
     }
   }
 
@@ -129,7 +141,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-2 max-w-[500px] lg:w-[500px] mx-auto">
+<div class="flex flex-col gap-2 w-full">
   <FormContainer
     submit_label="Create Task"
     on:submit={create_task}
