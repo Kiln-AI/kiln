@@ -1,7 +1,37 @@
-<script>
+<script lang="ts">
   import "../../app.css"
   import { current_project, current_task } from "$lib/stores"
   import SelectTasksMenu from "./select_tasks_menu.svelte"
+  import { page } from "$app/stores"
+
+  enum Section {
+    Examples,
+    Settings,
+    Run,
+    None,
+  }
+
+  function path_start(root: string, pathname: string): boolean {
+    if (pathname == root) {
+      return true
+    } else if (pathname.startsWith(root + "/")) {
+      return true
+    }
+    return false
+  }
+
+  let section: Section = Section.None
+  $: {
+    if (path_start("/examples", $page.url.pathname)) {
+      section = Section.Examples
+    } else if (path_start("/settings", $page.url.pathname)) {
+      section = Section.Settings
+    } else if (path_start("/", $page.url.pathname)) {
+      section = Section.Run
+    } else {
+      section = Section.None
+    }
+  }
 </script>
 
 <div class="drawer lg:drawer-open">
@@ -68,7 +98,7 @@
         </details>
       </li>
       <li class="menu-lg">
-        <a href="/?1">
+        <a href="/" class={section == Section.Run ? "active" : ""}>
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524827/play-circle -->
           <svg
             class="w-6 h-6 mr-2"
@@ -93,7 +123,7 @@
         >
       </li>
       <li class="menu-lg">
-        <a href="/?2">
+        <a href="/examples" class={section == Section.Examples ? "active" : ""}>
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524492/database -->
           <svg
             class="w-6 h-6 mr-2"
@@ -133,7 +163,7 @@
         >
       </li>
       <li class="menu-lg">
-        <a href="/?3">
+        <a href="/settings" class={section == Section.Settings ? "active" : ""}>
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524954/settings -->
           <svg
             class="w-6 h-6 mr-2"
