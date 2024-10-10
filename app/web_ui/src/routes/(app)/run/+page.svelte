@@ -1,5 +1,8 @@
 <script lang="ts">
   import AppPage from "../app_page.svelte"
+  import { current_task } from "$lib/stores"
+
+  $: subtitle = $current_task?.name ?? ""
 </script>
 
 <svelte:head>
@@ -7,4 +10,4 @@
   <meta name="description" content="The open source ML product platform" />
 </svelte:head>
 
-<AppPage title="Run Task" />
+<AppPage title="Run Task" bind:subtitle />
