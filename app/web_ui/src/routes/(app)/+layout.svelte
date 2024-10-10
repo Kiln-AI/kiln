@@ -32,6 +32,13 @@
       section = Section.None
     }
   }
+
+  function close_task_menu() {
+    const menu = document.getElementById("task-menu")
+    if (menu instanceof HTMLDetailsElement) {
+      menu.open = false
+    }
+  }
 </script>
 
 <div class="drawer lg:drawer-open">
@@ -61,7 +68,7 @@
       <slot />
     </div>
   </div>
-  <div class="drawer-side">
+  <div class="drawer-side" on:mouseleave={close_task_menu} role="navigation">
     <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"
     ></label>
 
@@ -85,7 +92,7 @@
         </a>
       </li>
       <li class="mb-4 xl:mb-6">
-        <details>
+        <details id="task-menu">
           <summary>
             <div class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
               <span class="font-bold whitespace-nowrap">Project:</span>
