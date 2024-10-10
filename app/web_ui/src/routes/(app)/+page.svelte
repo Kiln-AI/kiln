@@ -1,10 +1,5 @@
 <script lang="ts">
-  import AppPage from "./app_page.svelte"
+  import { goto } from "$app/navigation"
+
+  goto("/run")
 </script>
-
-<svelte:head>
-  <title>Kiln Studio</title>
-  <meta name="description" content="The open source ML product platform" />
-</svelte:head>
-
-<AppPage title="Run Task" />

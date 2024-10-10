@@ -26,7 +26,7 @@
       section = Section.Examples
     } else if (path_start("/settings", $page.url.pathname)) {
       section = Section.Settings
-    } else if (path_start("/", $page.url.pathname)) {
+    } else if (path_start("/run", $page.url.pathname)) {
       section = Section.Run
     } else {
       section = Section.None
