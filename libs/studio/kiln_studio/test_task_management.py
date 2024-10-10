@@ -1,4 +1,4 @@
-from pathlib import Path
+import datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -183,6 +183,15 @@ def test_get_task_project_not_found(client):
     assert "Project not found" in response.json()["message"]
 
 
+@pytest.fixture
+def mock_config():
+    with patch("kiln_ai.utils.config.Config.shared") as MockConfig:
+        # Mock the Config class
+        mock_config_instance = MockConfig.return_value
+        mock_config_instance.open_ai_api_key = "test_key"
+        yield mock_config_instance
+
+
 @pytest.mark.asyncio
 async def test_run_task_success(client, tmp_path):
     project_path = tmp_path / "test_project" / "project.json"
@@ -208,9 +217,13 @@ async def test_run_task_success(client, tmp_path):
         "libs.studio.kiln_studio.task_management.project_from_id"
     ) as mock_project_from_id, patch.object(
         LangChainPromptAdapter, "invoke", new_callable=AsyncMock
-    ) as mock_invoke:
+    ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
         mock_project_from_id.return_value = project
         mock_invoke.return_value = "Test output"
+
+        # Mock the Config class
+        mock_config_instance = MockConfig.return_value
+        mock_config_instance.open_ai_api_key = "test_key"
 
         response = client.post(
             f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
@@ -247,16 +260,21 @@ async def test_run_task_structured_output(client, tmp_path):
         "libs.studio.kiln_studio.task_management.project_from_id"
     ) as mock_project_from_id, patch.object(
         LangChainPromptAdapter, "invoke", new_callable=AsyncMock
-    ) as mock_invoke:
+    ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
         mock_project_from_id.return_value = project
         mock_invoke.return_value = {"key": "value"}
+
+        # Mock the Config class
+        mock_config_instance = MockConfig.return_value
+        mock_config_instance.open_ai_api_key = "test_key"
+        mock_config_instance.user_id = "test_user"
 
         response = client.post(
             f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
         )
 
-    assert response.status_code == 200
     res = response.json()
+    assert response.status_code == 200
     assert res["plaintext_output"] is None
     assert res["structured_output"] == {"key": "value"}
 
@@ -289,7 +307,7 @@ async def test_run_task_not_found(client, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_run_task_no_input(client, tmp_path):
+async def test_run_task_no_input(client, tmp_path, mock_config):
     project_path = tmp_path / "test_project" / "project.json"
     project_path.parent.mkdir()
 
@@ -313,8 +331,8 @@ async def test_run_task_no_input(client, tmp_path):
             f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
         )
 
-    assert response.status_code == 400
-    assert "No input provided" in response.json()["message"]
+    assert response.status_code == 422
+    assert "Input should be a valid string" in response.json()["message"]
 
 
 @pytest.mark.asyncio
@@ -331,7 +349,6 @@ async def test_run_task_structured_input(client, tmp_path):
         parent=project,
     )
 
-    # Replace the lambda with a proper mock
     with patch.object(
         Task,
         "input_schema",
@@ -352,9 +369,14 @@ async def test_run_task_structured_input(client, tmp_path):
             "libs.studio.kiln_studio.task_management.project_from_id"
         ) as mock_project_from_id, patch.object(
             LangChainPromptAdapter, "invoke", new_callable=AsyncMock
-        ) as mock_invoke:
+        ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
             mock_project_from_id.return_value = project
             mock_invoke.return_value = "Structured input processed"
+
+            # Mock the Config class
+            mock_config_instance = MockConfig.return_value
+            mock_config_instance.open_ai_api_key = "test_key"
+            mock_config_instance.user_id = "test_user"
 
             response = client.post(
                 f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request

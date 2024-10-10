@@ -57,7 +57,6 @@ def connect_task_management(app: FastAPI):
 
     @app.post("/api/projects/{project_id}/task/{task_id}/run")
     async def run_task(project_id: str, task_id: str, request: RunTaskRequest):
-        print(f"Running task {task_id} with request {request}")
         parent_project = project_from_id(project_id)
         task = next(
             (task for task in parent_project.tasks() if task.id == task_id), None

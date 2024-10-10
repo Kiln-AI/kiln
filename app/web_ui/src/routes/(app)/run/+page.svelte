@@ -17,8 +17,10 @@
 
   // TODO: real values for adapters and models
   let prompt_method = "basic"
-  let model = "gpt_4o"
-  let provider = "openrouter"
+  let model = "openai/gpt_4o"
+
+  $: model_name = model.split("/")[1]
+  $: provider = model.split("/")[0]
 
   // TODO structured output and UI
   let output = ""
@@ -28,6 +30,8 @@
   async function run_task() {
     try {
       submitting = true
+      error = null
+      output = ""
       const response = await fetch(
         `http://localhost:8757/api/projects/${$current_project?.id}/task/${$current_task?.id}/run`,
         {
@@ -36,7 +40,7 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model_name: model,
+            model_name: model_name,
             provider: provider,
             plaintext_input: plaintext_input,
           }),
@@ -47,8 +51,9 @@
       output = JSON.stringify(data, null, 2) // Pretty-print the output
     } catch (e) {
       error = createKilnError(e)
+    } finally {
+      submitting = false
     }
-    submitting = false
   }
 </script>
 
@@ -80,14 +85,48 @@
           bind:value={model}
           id="model"
           inputType="select"
-          select_options={[
-            ["gpt_4o", "GPT-4o"],
-            ["gpt_4o-mini", "GPT-4o-Mini"],
+          select_options_grouped={[
+            [
+              "OpenAI",
+              [
+                ["openai/gpt_4o", "GPT 4o"],
+                ["openai/gpt_4o_mini", "GPT 4o Mini"],
+              ],
+            ],
+            [
+              "OpenRouter",
+              [
+                ["openrouter/gpt_4o", "GPT 4o"],
+                ["openrouter/gpt_4o_mini", "GPT 4o Mini"],
+              ],
+            ],
+            [
+              "Groq",
+              [
+                ["groq/llama_3_1_8b", "Llama 3.1 8b"],
+                ["groq/llama_3_1_70b", "Llama 3.1 70b"],
+              ],
+            ],
+            [
+              "Ollama",
+              [
+                ["ollama/llama_3_1_8b", "Llama 3.1 8b"],
+                ["ollama/llama_3_1_70b", "Llama 3.1 70b"],
+              ],
+            ],
+            [
+              "Amazon Bedrock",
+              [
+                ["amazon_bedrock/llama_3_1_8b", "Llama 3.1 8b"],
+                ["amazon_bedrock/llama_3_1_70b", "Llama 3.1 70b"],
+              ],
+            ],
           ]}
         />
       </div>
       <FormElement
         label="Plaintext Input"
+        inputType="textarea"
         bind:value={plaintext_input}
         id="plaintext_input"
       />

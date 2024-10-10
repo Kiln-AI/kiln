@@ -302,18 +302,42 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
         raise ValueError(f"Provider {provider_name} not found for model {name}")
 
     if provider.name == ModelProviderName.openai:
-        return ChatOpenAI(**provider.provider_options)
+        api_key = Config.shared().open_ai_api_key
+        if api_key is None:
+            raise ValueError(
+                "Attempted to use OpenAI without an API key set. "
+                "Get your API key from https://platform.openai.com/account/api-keys"
+            )
+        return ChatOpenAI(**provider.provider_options, openai_api_key=api_key)  # type: ignore[arg-type]
     elif provider.name == ModelProviderName.groq:
-        return ChatGroq(**provider.provider_options)
+        api_key = Config.shared().groq_api_key
+        if api_key is None:
+            raise ValueError(
+                "Attempted to use Groq without an API key set. "
+                "Get your API key from https://console.groq.com/keys"
+            )
+        return ChatGroq(**provider.provider_options, groq_api_key=api_key)  # type: ignore[arg-type]
     elif provider.name == ModelProviderName.amazon_bedrock:
-        return ChatBedrockConverse(**provider.provider_options)
+        api_key = Config.shared().bedrock_access_key
+        secret_key = Config.shared().bedrock_secret_key
+        if api_key is None or secret_key is None:
+            raise ValueError(
+                "Attempted to use Amazon Bedrock without an access key and secret set. "
+                "Get your keys from https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/overview"
+            )
+        # langchain doesn't allow passing these, so ugly hack to set env vars
+        os.environ["AWS_ACCESS_KEY_ID"] = api_key
+        os.environ["AWS_SECRET_ACCESS_KEY"] = secret_key
+        return ChatBedrockConverse(
+            **provider.provider_options,
+        )
     elif provider.name == ModelProviderName.ollama:
         return ChatOllama(**provider.provider_options, base_url=ollama_base_url())
     elif provider.name == ModelProviderName.openrouter:
         api_key = Config.shared().open_router_api_key
         if api_key is None:
             raise ValueError(
-                "OPENROUTER_API_KEY environment variable must be set to use OpenRouter. "
+                "Attempted to use OpenRouter without an API key set. "
                 "Get your API key from https://openrouter.ai/settings/keys"
             )
         base_url = getenv("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1"
