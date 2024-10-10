@@ -25,14 +25,24 @@
       if (all_projects?.error) {
         throw new KilnError(all_projects.error, null)
       }
-      // No projects, go to setup to create one
-      if (!$current_project) {
+      // No projects, go to setup to get started
+      if (all_projects?.projects?.length == 0) {
         goto("/setup")
+        return
       }
-      // No current task, go to setup to create one
+      // We have projects, but no current project. Select screen allows creating tasks, or selecting existing ones.
+      if (!$current_project || !$current_project.path) {
+        goto("/setup/select_task")
+        return
+      }
+      // we have a current project, but no current task. Go to setup to create one
       await load_current_task($current_project)
       if (!$current_task) {
-        goto("/setup/create_task")
+        goto(
+          "/setup/create_task?project_path=" +
+            encodeURIComponent($current_project?.path ?? ""),
+        )
+        return
       }
     } catch (e: unknown) {
       load_error = createKilnError(e).getMessage()

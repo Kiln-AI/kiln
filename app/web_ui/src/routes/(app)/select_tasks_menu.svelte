@@ -7,6 +7,9 @@
 
   let id = "select-tasks-menu-" + Math.random().toString(36)
 
+  export let new_project_url = "/create_project"
+  export let new_task_url = "/create_task"
+
   $: project_list = $projects?.projects || []
   // Undefined should fallback. Null is manually selected none
   let manually_selected_project: ProjectInfo | null | undefined = undefined
@@ -157,9 +160,9 @@
           {/if}
           <li class="">
             <a
-              href="/create_task?project_path={encodeURIComponent(
-                project.path,
-              )}"
+              href={new_task_url +
+                "?project_path=" +
+                encodeURIComponent(project.path)}
             >
               <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. https://www.svgrepo.com/svg/491465/plus-circle -->
               <svg
@@ -183,7 +186,7 @@
     </li>
   {/each}
   <li class="pt-4">
-    <a href="/create_project">
+    <a href={new_project_url}>
       <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. https://www.svgrepo.com/svg/491465/plus-circle -->
       <svg
         class="w-4 h-4"
