@@ -2,9 +2,9 @@ import { writable, get } from "svelte/store"
 import { api_error_handler, createKilnError } from "./utils/error_handlers"
 
 export type ProjectInfo = {
+  id: string
   name: string
   description: string
-  path: string
   created_at: Date
   created_by: string
 }
@@ -25,16 +25,16 @@ export type Task = {
 
 // UI State stored in the browser. For more client centric state
 export type UIState = {
-  current_project_path: string | null
+  current_project_id: string | null
   current_task_id: string | null
 }
 
 export const default_ui_state: UIState = {
-  current_project_path: null,
+  current_project_id: null,
   current_task_id: null,
 }
 
-// Private, used to store the path of the current project, and task ID
+// Private, used to store the current project, and task ID
 export const ui_state = localStorageStore("ui_state", default_ui_state)
 
 // These stores store nice structured data. They are auto-updating based on the ui_state and server calls to load data
@@ -46,7 +46,7 @@ let previous_ui_state: UIState = default_ui_state
 
 // Live update the structured data stores based on the ui_state
 ui_state.subscribe((state) => {
-  if (state.current_project_path != previous_ui_state.current_project_path) {
+  if (state.current_project_id != previous_ui_state.current_project_id) {
     current_project.set(get_current_project())
   }
   if (state.current_task_id != previous_ui_state.current_task_id) {
@@ -68,12 +68,12 @@ function get_current_project(): ProjectInfo | null {
   if (!all_projects) {
     return null
   }
-  const current_project_path = get(ui_state).current_project_path
-  if (!current_project_path) {
+  const current_project_id = get(ui_state).current_project_id
+  if (!current_project_id) {
     return null
   }
   const project = all_projects.projects.find(
-    (project) => project.path === current_project_path,
+    (project) => project.id === current_project_id,
   )
   if (!project) {
     return null
@@ -127,13 +127,13 @@ export async function load_current_task(project: ProjectInfo | null) {
     if (!project || !task_id) {
       return
     }
-    const urlPath = encodeURIComponent(project.path)
+    const projectId = encodeURIComponent(project.id)
     const response = await fetch(
-      `http://localhost:8757/api/tasks?project_path=${urlPath}`,
+      `http://localhost:8757/api/projects/${projectId}/task/${task_id}`,
     )
     const data = await response.json()
     api_error_handler(response, data)
-    task = data.find((t: Task) => t.id === task_id)
+    task = data
   } catch (error: unknown) {
     // Can't load this task, likely deleted. Clear the ID, which will force the user to select a new task
     task = null

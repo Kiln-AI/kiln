@@ -27,8 +27,9 @@ from pydantic import (
 )
 from pydantic_core import ErrorDetails
 
-# ID is a 10 digit hex string
-ID_FIELD = Field(default_factory=lambda: uuid.uuid4().hex[:10].upper())
+# ID is a 12 digit random integer string. Should be unique per project.
+# Use integers to make it easier to type for a search function.
+ID_FIELD = Field(default_factory=lambda: str(uuid.uuid4().int)[:12])
 ID_TYPE = str
 T = TypeVar("T", bound="KilnBaseModel")
 PT = TypeVar("PT", bound="KilnParentedModel")
@@ -42,6 +43,7 @@ class KilnBaseModel(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
     v: int = 1  # schema_version
+    id: ID_TYPE = ID_FIELD
     path: Optional[Path] = Field(default=None, exclude=True)
     created_at: datetime = Field(default_factory=datetime.now)
     created_by: str = Field(default_factory=lambda: Config.shared().user_id)
@@ -116,7 +118,6 @@ class KilnBaseModel(BaseModel):
 
 
 class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
-    id: ID_TYPE = ID_FIELD
     _parent: KilnBaseModel | None = None
 
     # workaround to tell typechecker that we support the parent property, even though it's not a stock property

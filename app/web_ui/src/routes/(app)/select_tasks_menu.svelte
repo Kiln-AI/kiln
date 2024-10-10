@@ -23,7 +23,7 @@
       : manually_selected_project || $current_project
 
   function select_project(project: ProjectInfo) {
-    if (project?.path == selected_project?.path) {
+    if (project?.id == selected_project?.id) {
       // Actually deselect it
       manually_selected_project = null
       return
@@ -43,9 +43,9 @@
     try {
       tasks_loading = true
       tasks_loading_error = null
-      let pathUrl = encodeURIComponent(project?.path || "")
+      let projectId = encodeURIComponent(project?.id || "")
       const response = await fetch(
-        `http://localhost:8757/api/tasks?project_path=${pathUrl}`,
+        `http://localhost:8757/api/projects/${projectId}/tasks`,
       )
       const data = await response.json()
       api_error_handler(response, data)
@@ -66,7 +66,7 @@
       return {
         ...state,
         current_task_id: task.id,
-        current_project_path: selected_project.path,
+        current_project_id: selected_project.id,
       }
     })
 
@@ -99,7 +99,7 @@
           {project.name}
         </div>
         <div>
-          {#if project.path == selected_project?.path}
+          {#if project.id == selected_project?.id}
             <svg
               fill="#000000"
               class="w-3 h-3"
@@ -132,7 +132,7 @@
           {/if}
         </div>
       </button>
-      {#if project.path == selected_project?.path}
+      {#if project.id == selected_project?.id}
         <ul>
           {#if tasks_loading}
             <li
@@ -161,8 +161,8 @@
           <li class="">
             <a
               href={new_task_url +
-                "?project_path=" +
-                encodeURIComponent(project.path)}
+                "?project_id=" +
+                encodeURIComponent(project.id)}
             >
               <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. https://www.svgrepo.com/svg/491465/plus-circle -->
               <svg

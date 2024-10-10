@@ -159,7 +159,7 @@ def test_serialize_child(tmp_path):
     assert data["v"] == 1
     assert data["name"] == "Name"
     assert data["model_type"] == "default_parented_model"
-    assert len(data["id"]) == 10
+    assert len(data["id"]) == 12
     assert child.path.parent.name == child.id + " - Name"
     assert child.path.parent.parent.name == "children"
     assert child.path.parent.parent.parent == tmp_path.parent

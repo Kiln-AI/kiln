@@ -21,10 +21,8 @@
     (value) => !!value,
   )
 
-  function redirect_to_project(project_path: string) {
-    goto(
-      redirect_on_created + `?project_path=${encodeURIComponent(project_path)}`,
-    )
+  function redirect_to_project(project_id: string) {
+    goto(redirect_on_created + `?project_id=${encodeURIComponent(project_id)}`)
   }
 
   const create_project = async () => {
@@ -47,7 +45,7 @@
       await load_projects()
       error = null
       if (redirect_on_created) {
-        redirect_to_project(data.path)
+        redirect_to_project(data.id)
         return
       }
       created = true
@@ -73,7 +71,7 @@
       const data = await response.json()
       api_error_handler(response, data)
       if (redirect_on_created) {
-        redirect_to_project(import_project_path)
+        redirect_to_project(data.id)
         return
       }
       created = true

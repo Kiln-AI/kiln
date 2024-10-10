@@ -11,6 +11,23 @@ def default_project_path():
     return os.path.join(Path.home(), "Kiln Projects")
 
 
+def project_from_id(project_id: str):
+    project_paths = Config.shared().projects
+    if project_paths is not None:
+        for project_path in project_paths:
+            try:
+                project = Project.load_from_file(project_path)
+                if project.id == project_id:
+                    return project
+            except Exception as e:
+                print(f"Error loading project, skipping: {project_path}: {e}")
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"Project not found. ID: {project_id}",
+    )
+
+
 def add_project_to_config(project_path: str):
     projects = Config.shared().projects
     if not isinstance(projects, list):
@@ -39,27 +56,24 @@ def connect_project_management(app: FastAPI):
         add_project_to_config(project_file)
 
         # Add path, which is usually excluded
-        returnProject = project.model_dump()
-        returnProject["path"] = project.path
-        return returnProject
+        return project
 
     @app.get("/api/projects")
     async def get_projects():
         project_paths = Config.shared().projects
         projects = []
-        for project_path in project_paths:
+        for project_path in project_paths if project_paths is not None else []:
             try:
                 project = Project.load_from_file(project_path)
-                json_project = project.model_dump()
-                path = str(project.path)
-                if path is None:
-                    raise ValueError("Project path is None")
-                json_project["path"] = path
-                projects.append(json_project)
+                projects.append(project)
             except Exception as e:
                 print(f"Error loading project, skipping: {project_path}: {e}")
 
         return projects
+
+    @app.get("/api/projects/{project_id}")
+    async def get_project(project_id: str):
+        return project_from_id(project_id)
 
     @app.post("/api/import_project")
     async def import_project(project_path: str):
@@ -80,4 +94,4 @@ def connect_project_management(app: FastAPI):
         # add to projects list
         add_project_to_config(project_path)
 
-        return project.model_dump()
+        return project

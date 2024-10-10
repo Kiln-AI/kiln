@@ -22,7 +22,7 @@
   import { page } from "$app/stores"
 
   // Prevents flash of complete UI if we're going to redirect
-  export let redirect_on_created: string | null = null
+  export let redirect_on_created: string | null = "/"
 
   export let task_name: string = ""
   export let task_description: string = ""
@@ -41,33 +41,33 @@
     [task_name, task_description, task_instructions].some((value) => !!value) ||
     task_requirements.some((req) => !!req.name || !!req.instruction)
 
-  export let target_project_path: string | null = null
+  export let target_project_id: string | null = null
 
   $: {
     if (browser) {
-      target_project_path =
-        new URLSearchParams($page.url.searchParams).get("project_path") ||
-        $current_project?.path ||
+      target_project_id =
+        new URLSearchParams($page.url.searchParams).get("project_id") ||
+        $current_project?.id ||
         null
     } else {
-      target_project_path = $current_project?.path || null
+      target_project_id = $current_project?.id || null
     }
   }
 
   export let project_target_name: string | null = null
   $: {
-    if (!target_project_path) {
+    if (!target_project_id) {
       project_target_name = null
     } else {
       project_target_name =
-        $projects?.projects.find((p) => p.path === target_project_path)?.name ||
-        target_project_path
+        $projects?.projects.find((p) => p.id === target_project_id)?.name ||
+        "Project ID: " + target_project_id
     }
   }
 
   async function create_task() {
     try {
-      if (!target_project_path) {
+      if (!target_project_id) {
         error = new KilnError(
           "You must create a project before creating a task",
           null,
@@ -90,13 +90,13 @@
           schema_from_model(task_output_schema),
         )
       }
-      const project_path = target_project_path
-      if (!project_path) {
+      const project_id = target_project_id
+      if (!project_id) {
         throw new KilnError("Current project not found", null)
       }
-      const encodedProjectPath = encodeURIComponent(project_path)
+      const encodedProjectId = encodeURIComponent(project_id)
       const response = await fetch(
-        `http://localhost:8757/api/task?project_path=${encodedProjectPath}`,
+        `http://localhost:8757/api/projects/${encodedProjectId}/task`,
         {
           method: "POST",
           headers: {
@@ -112,7 +112,7 @@
       ui_state.set({
         ...get(ui_state),
         current_task_id: data.id,
-        current_project_path: target_project_path,
+        current_project_id: target_project_id,
       })
       if (redirect_on_created) {
         goto(redirect_on_created)

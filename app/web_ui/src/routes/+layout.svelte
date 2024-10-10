@@ -31,7 +31,7 @@
         return
       }
       // We have projects, but no current project. Select screen allows creating tasks, or selecting existing ones.
-      if (!$current_project || !$current_project.path) {
+      if (!$current_project || !$current_project.id) {
         goto("/setup/select_task")
         return
       }
@@ -39,8 +39,8 @@
       await load_current_task($current_project)
       if (!$current_task) {
         goto(
-          "/setup/create_task?project_path=" +
-            encodeURIComponent($current_project?.path ?? ""),
+          "/setup/create_task?project_id=" +
+            encodeURIComponent($current_project?.id ?? ""),
         )
         return
       }

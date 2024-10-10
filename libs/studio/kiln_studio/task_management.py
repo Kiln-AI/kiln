@@ -1,28 +1,16 @@
-import os
-from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 
-from libs.core.kiln_ai.datamodel import Project, Task
+from libs.core.kiln_ai.datamodel import Task
+from libs.studio.kiln_studio.project_management import project_from_id
 
 
 def connect_task_management(app: FastAPI):
-    @app.post("/api/task")
-    async def create_task(task_data: Dict[str, Any], project_path: str | None = None):
-        if project_path is None or not os.path.exists(project_path):
-            raise HTTPException(
-                status_code=400,
-                detail="Parent project not found. Can't create task.",
-            )
-
-        try:
-            parent_project = Project.load_from_file(Path(project_path))
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to load parent project: {e}",
-            )
+    @app.post("/api/projects/{project_id}/task")
+    async def create_task(project_id: str, task_data: Dict[str, Any]):
+        print(f"Creating task for project {project_id} with data {task_data}")
+        parent_project = project_from_id(project_id)
 
         task = Task.validate_and_save_with_subrelations(
             task_data, parent=parent_project
@@ -33,24 +21,22 @@ def connect_task_management(app: FastAPI):
                 detail="Failed to create task.",
             )
 
-        returnTask = task.model_dump()
-        returnTask["path"] = task.path
-        return returnTask
+        return task
 
-    @app.get("/api/tasks")
-    async def get_tasks(project_path: str | None = None):
-        if project_path is None or not os.path.exists(project_path):
-            raise HTTPException(
-                status_code=400,
-                detail="Parent project not found. Can't get tasks.",
-            )
-
-        try:
-            parent_project = Project.load_from_file(Path(project_path))
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to load parent project: {e}",
-            )
-
+    @app.get("/api/projects/{project_id}/tasks")
+    async def get_tasks(project_id: str):
+        parent_project = project_from_id(project_id)
         return parent_project.tasks()
+
+    @app.get("/api/projects/{project_id}/task/{task_id}")
+    async def get_task(project_id: str, task_id: str):
+        parent_project = project_from_id(project_id)
+
+        for task in parent_project.tasks():
+            if task.id == task_id:
+                return task
+
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task not found. ID: {task_id}",
+        )

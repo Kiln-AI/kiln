@@ -3,6 +3,7 @@ import { projects, current_project, ui_state, default_ui_state } from "./stores"
 import { describe, it, expect, beforeEach } from "vitest"
 
 const testProject = {
+  id: "test-project-id",
   name: "Test Project",
   path: "/test/path",
   description: "Test Description",
@@ -26,7 +27,7 @@ describe("stores", () => {
     it("should update when set", () => {
       const testProjects = {
         projects: [testProject],
-        current_project_path: "/test/path",
+        current_project_id: "test-project-id",
         error: null,
       }
       projects.set(testProjects)
@@ -39,24 +40,24 @@ describe("stores", () => {
       expect(get(current_project)).toBeNull()
     })
 
-    it("should return null when current_project_path is null", () => {
+    it("should return null when current_project_id is null", () => {
       projects.set({
         projects: [testProject],
         error: null,
       })
       ui_state.set({
-        current_project_path: null,
+        current_project_id: null,
       })
       expect(get(current_project)).toBeNull()
     })
 
-    it("should return null when no project matches current_project_path", () => {
+    it("should return null when no project matches current_project_id", () => {
       projects.set({
         projects: [testProject],
         error: null,
       })
       ui_state.set({
-        current_project_path: "/non-existent/path",
+        current_project_id: "non-existent-project-id",
       })
       expect(get(current_project)).toBeNull()
     })
@@ -67,7 +68,7 @@ describe("stores", () => {
         error: null,
       })
       ui_state.set({
-        current_project_path: "/test/path",
+        current_project_id: "test-project-id",
       })
       expect(get(current_project)).toEqual(testProject)
     })

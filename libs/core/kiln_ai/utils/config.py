@@ -1,5 +1,6 @@
 import os
 import pwd
+import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -137,15 +138,18 @@ class Config:
         self.update_settings({name: value})
 
     def update_settings(self, new_settings: Dict[str, Any]):
-        # fresh load so we don't clobber other instances
-        self._settings = self.load_settings()
-        self._settings.update(new_settings)
-        for name, value in new_settings.items():
-            if value is None:
-                del self._settings[name]
-        with open(self.settings_path(), "w") as f:
-            yaml.dump(self._settings, f)
-        self._settings = self.load_settings()
+        # Lock to prevent race conditions in multi-threaded scenarios
+        with threading.Lock():
+            # Fresh load to avoid clobbering changes from other instances
+            current_settings = self.load_settings()
+            current_settings.update(new_settings)
+            # remove None values
+            current_settings = {
+                k: v for k, v in current_settings.items() if v is not None
+            }
+            with open(self.settings_path(), "w") as f:
+                yaml.dump(current_settings, f)
+            self._settings = current_settings
 
 
 def _get_user_id():

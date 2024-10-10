@@ -1,10 +1,11 @@
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
+from fastapi.exceptions import HTTPException
 from fastapi.testclient import TestClient
 
 from libs.core.kiln_ai.datamodel import Project
@@ -12,7 +13,7 @@ from libs.core.kiln_ai.utils.config import Config
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
 from libs.studio.kiln_studio.project_management import (
     connect_project_management,
-    default_project_path,
+    project_from_id,
 )
 
 
@@ -45,9 +46,6 @@ def test_create_project_success(client):
     res = response.json()
     assert res["name"] == "Test Project"
     assert res["description"] == "A test project"
-    assert res["path"] == os.path.join(
-        default_project_path(), "Test Project", "project.json"
-    )
     assert res["v"] == 1
     assert res["model_type"] == "project"
     assert res["created_by"] == Config.shared().user_id
@@ -107,7 +105,6 @@ def test_create_and_load_project(client):
             res = response.json()
             assert res["name"] == "Test Project"
             assert res["description"] == "A test project description"
-            assert res["path"] == os.path.join(temp_dir, "Test Project", "project.json")
             assert res["v"] == 1
             assert res["model_type"] == "project"
             assert res["created_by"] == Config.shared().user_id
@@ -128,18 +125,6 @@ def test_create_and_load_project(client):
             assert project_file in Config.shared().projects
 
 
-@pytest.fixture
-def mock_projects():
-    return [
-        Project(
-            name="Project 1", description="Description 1", path="/path/to/project1.json"
-        ),
-        Project(
-            name="Project 2", description="Description 2", path="/path/to/project2.json"
-        ),
-    ]
-
-
 def test_get_projects_empty(client):
     with patch.object(Config, "shared") as mock_config:
         mock_config.return_value.projects = []
@@ -147,40 +132,6 @@ def test_get_projects_empty(client):
 
     assert response.status_code == 200
     assert response.json() == []
-
-
-def test_get_projects_success(client, mock_projects):
-    with patch.object(Config, "shared") as mock_config, patch(
-        "libs.core.kiln_ai.datamodel.Project.load_from_file"
-    ) as mock_load:
-        mock_config.return_value.projects = [p.path for p in mock_projects]
-        mock_load.side_effect = mock_projects
-
-        response = client.get("/api/projects")
-
-    assert response.status_code == 200
-    result = response.json()
-    assert len(result) == 2
-
-    for i, project in enumerate(result):
-        assert project["name"] == f"Project {i+1}"
-        assert project["description"] == f"Description {i+1}"
-        assert project["path"] == str(mock_projects[i].path)
-
-
-def test_get_projects_file_not_found(client, mock_projects):
-    with patch.object(Config, "shared") as mock_config, patch(
-        "libs.core.kiln_ai.datamodel.Project.load_from_file"
-    ) as mock_load:
-        mock_config.return_value.projects = [p.path for p in mock_projects]
-        mock_load.side_effect = [mock_projects[0], FileNotFoundError]
-
-        response = client.get("/api/projects")
-
-    assert response.status_code == 200
-    result = response.json()
-    assert len(result) == 1
-    assert result[0]["name"] == "Project 1"
 
 
 def test_get_projects_with_current_project(client, mock_projects):
@@ -272,3 +223,139 @@ def test_import_project_missing_path(client):
     assert response.status_code == 422
     assert "project_path" in response.text
     assert "field required" in response.text.lower()
+
+
+def test_get_project_success(client):
+    mock_project = Project(
+        name="Test Project", description="A test project", id="test-id"
+    )
+    with patch(
+        "libs.studio.kiln_studio.project_management.project_from_id",
+        return_value=mock_project,
+    ):
+        response = client.get("/api/projects/test-id")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["name"] == "Test Project"
+    assert result["description"] == "A test project"
+    assert result["id"] == "test-id"
+
+
+def test_get_project_not_found(client):
+    with patch(
+        "libs.studio.kiln_studio.project_management.project_from_id",
+        side_effect=HTTPException(status_code=404, detail="Project not found"),
+    ):
+        response = client.get("/api/projects/non-existent-id")
+
+    assert response.status_code == 404
+    assert response.json() == {"message": "Project not found"}
+
+
+@pytest.fixture
+def mock_config():
+    config = MagicMock()
+    config.projects = ["/path/to/project1.json", "/path/to/project2.json"]
+    return config
+
+
+@pytest.fixture
+def mock_projects():
+    return [
+        Project(
+            name="Project 1",
+            description="Description 1",
+            path="/path/to/project1.json",
+            id="project1-id",
+        ),
+        Project(
+            name="Project 2",
+            description="Description 2",
+            path="/path/to/project2.json",
+            id="project2-id",
+        ),
+    ]
+
+
+@pytest.fixture
+def patched_config(mock_config):
+    with patch(
+        "libs.studio.kiln_studio.project_management.Config.shared",
+        return_value=mock_config,
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def patched_load_project(mock_projects):
+    with patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file", side_effect=mock_projects
+    ) as mock:
+        yield mock
+
+
+def test_project_from_id_success(patched_config, patched_load_project, mock_projects):
+    result = project_from_id("project2-id")
+    assert result == mock_projects[1]
+
+
+def test_project_from_id_not_found(patched_config, patched_load_project):
+    with pytest.raises(HTTPException) as exc_info:
+        project_from_id("non-existent-id")
+    assert exc_info.value.status_code == 404
+    assert "Project not found" in str(exc_info.value.detail)
+
+
+def test_project_from_id_config_projects_none(patched_config):
+    patched_config.return_value.projects = None
+    with pytest.raises(HTTPException) as exc_info:
+        project_from_id("any-id")
+    assert exc_info.value.status_code == 404
+    assert "Project not found" in str(exc_info.value.detail)
+
+
+def test_project_from_id_load_exception(patched_config, mock_config):
+    mock_config.projects = ["/path/to/project.json"]
+    with patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file",
+        side_effect=Exception("Load error"),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            project_from_id("any-id")
+        assert exc_info.value.status_code == 404
+        assert "Project not found" in str(exc_info.value.detail)
+
+
+def test_get_projects_success(client, mock_projects):
+    with patch.object(Config, "shared") as mock_config, patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file"
+    ) as mock_load:
+        mock_config.return_value.projects = [p.path for p in mock_projects]
+        mock_load.side_effect = mock_projects
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result) == 2
+    assert result[0]["name"] == "Project 1"
+    assert result[0]["description"] == "Description 1"
+    assert result[1]["name"] == "Project 2"
+    assert result[1]["description"] == "Description 2"
+
+
+def test_get_projects_with_one_exception(client, mock_projects):
+    with patch.object(Config, "shared") as mock_config, patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file"
+    ) as mock_load:
+        mock_config.return_value.projects = [p.path for p in mock_projects]
+        mock_load.side_effect = [Exception("Load error"), mock_projects[1]]
+
+        response = client.get("/api/projects")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result) == 1
+    assert result[0]["name"] == "Project 2"
+    assert result[0]["description"] == "Description 2"

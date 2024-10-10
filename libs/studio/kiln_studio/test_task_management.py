@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from libs.core.kiln_ai.datamodel import Project, Task
@@ -34,36 +34,38 @@ def test_create_task_success(client, tmp_path):
     }
 
     with patch(
-        "libs.core.kiln_ai.datamodel.Project.load_from_file"
-    ) as mock_load, patch("libs.core.kiln_ai.datamodel.Task.save_to_file") as mock_save:
-        mock_load.return_value = Project(name="Test Project")
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id, patch(
+        "libs.core.kiln_ai.datamodel.Task.save_to_file"
+    ) as mock_save:
+        mock_project_from_id.return_value = Project(
+            name="Test Project", path=str(project_path)
+        )
         mock_save.return_value = None
 
-        response = client.post(f"/api/task?project_path={project_path}", json=task_data)
+        response = client.post("/api/projects/project1-id/task", json=task_data)
 
     assert response.status_code == 200
     res = response.json()
     assert res["name"] == "Test Task"
     assert res["description"] == "This is a test task"
-    assert "path" in res
     assert res["id"] is not None
     assert res["priority"] == 2
 
+    # Verify that project_from_id was called with the correct argument
+    mock_project_from_id.assert_called_once_with("project1-id")
+
 
 def test_create_task_project_not_found(client, tmp_path):
-    non_existent_path = tmp_path / "non_existent"
-
     task_data = {
         "name": "Test Task",
         "description": "This is a test task",
     }
 
-    response = client.post(
-        f"/api/task?project_path={non_existent_path}", json=task_data
-    )
+    response = client.post("/api/projects/FAKEPROJECTID/task", json=task_data)
 
-    assert response.status_code == 400
-    assert response.json()["message"] == "Parent project not found. Can't create task."
+    assert response.status_code == 404
+    assert response.json()["message"] == "Project not found. ID: FAKEPROJECTID"
 
 
 def test_create_task_project_load_error(client, tmp_path):
@@ -75,13 +77,15 @@ def test_create_task_project_load_error(client, tmp_path):
         "description": "This is a test task",
     }
 
-    with patch("libs.core.kiln_ai.datamodel.Project.load_from_file") as mock_load:
-        mock_load.side_effect = Exception("Failed to load project")
+    with patch("libs.studio.kiln_studio.task_management.project_from_id") as mock_load:
+        mock_load.side_effect = HTTPException(
+            status_code=404, detail="Project not found"
+        )
 
-        response = client.post(f"/api/task?project_path={project_path}", json=task_data)
+        response = client.post("/api/projects/FAKEPROJECTID/task", json=task_data)
 
-    assert response.status_code == 500
-    assert "Failed to load parent project" in response.json()["message"]
+    assert response.status_code == 404
+    assert "Project not found" in response.json()["message"]
 
 
 def test_create_task_real_project(client, tmp_path):
@@ -97,23 +101,82 @@ def test_create_task_real_project(client, tmp_path):
         "description": "This is a real task",
         "instruction": "Task instruction",
     }
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id:
+        mock_project_from_id.return_value = project
 
-    response = client.post(f"/api/task?project_path={project.path}", json=task_data)
+        response = client.post("/api/projects/project1-id/task", json=task_data)
 
     assert response.status_code == 200
     res = response.json()
     assert res["name"] == "Real Task"
     assert res["description"] == "This is a real task"
     assert res["instruction"] == "Task instruction"
-    assert "path" in res
     assert res["id"] is not None
     assert res["priority"] == 2
 
     # Verify the task file on disk
-    task_from_disk = Task.load_from_file(Path(res["path"]))
+    task_from_disk = project.tasks()[0]
 
     assert task_from_disk.name == "Real Task"
     assert task_from_disk.description == "This is a real task"
     assert task_from_disk.instruction == "Task instruction"
     assert task_from_disk.id == res["id"]
     assert task_from_disk.priority == 2
+
+
+def test_get_task_success(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+    task.save_to_file()
+
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id:
+        mock_project_from_id.return_value = project
+        response = client.get(f"/api/projects/project1-id/task/{task.id}")
+
+    assert response.status_code == 200
+    res = response.json()
+    assert res["name"] == "Test Task"
+    assert res["description"] == "This is a test task"
+    assert res["id"] == task.id
+
+
+def test_get_task_not_found(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id:
+        mock_project_from_id.return_value = project
+        response = client.get("/api/projects/project1-id/task/non_existent_task_id")
+
+    assert response.status_code == 404
+    assert response.json()["message"] == "Task not found. ID: non_existent_task_id"
+
+
+def test_get_task_project_not_found(client):
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id:
+        mock_project_from_id.side_effect = HTTPException(
+            status_code=404, detail="Project not found"
+        )
+        response = client.get("/api/projects/non_existent_project_id/task/task_id")
+
+    assert response.status_code == 404
+    assert "Project not found" in response.json()["message"]
