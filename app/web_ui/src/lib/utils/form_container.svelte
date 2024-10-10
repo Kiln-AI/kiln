@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import { browser } from "$app/environment"
   import { createEventDispatcher } from "svelte"
   import { KilnError } from "./error_handlers"
 
@@ -38,7 +37,6 @@
   }
 
   function first_error() {
-    if (!browser) return null
     const form = document.getElementById(id)
     if (form) {
       const errorElement = form.querySelector(".input-error, .textarea-error")

@@ -18,7 +18,6 @@
   } from "$lib/utils/error_handlers"
   import { ui_state, projects } from "$lib/stores"
   import { get } from "svelte/store"
-  import { browser } from "$app/environment"
   import { page } from "$app/stores"
 
   // Prevents flash of complete UI if we're going to redirect
@@ -44,14 +43,10 @@
   export let target_project_id: string | null = null
 
   $: {
-    if (browser) {
-      target_project_id =
-        new URLSearchParams($page.url.searchParams).get("project_id") ||
-        $current_project?.id ||
-        null
-    } else {
-      target_project_id = $current_project?.id || null
-    }
+    target_project_id =
+      new URLSearchParams($page.url.searchParams).get("project_id") ||
+      $current_project?.id ||
+      null
   }
 
   export let project_target_name: string | null = null
