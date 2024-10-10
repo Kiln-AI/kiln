@@ -6,7 +6,7 @@
 <div class="max-w-[600px]">
   <AppPage
     title="New Project"
-    subtitle="Projects are a collection of tasks and other resources. They are the ideal way to organize your work."
+    subtitle="Projects are a collection of tasks, results, evals, and other resources."
   >
     <EditProject redirect_on_created="/create_task" />
   </AppPage>

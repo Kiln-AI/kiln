@@ -21,6 +21,12 @@
     (value) => !!value,
   )
 
+  function redirect_to_project(project_path: string) {
+    goto(
+      redirect_on_created + `?project_path=${encodeURIComponent(project_path)}`,
+    )
+  }
+
   const create_project = async () => {
     try {
       error = null
@@ -41,8 +47,34 @@
       await load_projects()
       error = null
       if (redirect_on_created) {
-        const project_path = encodeURIComponent(data.path)
-        goto(redirect_on_created + `?project_path=${project_path}`)
+        redirect_to_project(data.path)
+        return
+      }
+      created = true
+    } catch (e) {
+      error = createKilnError(e)
+    } finally {
+      submitting = false
+    }
+  }
+
+  let importing = false
+  let import_project_path = ""
+
+  const import_project = async () => {
+    try {
+      submitting = true
+      const response = await fetch(
+        `http://localhost:8757/api/import_project?project_path=${encodeURIComponent(import_project_path)}`,
+        {
+          method: "POST",
+        },
+      )
+      const data = await response.json()
+      api_error_handler(response, data)
+      if (redirect_on_created) {
+        redirect_to_project(import_project_path)
+        return
       }
       created = true
     } catch (e) {
@@ -55,31 +87,69 @@
 
 <div class="flex flex-col gap-2 w-full">
   {#if !created}
-    <FormContainer
-      submit_label="Create Project"
-      on:submit={create_project}
-      bind:warn_before_unload
-      bind:submitting
-      bind:error
-    >
-      <FormElement
-        label="Project Name"
-        id="project_name"
-        inputType="input"
-        bind:value={project_name}
-      />
-      <FormElement
-        label="Project Description"
-        id="project_description"
-        inputType="textarea"
-        optional={true}
-        bind:value={project_description}
-      />
-    </FormContainer>
+    {#if !importing}
+      <FormContainer
+        submit_label="Create Project"
+        on:submit={create_project}
+        bind:warn_before_unload
+        bind:submitting
+        bind:error
+      >
+        <FormElement
+          label="Project Name"
+          id="project_name"
+          inputType="input"
+          bind:value={project_name}
+        />
+        <FormElement
+          label="Project Description"
+          id="project_description"
+          inputType="textarea"
+          optional={true}
+          bind:value={project_description}
+        />
+      </FormContainer>
+
+      <p class="text-sm mt-4 text-center">
+        Have an existing project?
+        <button class="link" on:click={() => (importing = true)}>
+          Import it by path.
+        </button>
+      </p>
+    {:else}
+      <FormContainer
+        submit_label="Import Project"
+        on:submit={import_project}
+        bind:warn_before_unload
+        bind:submitting
+        bind:error
+      >
+        <FormElement
+          label="Existing Project Path"
+          description="The path to the project on your local machine. For example, /Users/username/Kiln Projects/my_project/project.json"
+          id="import_project_path"
+          inputType="input"
+          bind:value={import_project_path}
+        />
+      </FormContainer>
+      <p class="text-sm mt-4 text-center">
+        Create a
+        <button class="link" on:click={() => (importing = false)}>
+          new project instead.
+        </button>
+      </p>
+    {/if}
   {:else if !redirect_on_created}
-    <h2 class="text-xl font-medium text-center">Project Created!</h2>
-    <p class="text-sm text-center">
-      Your new project "{project_name}" has been created.
-    </p>
+    {#if importing}
+      <h2 class="text-xl font-medium text-center">Project Imported!</h2>
+      <p class="text-sm text-center">
+        Your project "{import_project_path}" has been imported.
+      </p>
+    {:else}
+      <h2 class="text-xl font-medium text-center">Project Created!</h2>
+      <p class="text-sm text-center">
+        Your new project "{project_name}" has been created.
+      </p>
+    {/if}
   {/if}
 </div>

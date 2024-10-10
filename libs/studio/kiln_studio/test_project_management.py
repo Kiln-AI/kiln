@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -222,3 +223,52 @@ def test_get_projects_with_no_projects(client):
     assert response.status_code == 200
     result = response.json()
     assert result == []
+
+
+def test_import_project_success(client):
+    mock_project = Project(name="Imported Project", description="An imported project")
+    with patch("os.path.exists", return_value=True), patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file", return_value=mock_project
+    ), patch(
+        "libs.studio.kiln_studio.project_management.add_project_to_config"
+    ) as mock_add:
+        response = client.post("/api/import_project?project_path=/path/to/project.json")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["name"] == "Imported Project"
+    assert result["description"] == "An imported project"
+    mock_add.assert_called_once_with("/path/to/project.json")
+
+
+def test_import_project_not_found(client):
+    with patch("os.path.exists", return_value=False):
+        response = client.post(
+            "/api/import_project?project_path=/nonexistent/path.json"
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "message": "Project not found. Check the path and try again."
+    }
+
+
+def test_import_project_load_error(client):
+    with patch("os.path.exists", return_value=True), patch(
+        "libs.core.kiln_ai.datamodel.Project.load_from_file",
+        side_effect=Exception("Load error"),
+    ):
+        response = client.post("/api/import_project?project_path=/path/to/project.json")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "message": "Failed to load project. The file be invalid: Load error"
+    }
+
+
+def test_import_project_missing_path(client):
+    response = client.post("/api/import_project")
+
+    assert response.status_code == 422
+    assert "project_path" in response.text
+    assert "field required" in response.text.lower()
