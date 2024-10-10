@@ -41,12 +41,23 @@ def connect_custom_errors(app: FastAPI):
 
             error_messages.append(f"{format_error_loc(loc)}: {message}")
 
+        def serialize_error(error):
+            return {
+                "type": error.get("type"),
+                "loc": [str(loc) for loc in error.get("loc", [])],
+                "msg": error.get("msg"),
+                "input": str(error.get("input")),
+                "ctx": {str(k): str(v) for k, v in error.get("ctx", {}).items()},
+            }
+
+        serialized_errors = [serialize_error(error) for error in exc.errors()]
+
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "error_messages": error_messages,
                 "message": ".\n".join(error_messages),
-                "source_errors": exc.errors(),
+                "source_errors": serialized_errors,
             },
         )
 
