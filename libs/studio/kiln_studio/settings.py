@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-
-from libs.core.kiln_ai.utils.config import Config
+from kiln_ai.utils.config import Config
 
 
 def connect_settings(app: FastAPI):

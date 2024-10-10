@@ -11,6 +11,8 @@ from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from ..utils.config import Config
+
 
 class ModelProviderName(str, Enum):
     openai = "openai"
@@ -308,7 +310,7 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
     elif provider.name == ModelProviderName.ollama:
         return ChatOllama(**provider.provider_options, base_url=ollama_base_url())
     elif provider.name == ModelProviderName.openrouter:
-        api_key = getenv("OPENROUTER_API_KEY")
+        api_key = Config.shared().open_router_api_key
         if api_key is None:
             raise ValueError(
                 "OPENROUTER_API_KEY environment variable must be set to use OpenRouter. "

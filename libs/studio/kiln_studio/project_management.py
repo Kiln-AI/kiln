@@ -2,9 +2,8 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-
-from libs.core.kiln_ai.datamodel import Project
-from libs.core.kiln_ai.utils.config import Config
+from kiln_ai.datamodel import Project
+from kiln_ai.utils.config import Config
 
 
 def default_project_path():

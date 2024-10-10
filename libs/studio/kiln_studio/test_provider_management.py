@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from kiln_ai.utils.config import Config
 
-from libs.core.kiln_ai.utils.config import Config
 from libs.studio.kiln_studio.provider_management import (
     connect_groq,
     connect_openrouter,

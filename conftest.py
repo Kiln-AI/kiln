@@ -2,8 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from dotenv import load_dotenv
-
-from libs.core.kiln_ai.utils.config import Config
+from kiln_ai.utils.config import Config
 
 
 @pytest.fixture(scope="session", autouse=True)

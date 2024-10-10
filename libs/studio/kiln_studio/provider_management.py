@@ -3,10 +3,9 @@ import os
 import requests
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from kiln_ai.adapters.ml_model_list import ModelProviderName, built_in_models
+from kiln_ai.utils.config import Config
 from langchain_aws import ChatBedrockConverse
-
-from libs.core.kiln_ai.adapters.ml_model_list import ModelProviderName, built_in_models
-from libs.core.kiln_ai.utils.config import Config
 
 
 def connect_provider_management(app: FastAPI):

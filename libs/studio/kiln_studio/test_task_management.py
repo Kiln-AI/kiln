@@ -1,11 +1,12 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
+from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
+from kiln_ai.datamodel import Project, Task
 
-from libs.core.kiln_ai.datamodel import Project, Task
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
 from libs.studio.kiln_studio.task_management import connect_task_management
 
@@ -180,3 +181,186 @@ def test_get_task_project_not_found(client):
 
     assert response.status_code == 404
     assert "Project not found" in response.json()["message"]
+
+
+@pytest.mark.asyncio
+async def test_run_task_success(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+    task.save_to_file()
+
+    run_task_request = {
+        "model_name": "gpt_4o",
+        "provider": "openai",
+        "plaintext_input": "Test input",
+    }
+
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id, patch.object(
+        LangChainPromptAdapter, "invoke", new_callable=AsyncMock
+    ) as mock_invoke:
+        mock_project_from_id.return_value = project
+        mock_invoke.return_value = "Test output"
+
+        response = client.post(
+            f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+        )
+
+    assert response.status_code == 200
+    res = response.json()
+    assert res["plaintext_output"] == "Test output"
+    assert res["structured_output"] is None
+
+
+@pytest.mark.asyncio
+async def test_run_task_structured_output(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+    task.save_to_file()
+
+    run_task_request = {
+        "model_name": "gpt_4o",
+        "provider": "openai",
+        "plaintext_input": "Test input",
+    }
+
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id, patch.object(
+        LangChainPromptAdapter, "invoke", new_callable=AsyncMock
+    ) as mock_invoke:
+        mock_project_from_id.return_value = project
+        mock_invoke.return_value = {"key": "value"}
+
+        response = client.post(
+            f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+        )
+
+    assert response.status_code == 200
+    res = response.json()
+    assert res["plaintext_output"] is None
+    assert res["structured_output"] == {"key": "value"}
+
+
+@pytest.mark.asyncio
+async def test_run_task_not_found(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+
+    run_task_request = {
+        "model_name": "gpt_4o",
+        "provider": "openai",
+        "plaintext_input": "Test input",
+    }
+
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id:
+        mock_project_from_id.return_value = project
+        response = client.post(
+            "/api/projects/project1-id/task/non_existent_task_id/run",
+            json=run_task_request,
+        )
+
+    assert response.status_code == 404
+    assert response.json()["message"] == "Task not found. ID: non_existent_task_id"
+
+
+@pytest.mark.asyncio
+async def test_run_task_no_input(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+    task.save_to_file()
+
+    run_task_request = {"model_name": "gpt_4o", "provider": "openai"}
+
+    with patch(
+        "libs.studio.kiln_studio.task_management.project_from_id"
+    ) as mock_project_from_id:
+        mock_project_from_id.return_value = project
+        response = client.post(
+            f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+        )
+
+    assert response.status_code == 400
+    assert "No input provided" in response.json()["message"]
+
+
+@pytest.mark.asyncio
+async def test_run_task_structured_input(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+
+    # Replace the lambda with a proper mock
+    with patch.object(
+        Task,
+        "input_schema",
+        return_value={
+            "type": "object",
+            "properties": {"key": {"type": "string"}},
+        },
+    ):
+        task.save_to_file()
+
+        run_task_request = {
+            "model_name": "gpt_4o",
+            "provider": "openai",
+            "structured_input": {"key": "value"},
+        }
+
+        with patch(
+            "libs.studio.kiln_studio.task_management.project_from_id"
+        ) as mock_project_from_id, patch.object(
+            LangChainPromptAdapter, "invoke", new_callable=AsyncMock
+        ) as mock_invoke:
+            mock_project_from_id.return_value = project
+            mock_invoke.return_value = "Structured input processed"
+
+            response = client.post(
+                f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+            )
+
+    assert response.status_code == 200
+    res = response.json()
+    assert res["plaintext_output"] == "Structured input processed"
+    assert res["structured_output"] is None

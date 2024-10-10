@@ -56,6 +56,11 @@
   })
 </script>
 
+<svelte:head>
+  <title>Kiln Studio</title>
+  <meta name="description" content="The open source ML product platform" />
+</svelte:head>
+
 {#if loading || load_error}
   <div
     class="fixed w-full top-0 right-0 left-0 bottom-0 bg-base-200 z-[1000] flex place-items-center place-content-center"

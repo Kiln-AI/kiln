@@ -4,8 +4,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-
-from libs.core.kiln_ai.utils.config import Config, ConfigProperty, _get_user_id
+from kiln_ai.utils.config import Config, ConfigProperty, _get_user_id
 
 
 @pytest.fixture
@@ -17,7 +16,7 @@ def mock_yaml_file(tmp_path):
 @pytest.fixture
 def config_with_yaml(mock_yaml_file):
     with patch(
-        "libs.core.kiln_ai.utils.config.Config.settings_path",
+        "kiln_ai.utils.config.Config.settings_path",
         return_value=mock_yaml_file,
     ):
         yield Config(
