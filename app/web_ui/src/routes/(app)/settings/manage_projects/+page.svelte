@@ -30,7 +30,12 @@
   }
 </script>
 
-<AppPage title="Manage Projects" subtitle="Add or remove projects">
+<AppPage
+  title="Manage Projects"
+  subtitle="Add or remove projects"
+  action_button="Add Project"
+  action_button_href="/settings/create_project"
+>
   {#if $projects == null}
     <div class=" mx-auto py-8 px-24">
       <span class="loading loading-spinner loading-md"></span>
@@ -40,26 +45,28 @@
   {:else if $projects.projects.length == 0}
     <div class="p-16">No projects found</div>
   {:else}
-    <div class="flex flex-col gap-4 max-w-[500px]">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
       {#each $projects.projects as project}
-        <div class="card card-bordered border-secondary shadow-md py-4 px-6">
-          <div class="flex flex-row">
+        <div
+          class="card card-bordered border-gray-500 shadow-md py-4 px-6 h-48"
+        >
+          <div class="flex flex-col h-full">
             <div class="grow">
               <div class="font-medium">{project.name}</div>
               <div class="text-xs text-gray-500">
                 {project.path}
               </div>
             </div>
-            <div class="flex-none flex flex-col gap-2">
+            <div class="flex-none flex flex-row gap-2 w-full">
               <a
                 href={`/settings/create_task?project_id=${project.id}`}
-                class="btn btn-xs"
+                class="btn btn-xs flex-grow"
               >
                 Add Task
               </a>
               <button
                 on:click={() => remove_project(project)}
-                class="btn btn-xs"
+                class="btn btn-xs flex-grow"
               >
                 Remove
               </button>
@@ -67,14 +74,6 @@
           </div>
         </div>
       {/each}
-
-      <div
-        class="mt-6 max-w-[500px] {$projects && $projects.projects.length > 0
-          ? 'mx-auto'
-          : ''}"
-      >
-        <a href="/settings/create_project" class="btn btn-wide">Add Project</a>
-      </div>
     </div>
   {/if}
 </AppPage>
