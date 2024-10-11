@@ -57,16 +57,18 @@
                 {project.path}
               </div>
             </div>
-            <div class="flex-none flex flex-row gap-2 w-full">
+            <div
+              class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 w-full"
+            >
               <a
                 href={`/settings/create_task?project_id=${project.id}`}
-                class="btn btn-xs flex-grow"
+                class="btn btn-xs w-full"
               >
                 Add Task
               </a>
               <button
                 on:click={() => remove_project(project)}
-                class="btn btn-xs flex-grow"
+                class="btn btn-xs w-full"
               >
                 Remove
               </button>
