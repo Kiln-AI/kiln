@@ -64,7 +64,9 @@ def connect_project_management(app: FastAPI):
         for project_path in project_paths if project_paths is not None else []:
             try:
                 project = Project.load_from_file(project_path)
-                projects.append(project)
+                json_project = project.model_dump()
+                json_project["path"] = project_path
+                projects.append(json_project)
             except Exception as e:
                 print(f"Error loading project, skipping: {project_path}: {e}")
 
@@ -73,6 +75,18 @@ def connect_project_management(app: FastAPI):
     @app.get("/api/projects/{project_id}")
     async def get_project(project_id: str):
         return project_from_id(project_id)
+
+    # Removes the project, but does not delete the files from disk
+    @app.delete("/api/projects/{project_id}")
+    async def delete_project(project_id: str):
+        project = project_from_id(project_id)
+
+        # Remove from config
+        projects_before = Config.shared().projects
+        projects_after = [p for p in projects_before if p != str(project.path)]
+        Config.shared().save_setting("projects", projects_after)
+
+        return {"message": f"Project removed. ID: {project_id}"}
 
     @app.post("/api/import_project")
     async def import_project(project_path: str):

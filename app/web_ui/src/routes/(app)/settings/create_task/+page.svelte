@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AppPage from "../app_page.svelte"
-  import EditTask from "../../(fullscreen)/setup/(setup)/create_task/edit_task.svelte"
+  import AppPage from "../../app_page.svelte"
+  import EditTask from "../../../(fullscreen)/setup/(setup)/create_task/edit_task.svelte"
 
   let project_target_name: string | null = null
 </script>

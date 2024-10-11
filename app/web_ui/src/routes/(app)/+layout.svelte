@@ -8,11 +8,16 @@
     Examples,
     SettingsMain,
     SettingsProviders,
+    SettingsManageProjects,
     Run,
     None,
   }
 
-  const settingsSections = [Section.SettingsMain, Section.SettingsProviders]
+  const settingsSections = [
+    Section.SettingsMain,
+    Section.SettingsProviders,
+    Section.SettingsManageProjects,
+  ]
 
   function path_start(root: string, pathname: string): boolean {
     if (pathname == root) {
@@ -29,6 +34,8 @@
       section = Section.Examples
     } else if (path_start("/settings/providers", $page.url.pathname)) {
       section = Section.SettingsProviders
+    } else if (path_start("/settings/manage_projects", $page.url.pathname)) {
+      section = Section.SettingsManageProjects
     } else if (path_start("/settings", $page.url.pathname)) {
       section = Section.SettingsMain
     } else if (path_start("/run", $page.url.pathname)) {
@@ -214,6 +221,16 @@
                 Providers
               </a>
             </li>
+            <li class="menu-nested-sm">
+              <a
+                class={section == Section.SettingsManageProjects
+                  ? "active"
+                  : ""}
+                href="/settings/manage_projects"
+              >
+                Manage Projects
+              </a>
+            </li>
           </ul>
         {/if}
       </li>
@@ -224,7 +241,7 @@
 <style>
   /* Add this style block at the end of your component */
   :global(ul > li.menu-nested-sm) {
-    padding: 0.5rem 0.25rem;
+    padding: 0.1rem 0.25rem;
   }
   :global(ul > li.menu-nested-sm > a) {
     padding: 0.5rem 1rem;

@@ -1,5 +1,6 @@
 import { writable, get } from "svelte/store"
 import { api_error_handler, createKilnError } from "./utils/error_handlers"
+import { dev } from "$app/environment"
 
 export type ProjectInfo = {
   id: string
@@ -7,6 +8,7 @@ export type ProjectInfo = {
   description: string
   created_at: Date
   created_by: string
+  path: string
 }
 
 export type AllProjects = {
@@ -136,6 +138,9 @@ export async function load_current_task(project: ProjectInfo | null) {
     task = data
   } catch (error: unknown) {
     // Can't load this task, likely deleted. Clear the ID, which will force the user to select a new task
+    if (dev) {
+      alert("Removing current_task_id from UI state")
+    }
     task = null
     ui_state.set({
       ...get(ui_state),

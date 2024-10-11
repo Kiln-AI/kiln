@@ -358,3 +358,35 @@ def test_get_projects_with_one_exception(client, mock_projects):
     assert len(result) == 1
     assert result[0]["name"] == "Project 2"
     assert result[0]["description"] == "Description 2"
+
+
+def test_delete_project_success(client):
+    mock_project = MagicMock(path="/path/to/project.json")
+    with patch(
+        "libs.studio.kiln_studio.project_management.project_from_id",
+        return_value=mock_project,
+    ), patch.object(Config, "shared") as mock_config:
+        mock_config.return_value.projects = [
+            "/path/to/project.json",
+            "/path/to/other_project.json",
+        ]
+        mock_config.return_value.save_setting = MagicMock()
+
+        response = client.delete("/api/projects/test-id")
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Project removed. ID: test-id"}
+    mock_config.return_value.save_setting.assert_called_once_with(
+        "projects", ["/path/to/other_project.json"]
+    )
+
+
+def test_delete_project_not_found(client):
+    with patch(
+        "libs.studio.kiln_studio.project_management.project_from_id",
+        side_effect=HTTPException(status_code=404, detail="Project not found"),
+    ):
+        response = client.delete("/api/projects/non-existent-id")
+
+    assert response.status_code == 404
+    assert response.json() == {"message": "Project not found"}

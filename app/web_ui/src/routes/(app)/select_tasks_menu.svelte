@@ -7,8 +7,8 @@
 
   let id = "select-tasks-menu-" + Math.random().toString(36)
 
-  export let new_project_url = "/create_project"
-  export let new_task_url = "/create_task"
+  export let new_project_url = "/settings/create_project"
+  export let new_task_url = "/settings/create_task"
 
   $: project_list = $projects?.projects || []
   // Undefined should fallback. Null is manually selected none
