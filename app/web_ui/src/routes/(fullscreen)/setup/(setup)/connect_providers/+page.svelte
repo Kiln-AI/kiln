@@ -18,7 +18,9 @@
   Kiln is free, but your need to connect API keys to use AI services.
 </h3>
 
-<div class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col">
+<div
+  class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18 w-full max-w-lg mx-auto"
+>
   <ConnectProviders bind:has_connected_providers bind:intermediate_step />
 </div>
 

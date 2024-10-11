@@ -6,10 +6,13 @@
 
   enum Section {
     Examples,
-    Settings,
+    SettingsMain,
+    SettingsProviders,
     Run,
     None,
   }
+
+  const settingsSections = [Section.SettingsMain, Section.SettingsProviders]
 
   function path_start(root: string, pathname: string): boolean {
     if (pathname == root) {
@@ -24,8 +27,10 @@
   $: {
     if (path_start("/examples", $page.url.pathname)) {
       section = Section.Examples
+    } else if (path_start("/settings/providers", $page.url.pathname)) {
+      section = Section.SettingsProviders
     } else if (path_start("/settings", $page.url.pathname)) {
-      section = Section.Settings
+      section = Section.SettingsMain
     } else if (path_start("/run", $page.url.pathname)) {
       section = Section.Run
     } else {
@@ -170,7 +175,10 @@
         >
       </li>
       <li class="menu-lg">
-        <a href="/settings" class={section == Section.Settings ? "active" : ""}>
+        <a
+          href="/settings/providers"
+          class={section == Section.SettingsMain ? "active" : ""}
+        >
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524954/settings -->
           <svg
             class="w-6 h-6 mr-2"
@@ -194,7 +202,32 @@
 
           Settings</a
         >
+        {#if settingsSections.includes(section)}
+          <ul>
+            <li class="menu-nested-sm">
+              <a
+                class=" menu-nested-sm {section == Section.SettingsProviders
+                  ? 'active'
+                  : ''}"
+                href="/settings/providers"
+              >
+                Providers
+              </a>
+            </li>
+          </ul>
+        {/if}
       </li>
     </ul>
   </div>
 </div>
+
+<style>
+  /* Add this style block at the end of your component */
+  :global(ul > li.menu-nested-sm) {
+    padding: 0.5rem 0.25rem;
+  }
+  :global(ul > li.menu-nested-sm > a) {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem; /* Equivalent to text-sm in Tailwind */
+  }
+</style>

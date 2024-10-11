@@ -17,7 +17,7 @@
       name: "OpenRouter.ai",
       id: "openrouter",
       description:
-        "The easiest way to use Kiln. Proxies requests to OpenAI, Anthropic, Google, and more. Works with almost any model.",
+        "Proxies requests to OpenAI, Anthropic, and more. Works with almost any model.",
       image: "/images/openrouter.svg",
       featured: true,
       api_key_steps: [
@@ -164,6 +164,7 @@
       status.ollama.error = "Ollama running, but no models available"
       return
     }
+    status.ollama.error = null
     status.ollama.connected = true
     status.ollama.custom_description =
       "Ollama connected. The following supported models are available: " +
@@ -264,88 +265,85 @@
   })
 </script>
 
-{#if api_key_provider}
-  <div
-    class="grow h-full max-w-[400px] mx-auto flex flex-col place-content-center"
-  >
-    <div class="grow"></div>
-    {#if api_key_provider.api_key_warning}
-      <div role="alert" class="alert alert-warning my-4">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 shrink-0 stroke-current"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
-        <span>
-          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-          {@html api_key_provider.api_key_warning.replace(/\n/g, "<br>")}
-        </span>
-      </div>
-    {/if}
+<div class="w-full">
+  {#if api_key_provider}
+    <div class="grow h-full max-w-[400px] flex flex-col place-content-center">
+      <div class="grow"></div>
+      {#if api_key_provider.api_key_warning}
+        <div role="alert" class="alert alert-warning my-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 shrink-0 stroke-current"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <span>
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html api_key_provider.api_key_warning.replace(/\n/g, "<br>")}
+          </span>
+        </div>
+      {/if}
 
-    <h1 class="text-xl font-medium flex-none text-center">
-      Connect {api_key_provider.name} with API Key
-    </h1>
+      <h1 class="text-xl font-medium flex-none text-center">
+        Connect {api_key_provider.name} with API Key
+      </h1>
 
-    <ol class="flex-none my-2 text-gray-700">
-      {#each api_key_provider.api_key_steps || [] as step}
-        <li class="list-decimal pl-1 mx-8 my-4">
-          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-          {@html step.replace(
-            /https?:\/\/\S+/g,
-            '<a href="$&" class="link underline" target="_blank">$&</a>',
-          )}
-        </li>
-      {/each}
-    </ol>
-    {#if api_key_message}
-      <p class="text-error text-center pb-4">{api_key_message}</p>
-    {/if}
-    <div class="flex flex-row gap-4 items-center">
-      <div class="grow flex flex-col gap-2" id="api-key-fields">
-        {#each api_key_provider.api_key_fields || ["API Key"] as field}
-          <input
-            type="text"
-            id={field}
-            placeholder={field}
-            class="input input-bordered w-full max-w-[300px] {api_key_issue
-              ? 'input-error'
-              : ''}"
-          />
+      <ol class="flex-none my-2 text-gray-700">
+        {#each api_key_provider.api_key_steps || [] as step}
+          <li class="list-decimal pl-1 mx-8 my-4">
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html step.replace(
+              /https?:\/\/\S+/g,
+              '<a href="$&" class="link underline" target="_blank">$&</a>',
+            )}
+          </li>
         {/each}
+      </ol>
+      {#if api_key_message}
+        <p class="text-error text-center pb-4">{api_key_message}</p>
+      {/if}
+      <div class="flex flex-row gap-4 items-center">
+        <div class="grow flex flex-col gap-2" id="api-key-fields">
+          {#each api_key_provider.api_key_fields || ["API Key"] as field}
+            <input
+              type="text"
+              id={field}
+              placeholder={field}
+              class="input input-bordered w-full max-w-[300px] {api_key_issue
+                ? 'input-error'
+                : ''}"
+            />
+          {/each}
+        </div>
+        <button
+          class="btn min-w-[130px]"
+          on:click={submit_api_key}
+          disabled={api_key_submitting}
+        >
+          {#if api_key_submitting}
+            <div class="loading loading-spinner loading-md"></div>
+          {:else}
+            Connect
+          {/if}
+        </button>
       </div>
       <button
-        class="btn min-w-[130px]"
-        on:click={submit_api_key}
-        disabled={api_key_submitting}
+        class="link text-center text-sm mt-8"
+        on:click={() => (api_key_provider = null)}
       >
-        {#if api_key_submitting}
-          <div class="loading loading-spinner loading-md"></div>
-        {:else}
-          Connect
-        {/if}
+        Cancel setting up {api_key_provider.name}
       </button>
+      <div class="grow-[1.5]"></div>
     </div>
-    <button
-      class="link text-center text-sm mt-8"
-      on:click={() => (api_key_provider = null)}
-    >
-      Cancel setting up {api_key_provider.name}
-    </button>
-    <div class="grow-[1.5]"></div>
-  </div>
-{:else}
-  <div class="grow h-full flex flex-col">
-    <div class="grow"></div>
-    <div class="flex-none flex flex-col gap-6 max-w-lg mx-auto">
+  {:else}
+    <div class="w-full flex flex-col gap-6 max-w-lg">
       {#each providers as provider}
         <div class="flex flex-row gap-4 items-center">
           <img
@@ -399,6 +397,5 @@
         </div>
       {/each}
     </div>
-    <div class="grow-[1.5]"></div>
-  </div>
-{/if}
+  {/if}
+</div>
