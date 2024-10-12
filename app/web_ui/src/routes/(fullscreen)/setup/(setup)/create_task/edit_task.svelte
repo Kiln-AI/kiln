@@ -128,11 +128,62 @@
       !!task_description ||
       !!task_instructions ||
       has_edited_requirements ||
-      !task_input_plaintext ||
-      task_input_schema.properties.length > 0 ||
-      !task_output_plaintext ||
-      task_output_schema.properties.length > 0
+      (!task_input_plaintext && task_input_schema.properties.length > 0) ||
+      (!task_output_plaintext && task_output_schema.properties.length > 0)
     )
+  }
+
+  function example_task() {
+    if (has_edits()) {
+      if (
+        !confirm("This will replace your current task edits. Are you sure?")
+      ) {
+        return
+      }
+    }
+
+    task_name = "Joke Generator"
+    task_description = "An example task from the KilnAI team."
+    task_instructions =
+      "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. The output should include a setup and punchline."
+    task_requirements = [
+      {
+        name: "Keep on topic",
+        instruction:
+          "Keep the joke on topic. If the user specifies a theme, the joke must be related to that theme.",
+        priority: 1,
+      },
+      {
+        name: "Keep it clean",
+        instruction:
+          "Avoid any jokes that are offensive or inappropriate. Keep the joke clean and appropriate for all audiences.",
+        priority: 2,
+      },
+      {
+        name: "Be funny",
+        instruction:
+          "Make the joke funny and engaging. It should be something that someone would want to tell to their friends. Something clever, not just a simple pun.",
+        priority: 1,
+      },
+    ]
+    task_input_plaintext = true
+    task_output_plaintext = false
+    task_output_schema = {
+      properties: [
+        {
+          title: "Setup",
+          description: "The setup to the joke",
+          type: "string",
+          required: true,
+        },
+        {
+          title: "Punchline",
+          description: "The punchline to the joke",
+          type: "string",
+          required: true,
+        },
+      ],
+    }
   }
 </script>
 
@@ -144,7 +195,15 @@
     bind:error
     bind:submitting
   >
-    <div class="text-xl font-bold">Part 1: Overview</div>
+    <div>
+      <div class="text-xl font-bold">Part 1: Overview</div>
+      <h3 class="text-sm mt-1">
+        Just exploring?
+        <button class="link text-primary" on:click={example_task}
+          >Try an example.</button
+        >
+      </h3>
+    </div>
     <FormElement
       label="Task Name"
       id="task_name"
