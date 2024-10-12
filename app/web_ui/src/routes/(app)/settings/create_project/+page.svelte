@@ -5,7 +5,7 @@
 
 <div class="max-w-[600px]">
   <AppPage
-    title="New Project"
+    title="Add Project"
     subtitle="Projects are a collection of tasks, results, evals, and other resources."
   >
     <EditProject redirect_on_created="/settings/create_task" />

@@ -107,11 +107,10 @@
           bind:value={project_description}
         />
       </FormContainer>
-
-      <p class="text-sm mt-4 text-center">
-        Have an existing project?
-        <button class="link" on:click={() => (importing = true)}>
-          Import it by path.
+      <p class="mt-4 text-center">
+        Or
+        <button class="link font-bold" on:click={() => (importing = true)}>
+          import an existing project
         </button>
       </p>
     {:else}
@@ -130,10 +129,10 @@
           bind:value={import_project_path}
         />
       </FormContainer>
-      <p class="text-sm mt-4 text-center">
-        Create a
-        <button class="link" on:click={() => (importing = false)}>
-          new project instead.
+      <p class="mt-4 text-center">
+        Or
+        <button class="link font-bold" on:click={() => (importing = false)}>
+          create a new project
         </button>
       </p>
     {/if}
