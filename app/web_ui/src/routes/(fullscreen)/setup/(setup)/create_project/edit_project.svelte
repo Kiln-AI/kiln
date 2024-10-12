@@ -70,6 +70,7 @@
       )
       const data = await response.json()
       api_error_handler(response, data)
+      await load_projects()
       if (redirect_on_created) {
         redirect_to_project(data.id)
         return
