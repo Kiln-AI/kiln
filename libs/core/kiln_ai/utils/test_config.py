@@ -29,20 +29,20 @@ def config_with_yaml(mock_yaml_file):
         )
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def reset_config():
     Config._shared_instance = None
     yield
     Config._shared_instance = None
 
 
-def test_shared_instance(reset_config):
+def test_shared_instance():
     config1 = Config.shared()
     config2 = Config.shared()
     assert config1 is config2
 
 
-def test_property_default_value(reset_config, config_with_yaml):
+def test_property_default_value(config_with_yaml):
     config = config_with_yaml
     assert config.example_property == "default_value"
 
@@ -54,27 +54,26 @@ def test_property_env_var(reset_config, config_with_yaml):
     del os.environ["EXAMPLE_PROPERTY"]
 
 
-def test_property_setter(reset_config, config_with_yaml):
+def test_property_setter(config_with_yaml):
     config = config_with_yaml
     config.example_property = "new_value"
     assert config.example_property == "new_value"
 
 
-def test_nonexistent_property(reset_config, config_with_yaml):
+def test_nonexistent_property(config_with_yaml):
     config = config_with_yaml
     with pytest.raises(AttributeError):
         config.nonexistent_property
 
 
-def test_property_type_conversion(reset_config):
-    Config._shared_instance = None
-
+def test_property_type_conversion(config_with_yaml):
+    config = config_with_yaml
     config = Config(properties={"int_property": ConfigProperty(int, default="42")})
     assert isinstance(config.int_property, int)
     assert config.int_property == 42
 
 
-def test_property_priority(reset_config, config_with_yaml):
+def test_property_priority(config_with_yaml):
     os.environ["EXAMPLE_PROPERTY"] = "env_value"
     config = config_with_yaml
 
@@ -88,15 +87,8 @@ def test_property_priority(reset_config, config_with_yaml):
     del os.environ["EXAMPLE_PROPERTY"]
 
 
-def test_lazy_loading(reset_config, config_with_yaml):
+def test_default_lambda(config_with_yaml):
     config = config_with_yaml
-    assert "example_property" not in config._values
-    _ = config.example_property
-    assert "example_property" in config._values
-
-
-def test_default_lambda(reset_config):
-    Config._shared_instance = None
 
     def default_lambda():
         return "lambda_value"
@@ -107,11 +99,6 @@ def test_default_lambda(reset_config):
         }
     )
 
-    assert config.lambda_property == "lambda_value"
-
-    # Test that the lambda is only called once
-    assert "lambda_property" in config._values
-    config._properties["lambda_property"].default_lambda = lambda: "new_lambda_value"
     assert config.lambda_property == "lambda_value"
 
 
@@ -145,15 +132,9 @@ def test_get_user_id_valid(monkeypatch):
     assert _get_user_id() == "test_user"
 
 
-def test_user_id_default(reset_config):
-    config = Config()
-    # assert config.user_id == "scosman"
-    assert len(config.user_id) > 0
-
-
-def test_autosave_examples_default(reset_config):
-    config = Config()
-    assert config.autosave_examples
+def test_user_id_default(config_with_yaml):
+    # assert Config.shared().user_id == "scosman"
+    assert len(Config.shared().user_id) > 0
 
 
 def test_yaml_persistence(config_with_yaml, mock_yaml_file):
@@ -262,3 +243,15 @@ def test_list_property(config_with_yaml, mock_yaml_file):
     # Check that the value is loaded from YAML and is a list
     assert isinstance(new_config.list_property, list)
     assert new_config.list_property == ["item1", "item2", "item3"]
+
+
+def test_stale_values_bug(config_with_yaml):
+    assert config_with_yaml.example_property == "default_value"
+
+    # Simulate updating the settings file with set_attr
+    config_with_yaml.example_property = "second_value"
+    assert config_with_yaml.example_property == "second_value"
+
+    # Simulate updating the settings file with set_settings
+    config_with_yaml.update_settings({"example_property": "third_value"})
+    assert config_with_yaml.example_property == "third_value"

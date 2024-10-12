@@ -27,7 +27,6 @@ class Config:
     _shared_instance = None
 
     def __init__(self, properties: Dict[str, ConfigProperty] | None = None):
-        self._values: Dict[str, Any] = {}
         self._properties: Dict[str, ConfigProperty] = properties or {
             "user_id": ConfigProperty(
                 str,
@@ -82,30 +81,35 @@ class Config:
         return cls._shared_instance
 
     def __getattr__(self, name: str) -> Any:
+        if name == "_properties":
+            return super().__getattribute__("_properties")
         if name not in self._properties:
-            raise AttributeError(f"Config has no attribute '{name}'")
+            return super().__getattribute__(name)
 
-        if name not in self._values:
-            prop = self._properties[name]
-            value = None
-            if name in self._settings:
-                value = self._settings[name]
-            elif prop.env_var and prop.env_var in os.environ:
-                value = os.environ[prop.env_var]
-            elif prop.default is not None:
-                value = prop.default
-            elif prop.default_lambda is not None:
-                value = prop.default_lambda()
-            self._values[name] = prop.type(value) if value is not None else None
+        property_config = self._properties[name]
 
-        return self._values[name]
+        # Check if the value is in settings
+        if name in self._settings:
+            return property_config.type(self._settings[name])
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name in ("_values", "_properties", "_settings"):
+        # Check environment variable
+        if property_config.env_var and property_config.env_var in os.environ:
+            value = os.environ[property_config.env_var]
+            return property_config.type(value)
+
+        # Use default value or default_lambda
+        if property_config.default_lambda:
+            value = property_config.default_lambda()
+        else:
+            value = property_config.default
+
+        return property_config.type(value)
+
+    def __setattr__(self, name, value):
+        if name in ("_properties", "_settings"):
             super().__setattr__(name, value)
         elif name in self._properties:
-            self._values[name] = self._properties[name].type(value)
-            self.save_setting(name, value)
+            self.update_settings({name: value})
         else:
             raise AttributeError(f"Config has no attribute '{name}'")
 
