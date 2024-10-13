@@ -58,7 +58,7 @@ class TaskOutput(KilnParentedModel):
     output: str = Field(
         description="The output of the task. JSON formatted for structured output, plaintext for unstructured output."
     )
-    source: DataSource = Field(
+    source: DataSourceType = Field(
         description="The source of the output: human or synthetic."
     )
     # TODO: add structure/validation to this. For human creator_id. Model ID and verion and provider for models
@@ -139,14 +139,14 @@ class TaskOutput(KilnParentedModel):
 
     @model_validator(mode="after")
     def validate_source_properties(self) -> Self:
-        if self.source == DataSource.synthetic:
+        if self.source == DataSourceType.synthetic:
             required_keys = {
                 "adapter_name",
                 "model_name",
                 "model_provider",
                 "prompt_builder_name",
             }
-        elif self.source == DataSource.human:
+        elif self.source == DataSourceType.human:
             required_keys = {"creator"}
         else:
             raise ValueError(f"Invalid source type: {self.source}")
@@ -166,7 +166,7 @@ class TaskOutput(KilnParentedModel):
         return self
 
 
-class DataSource(str, Enum):
+class DataSourceType(str, Enum):
     """
     The source of a piece of data.
     """
@@ -183,7 +183,7 @@ class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOu
     input: str = Field(
         description="The inputs to the task. JSON formatted for structured input, plaintext for unstructured input."
     )
-    source: DataSource = Field(
+    source: DataSourceType = Field(
         description="The source of the input: human or synthetic."
     )
     # TODO add structure/validation to this. For human creator_id. Model: synthetic data tool and model version

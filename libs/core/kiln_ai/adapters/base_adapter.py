@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Dict
 
 from kiln_ai.datamodel import (
-    DataSource,
+    DataSourceType,
     Task,
     TaskInput,
     TaskOutput,
@@ -28,7 +28,9 @@ class BaseAdapter(metaclass=ABCMeta):
         self.input_schema = self.kiln_task.input_json_schema
 
     async def invoke(
-        self, input: Dict | str, input_source: DataSource = DataSource.human
+        self,
+        input: Dict | str,
+        input_source: DataSourceType = DataSourceType.human,
     ) -> Dict | str:
         # validate input
         if self.input_schema is not None:
@@ -73,7 +75,7 @@ class BaseAdapter(metaclass=ABCMeta):
 
     # create a run and task output
     def save_run(
-        self, input: Dict | str, input_source: DataSource, output: Dict | str
+        self, input: Dict | str, input_source: DataSourceType, output: Dict | str
     ) -> TaskInput:
         # Convert input and output to JSON strings if they are dictionaries
         input_str = json.dumps(input) if isinstance(input, dict) else input
@@ -122,7 +124,7 @@ class BaseAdapter(metaclass=ABCMeta):
             parent=task_input,
             output=output_str,
             # Synthetic since an adapter, not a human, is creating this
-            source=DataSource.synthetic,
+            source=DataSourceType.synthetic,
             source_properties=self._properties_for_task_output(),
         )
         task_output.save_to_file()

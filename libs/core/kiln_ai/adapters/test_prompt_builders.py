@@ -5,7 +5,7 @@ from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromp
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
 from kiln_ai.datamodel import (
-    DataSource,
+    DataSourceType,
     Project,
     Task,
     TaskInput,
@@ -94,7 +94,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     # Create an task input, but with no output
     e1 = TaskInput(
         input='{"subject": "Cows"}',
-        source=DataSource.human,
+        source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=task,
     )
@@ -104,7 +104,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     # No review, so not valid
     eo1 = TaskOutput(
         output='{"joke": "Moo I am a cow joke."}',
-        source=DataSource.human,
+        source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=e1,
     )
@@ -117,14 +117,14 @@ def test_multi_shot_prompt_builder(tmp_path):
 
     e2 = TaskInput(
         input='{"subject": "Dogs"}',
-        source=DataSource.human,
+        source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=task,
     )
     e2.save_to_file()
     eo2 = TaskOutput(
         output='{"joke": "This is a ruff joke."}',
-        source=DataSource.human,
+        source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=e2,
         rating=TaskOutputRating(rating=4, reason="Bark"),
