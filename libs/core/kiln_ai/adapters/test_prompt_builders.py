@@ -5,12 +5,12 @@ from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromp
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
 from kiln_ai.datamodel import (
-    Example,
-    ExampleOutput,
-    ExampleSource,
+    DataSource,
     Project,
-    ReasonRating,
     Task,
+    TaskInput,
+    TaskOutput,
+    TaskOutputRating,
 )
 
 
@@ -92,9 +92,9 @@ def test_multi_shot_prompt_builder(tmp_path):
     task.save_to_file()
 
     # Create an example, but with no output
-    e1 = Example(
+    e1 = TaskInput(
         input='{"subject": "Cows"}',
-        source=ExampleSource.human,
+        source=DataSource.human,
         source_properties={"creator": "john_doe"},
         parent=task,
     )
@@ -102,32 +102,32 @@ def test_multi_shot_prompt_builder(tmp_path):
     check_example_outputs(task, 0)
 
     # No review, so not valid
-    eo1 = ExampleOutput(
+    eo1 = TaskOutput(
         output='{"joke": "Moo I am a cow joke."}',
-        source=ExampleSource.human,
+        source=DataSource.human,
         source_properties={"creator": "john_doe"},
         parent=e1,
     )
     eo1.save_to_file()
     check_example_outputs(task, 0)
 
-    eo1.rating = ReasonRating(rating=4, reason="It's a good joke")
+    eo1.rating = TaskOutputRating(rating=4, reason="It's a good joke")
     eo1.save_to_file()
     check_example_outputs(task, 1)
 
-    e2 = Example(
+    e2 = TaskInput(
         input='{"subject": "Dogs"}',
-        source=ExampleSource.human,
+        source=DataSource.human,
         source_properties={"creator": "john_doe"},
         parent=task,
     )
     e2.save_to_file()
-    eo2 = ExampleOutput(
+    eo2 = TaskOutput(
         output='{"joke": "This is a ruff joke."}',
-        source=ExampleSource.human,
+        source=DataSource.human,
         source_properties={"creator": "john_doe"},
         parent=e2,
-        rating=ReasonRating(rating=4, reason="Bark"),
+        rating=TaskOutputRating(rating=4, reason="Bark"),
     )
     eo2.save_to_file()
     check_example_outputs(task, 2)

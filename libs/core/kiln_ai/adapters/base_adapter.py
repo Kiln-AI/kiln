@@ -4,11 +4,10 @@ from dataclasses import dataclass
 from typing import Dict
 
 from kiln_ai.datamodel import (
-    Example,
-    ExampleOutput,
-    ExampleOutputSource,
-    ExampleSource,
+    DataSource,
     Task,
+    TaskInput,
+    TaskOutput,
 )
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
@@ -29,7 +28,7 @@ class BaseAdapter(metaclass=ABCMeta):
         self.input_schema = self.kiln_task.input_json_schema
 
     async def invoke(
-        self, input: Dict | str, input_source: ExampleSource = ExampleSource.human
+        self, input: Dict | str, input_source: DataSource = DataSource.human
     ) -> Dict | str:
         # validate input
         if self.input_schema is not None:
@@ -74,8 +73,8 @@ class BaseAdapter(metaclass=ABCMeta):
 
     # create an example and example output
     def save_example(
-        self, input: Dict | str, input_source: ExampleSource, output: Dict | str
-    ) -> Example:
+        self, input: Dict | str, input_source: DataSource, output: Dict | str
+    ) -> TaskInput:
         # Convert input and output to JSON strings if they are dictionaries
         input_str = json.dumps(input) if isinstance(input, dict) else input
         output_str = json.dumps(output) if isinstance(output, dict) else output
@@ -96,7 +95,7 @@ class BaseAdapter(metaclass=ABCMeta):
         if existing_example:
             example = existing_example
         else:
-            example = Example(
+            example = TaskInput(
                 parent=self.kiln_task,
                 input=input_str,
                 source=input_source,
@@ -119,11 +118,11 @@ class BaseAdapter(metaclass=ABCMeta):
             return example
 
         # Create a new ExampleOutput for the existing or new Example
-        example_output = ExampleOutput(
+        example_output = TaskOutput(
             parent=example,
             output=output_str,
             # Synthetic since an adapter, not a human, is creating this
-            source=ExampleOutputSource.synthetic,
+            source=DataSource.synthetic,
             source_properties=self._properties_for_example_output(),
         )
         example_output.save_to_file()

@@ -31,7 +31,7 @@ class Priority(IntEnum):
     p3 = 3
 
 
-class ReasonRating(KilnBaseModel):
+class TaskOutputRating(KilnBaseModel):
     """
     A combination of a rating (1-5 stars) and a reason for the rating.
 
@@ -50,16 +50,7 @@ class ReasonRating(KilnBaseModel):
     )
 
 
-class ExampleOutputSource(str, Enum):
-    """
-    The source of the example output.
-    """
-
-    human = "human"
-    synthetic = "synthetic"
-
-
-class ExampleOutput(KilnParentedModel):
+class TaskOutput(KilnParentedModel):
     """
     An example output from a specific Example input, to a Task.
     """
@@ -67,7 +58,7 @@ class ExampleOutput(KilnParentedModel):
     output: str = Field(
         description="The output of the task. JSON formatted for structured output, plaintext for unstructured output."
     )
-    source: ExampleOutputSource = Field(
+    source: DataSource = Field(
         description="The source of the example output: human or synthetic."
     )
     # TODO: add structure/validation to this. For human creator_id. Model ID and verion and provider for models
@@ -75,21 +66,22 @@ class ExampleOutput(KilnParentedModel):
         default={},
         description="Additional properties of the source, e.g. the user name of the human who provided the output or the model that generated the output.",
     )
-    rating: ReasonRating | None = Field(
+    rating: TaskOutputRating | None = Field(
         default=None,
         description="The rating of the output, along with a reason this rating was given.",
     )
-    requirement_ratings: Dict[ID_TYPE, ReasonRating] = Field(
+    requirement_ratings: Dict[ID_TYPE, TaskOutputRating] = Field(
         default={},
         description="The ratings of the requirements of the task, along with a reason this rating was given. The keys are the ids of the requirements.",
     )
+
     fixed_output: str | None = Field(
         default=None,
         description="An version of the output with issues fixed by a human evaluator. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output example for this task unrelated to this output, generate a new ExampleOutput with type 'human' instead of using this field.",
     )
 
-    def parent_example(self) -> Example | None:
-        if not isinstance(self.parent, Example):
+    def parent_example(self) -> TaskInput | None:
+        if not isinstance(self.parent, TaskInput):
             return None
         return self.parent
 
@@ -116,7 +108,7 @@ class ExampleOutput(KilnParentedModel):
         example = self.parent
         if example is None:
             return None
-        if not isinstance(example, Example):
+        if not isinstance(example, TaskInput):
             raise ValueError("ExampleOutput must have a valid parent Example")
 
         task = example.parent
@@ -147,14 +139,14 @@ class ExampleOutput(KilnParentedModel):
 
     @model_validator(mode="after")
     def validate_source_properties(self) -> Self:
-        if self.source == ExampleOutputSource.synthetic:
+        if self.source == DataSource.synthetic:
             required_keys = {
                 "adapter_name",
                 "model_name",
                 "model_provider",
                 "prompt_builder_name",
             }
-        elif self.source == ExampleOutputSource.human:
+        elif self.source == DataSource.human:
             required_keys = {"creator"}
         else:
             raise ValueError(f"Invalid source type: {self.source}")
@@ -174,16 +166,16 @@ class ExampleOutput(KilnParentedModel):
         return self
 
 
-class ExampleSource(str, Enum):
+class DataSource(str, Enum):
     """
-    The source of the example input.
+    The source of a piece of data.
     """
 
     human = "human"
     synthetic = "synthetic"
 
 
-class Example(KilnParentedModel, KilnParentModel, parent_of={"outputs": ExampleOutput}):
+class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutput}):
     """
     An example input to a specific Task.
     """
@@ -191,7 +183,7 @@ class Example(KilnParentedModel, KilnParentModel, parent_of={"outputs": ExampleO
     input: str = Field(
         description="The inputs to the task. JSON formatted for structured input, plaintext for unstructured input."
     )
-    source: ExampleSource = Field(
+    source: DataSource = Field(
         description="The source of the example input: human or synthetic."
     )
     # TODO add structure/validation to this. For human creator_id. Model: synthetic data tool and model version
@@ -201,7 +193,7 @@ class Example(KilnParentedModel, KilnParentModel, parent_of={"outputs": ExampleO
     )
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
-    def outputs(self) -> list[ExampleOutput]:
+    def outputs(self) -> list[TaskOutput]:
         return super().outputs()  # type: ignore
 
     def parent_task(self) -> Task | None:
@@ -247,7 +239,7 @@ class TaskDeterminism(str, Enum):
 class Task(
     KilnParentedModel,
     KilnParentModel,
-    parent_of={"requirements": TaskRequirement, "examples": Example},
+    parent_of={"requirements": TaskRequirement, "examples": TaskInput},
 ):
     name: str = NAME_FIELD
     description: str = Field(default="")
@@ -273,7 +265,7 @@ class Task(
         return super().requirements()  # type: ignore
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
-    def examples(self) -> list[Example]:
+    def examples(self) -> list[TaskInput]:
         return super().examples()  # type: ignore
 
 

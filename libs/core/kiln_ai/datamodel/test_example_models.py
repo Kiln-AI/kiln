@@ -2,14 +2,13 @@ import json
 
 import pytest
 from kiln_ai.datamodel import (
-    Example,
-    ExampleOutput,
-    ExampleOutputSource,
-    ExampleSource,
+    DataSource,
     Project,
-    ReasonRating,
     Task,
     TaskDeterminism,
+    TaskInput,
+    TaskOutput,
+    TaskOutputRating,
     TaskRequirement,
 )
 from pydantic import ValidationError
@@ -23,19 +22,19 @@ def test_example_model_validation(tmp_path):
         path=tmp_path / Task.base_filename(),
     )
     task.save_to_file()
-    valid_example = Example(
+    valid_example = TaskInput(
         parent=task,
         input="Test input",
-        source=ExampleSource.human,
+        source=DataSource.human,
         source_properties={"creator": "John Doe"},
     )
     assert valid_example.input == "Test input"
-    assert valid_example.source == ExampleSource.human
+    assert valid_example.source == DataSource.human
     assert valid_example.source_properties == {"creator": "John Doe"}
 
     # Invalid source
     with pytest.raises(ValidationError):
-        Example(
+        TaskInput(
             parent=task,
             input="Test input",
             source="invalid_source",
@@ -44,14 +43,14 @@ def test_example_model_validation(tmp_path):
 
     # Missing required field
     with pytest.raises(ValidationError):
-        Example(parent=task, source=ExampleSource.human, source_properties={})
+        TaskInput(parent=task, source=DataSource.human, source_properties={})
 
     # Invalid source_properties type
     with pytest.raises(ValidationError):
-        Example(
+        TaskInput(
             parent=task,
             input="Test input",
-            source=ExampleSource.human,
+            source=DataSource.human,
             source_properties="invalid",
         )
 
@@ -63,10 +62,10 @@ def test_example_relationship(tmp_path):
         path=tmp_path / Task.base_filename(),
     )
     task.save_to_file()
-    example = Example(
+    example = TaskInput(
         parent=task,
         input="Test input",
-        source=ExampleSource.human,
+        source=DataSource.human,
         source_properties={},
     )
     assert example.__class__.relationship_name() == "examples"
@@ -81,23 +80,23 @@ def test_example_output_model_validation(tmp_path):
         path=tmp_path / Task.base_filename(),
     )
     task.save_to_file()
-    example = Example(input="Test input", source=ExampleSource.human, parent=task)
+    example = TaskInput(input="Test input", source=DataSource.human, parent=task)
     example.save_to_file()
-    valid_output = ExampleOutput(
+    valid_output = TaskOutput(
         parent=example,
         output="Test output",
-        source=ExampleOutputSource.human,
+        source=DataSource.human,
         source_properties={"creator": "Jane Doe"},
         requirement_ratings={},
     )
     assert valid_output.output == "Test output"
-    assert valid_output.source == ExampleOutputSource.human
+    assert valid_output.source == DataSource.human
     assert valid_output.source_properties == {"creator": "Jane Doe"}
     assert len(valid_output.requirement_ratings) == 0
 
     # Invalid source
     with pytest.raises(ValidationError):
-        ExampleOutput(
+        TaskOutput(
             path="/test/path",
             output="Test output",
             source="invalid_source",
@@ -107,31 +106,31 @@ def test_example_output_model_validation(tmp_path):
 
     # Missing required field
     with pytest.raises(ValidationError):
-        ExampleOutput(
+        TaskOutput(
             path="/test/path",
-            source=ExampleOutputSource.human,
+            source=DataSource.human,
             source_properties={},
             requirement_ratings={},
         )
 
-    # Invalid rating in ReasonRating
+    # Invalid rating in TaskOutputRating
     with pytest.raises(ValidationError):
-        ExampleOutput(
+        TaskOutput(
             path="/test/path",
             output="Test output",
-            source=ExampleOutputSource.human,
+            source=DataSource.human,
             source_properties={},
             requirement_ratings={
-                "req1": ReasonRating(rating=6, reason="Invalid rating")
+                "req1": TaskOutputRating(rating=6, reason="Invalid rating")
             },
         )
 
     # Invalid requirement_ratings type
     with pytest.raises(ValidationError):
-        ExampleOutput(
+        TaskOutput(
             path="/test/path",
             output="Test output",
-            source=ExampleOutputSource.human,
+            source=DataSource.human,
             source_properties={},
             requirement_ratings="invalid",
         )
@@ -170,9 +169,9 @@ def test_structured_output_workflow(tmp_path):
 
     # Create examples
     examples = []
-    for source in ExampleSource:
+    for source in DataSource:
         for _ in range(2):
-            example = Example(
+            example = TaskInput(
                 input="Generate info for John Doe",
                 source=source,
                 parent=task,
@@ -183,9 +182,9 @@ def test_structured_output_workflow(tmp_path):
     # Create outputs
     outputs = []
     for example in examples:
-        output = ExampleOutput(
+        output = TaskOutput(
             output='{"name": "John Doe", "age": 30}',
-            source=ExampleOutputSource.human,
+            source=DataSource.human,
             source_properties={"creator": "john_doe"},
             parent=example,
         )
@@ -194,10 +193,10 @@ def test_structured_output_workflow(tmp_path):
 
     # Update outputs with ratings
     for output in outputs:
-        output.rating = ReasonRating(rating=4, reason="Good output")
+        output.rating = TaskOutputRating(rating=4, reason="Good output")
         output.requirement_ratings = {
-            req1.id: ReasonRating(rating=5, reason="Name is capitalized"),
-            req2.id: ReasonRating(rating=5, reason="Age is positive"),
+            req1.id: TaskOutputRating(rating=5, reason="Name is capitalized"),
+            req2.id: TaskOutputRating(rating=5, reason="Age is positive"),
         }
         output.save_to_file()
 
@@ -243,7 +242,7 @@ def test_example_output_requirement_rating_keys(tmp_path):
     project.save_to_file()
     task = Task(name="Test Task", parent=project, instruction="Task instruction")
     task.save_to_file()
-    example = Example(input="Test input", source="human", parent=task)
+    example = TaskInput(input="Test input", source=DataSource.human, parent=task)
     example.save_to_file()
 
     # Create task requirements
@@ -256,9 +255,9 @@ def test_example_output_requirement_rating_keys(tmp_path):
     )
     req2.save_to_file()
     # Valid case: all requirement IDs are valid
-    valid_output = ExampleOutput(
+    valid_output = TaskOutput(
         output="Test output",
-        source="human",
+        source=DataSource.human,
         source_properties={"creator": "john_doe"},
         parent=example,
         requirement_ratings={
@@ -274,9 +273,9 @@ def test_example_output_requirement_rating_keys(tmp_path):
         ValueError,
         match="Requirement ID .* is not a valid requirement ID for this task",
     ):
-        output = ExampleOutput(
+        output = TaskOutput(
             output="Test output",
-            source="human",
+            source=DataSource.human,
             source_properties={"creator": "john_doe"},
             parent=example,
             requirement_ratings={
@@ -303,18 +302,18 @@ def test_example_output_schema_validation(tmp_path):
         ),
     )
     task.save_to_file()
-    example = Example(
+    example = TaskInput(
         input="Test input",
-        source="human",
+        source=DataSource.human,
         parent=task,
         source_properties={"creator": "john_doe"},
     )
     example.save_to_file()
 
     # Create an example output with a valid schema
-    valid_output = ExampleOutput(
+    valid_output = TaskOutput(
         output='{"name": "John Doe", "age": 30}',
-        source="human",
+        source=DataSource.human,
         source_properties={"creator": "john_doe"},
         parent=example,
     )
@@ -327,9 +326,9 @@ def test_example_output_schema_validation(tmp_path):
 
     # Invalid case: output does not match task output schema
     with pytest.raises(ValueError):
-        output = ExampleOutput(
+        output = TaskOutput(
             output='{"name": "John Doe", "age": "thirty"}',
-            source="human",
+            source=DataSource.human,
             source_properties={"creator": "john_doe"},
             parent=example,
         )
@@ -355,9 +354,9 @@ def test_example_input_schema_validation(tmp_path):
     task.save_to_file()
 
     # Create an example with a valid input schema
-    valid_example = Example(
+    valid_example = TaskInput(
         input='{"name": "John Doe", "age": 30}',
-        source=ExampleSource.human,
+        source=DataSource.human,
         parent=task,
     )
     valid_example.save_to_file()
@@ -369,21 +368,21 @@ def test_example_input_schema_validation(tmp_path):
 
     # Invalid case: input does not match task input schema
     with pytest.raises(ValueError):
-        example = Example(
+        example = TaskInput(
             input='{"name": "John Doe", "age": "thirty"}',
-            source=ExampleSource.human,
+            source=DataSource.human,
             parent=task,
         )
         example.save_to_file()
 
 
 def test_valid_human_example_output():
-    output = ExampleOutput(
+    output = TaskOutput(
         output="Test output",
-        source=ExampleOutputSource.human,
+        source=DataSource.human,
         source_properties={"creator": "John Doe"},
     )
-    assert output.source == ExampleOutputSource.human
+    assert output.source == DataSource.human
     assert output.source_properties["creator"] == "John Doe"
 
 
@@ -392,24 +391,22 @@ def test_invalid_human_example_output_missing_creator():
         ValidationError,
         match="must include \['creator'\]",
     ):
-        ExampleOutput(
-            output="Test output", source=ExampleOutputSource.human, source_properties={}
-        )
+        TaskOutput(output="Test output", source=DataSource.human, source_properties={})
 
 
 def test_invalid_human_example_output_empty_creator():
     with pytest.raises(ValidationError, match="must not be empty string"):
-        ExampleOutput(
+        TaskOutput(
             output="Test output",
-            source=ExampleOutputSource.human,
+            source=DataSource.human,
             source_properties={"creator": ""},
         )
 
 
 def test_valid_synthetic_example_output():
-    output = ExampleOutput(
+    output = TaskOutput(
         output="Test output",
-        source=ExampleOutputSource.synthetic,
+        source=DataSource.synthetic,
         source_properties={
             "adapter_name": "TestAdapter",
             "model_name": "GPT-4",
@@ -417,7 +414,7 @@ def test_valid_synthetic_example_output():
             "prompt_builder_name": "TestPromptBuilder",
         },
     )
-    assert output.source == ExampleOutputSource.synthetic
+    assert output.source == DataSource.synthetic
     assert output.source_properties["adapter_name"] == "TestAdapter"
     assert output.source_properties["model_name"] == "GPT-4"
     assert output.source_properties["model_provider"] == "OpenAI"
@@ -428,18 +425,18 @@ def test_invalid_synthetic_example_output_missing_keys():
     with pytest.raises(
         ValidationError, match="example output source_properties must include"
     ):
-        ExampleOutput(
+        TaskOutput(
             output="Test output",
-            source=ExampleOutputSource.synthetic,
+            source=DataSource.synthetic,
             source_properties={"adapter_name": "TestAdapter", "model_name": "GPT-4"},
         )
 
 
 def test_invalid_synthetic_example_output_empty_values():
     with pytest.raises(ValidationError, match="must not be empty string"):
-        ExampleOutput(
+        TaskOutput(
             output="Test output",
-            source=ExampleOutputSource.synthetic,
+            source=DataSource.synthetic,
             source_properties={
                 "adapter_name": "TestAdapter",
                 "model_name": "",
@@ -451,9 +448,9 @@ def test_invalid_synthetic_example_output_empty_values():
 
 def test_invalid_synthetic_example_output_non_string_values():
     with pytest.raises(ValidationError, match="Input should be a valid string"):
-        ExampleOutput(
+        TaskOutput(
             output="Test output",
-            source=ExampleOutputSource.synthetic,
+            source=DataSource.synthetic,
             source_properties={
                 "adapter_name": "TestAdapter",
                 "model_name": "GPT-4",
