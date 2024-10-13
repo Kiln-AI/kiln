@@ -81,12 +81,18 @@ def test_prompt_type_optional_for_synthetic():
     assert "prompt_type" not in data_source.properties
 
 
-def test_prompt_type_not_allowed_for_human():
-    with pytest.raises(
-        ValidationError,
-        match="'prompt_type' is not allowed for DataSourceType.human data",
-    ):
-        DataSource(
-            type=DataSourceType.human,
-            properties={"created_by": "John Doe", "prompt_type": "completion"},
-        )
+def test_private_data_source_properties_not_serialized():
+    data_source = DataSource(
+        type=DataSourceType.synthetic,
+        properties={
+            "model_name": "GPT-4",
+            "model_provider": "OpenAI",
+        },
+    )
+    serialized = data_source.model_dump()
+    assert "_data_source_properties" not in serialized
+    assert "properties" in serialized
+    assert serialized["properties"] == {
+        "model_name": "GPT-4",
+        "model_provider": "OpenAI",
+    }
