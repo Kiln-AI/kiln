@@ -1,10 +1,12 @@
 <script lang="ts">
   import AppPage from "../app_page.svelte"
   import { current_task, current_project } from "$lib/stores"
+  import type { RunOutput } from "$lib/stores"
   import { createKilnError } from "$lib/utils/error_handlers"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import { KilnError } from "$lib/utils/error_handlers"
+  import Output from "./output.svelte"
 
   // TODO: implement checking input content
   let warn_before_unload = false
@@ -22,16 +24,15 @@
   $: model_name = model.split("/")[1]
   $: provider = model.split("/")[0]
 
-  // TODO structured output and UI
-  let output = ""
+  let output: RunOutput | null = null
 
-  $: subtitle = $current_task?.name ?? ""
+  $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
   async function run_task() {
     try {
       submitting = true
       error = null
-      output = ""
+      output = null
       const response = await fetch(
         `http://localhost:8757/api/projects/${$current_project?.id}/task/${$current_task?.id}/run`,
         {
@@ -47,17 +48,35 @@
         },
       )
       const data = await response.json()
-      console.log(data)
-      output = JSON.stringify(data, null, 2) // Pretty-print the output
+      // Check if data conforms to RunOutput type
+      if (isRunOutput(data)) {
+        output = data
+      } else {
+        throw new Error("Invalid response format")
+      }
     } catch (e) {
       error = createKilnError(e)
     } finally {
       submitting = false
     }
   }
+
+  // Add this type guard function
+  function isRunOutput(data: unknown): data is RunOutput {
+    // Implement the type check based on RunOutput structure
+    // This is a basic example, adjust according to your RunOutput type
+    return (
+      typeof data === "object" &&
+      data !== null &&
+      (("plaintext_output" in data &&
+        typeof data.plaintext_output === "string") ||
+        ("structured_output" in data &&
+          typeof data.structured_output === "object"))
+    )
+  }
 </script>
 
-<AppPage title="Run Task" bind:subtitle>
+<AppPage title="Run" bind:subtitle>
   <div class="flex flex-col gap-2 w-full max-w-[800px]">
     <FormContainer
       submit_label="Run"
@@ -132,8 +151,8 @@
       />
     </FormContainer>
   </div>
-  <div class="mt-10">
+  <div class="mt-10 {submitting || output == null ? 'hidden' : ''}">
     <div class="text-xl font-bold">Outputs</div>
-    <div class="text-xl font-bold">{output}</div>
+    <Output {output} json_schema={$current_task?.output_json_schema} />
   </div>
 </AppPage>

@@ -23,6 +23,13 @@ export type Task = {
   path: string
   created_at: Date
   created_by: string
+  output_json_schema: string | null
+  input_json_schema: string | null
+}
+
+export type RunOutput = {
+  plaintext_output: string | null
+  structured_output: Record<string, unknown> | null
 }
 
 // UI State stored in the browser. For more client centric state
