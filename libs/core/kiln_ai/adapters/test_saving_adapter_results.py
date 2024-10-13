@@ -36,39 +36,39 @@ def test_task(tmp_path):
     return task
 
 
-def test_save_example_isolation(test_task):
+def test_save_run_isolation(test_task):
     adapter = TestAdapter(test_task)
     input_data = "Test input"
     output_data = "Test output"
 
-    example = adapter.save_example(input_data, DataSource.human, output_data)
+    task_input = adapter.save_run(input_data, DataSource.human, output_data)
 
-    # Check that the example was saved correctly
-    assert example.parent == test_task
-    assert example.input == input_data
-    assert example.source == DataSource.human
+    # Check that the task input was saved correctly
+    assert task_input.parent == test_task
+    assert task_input.input == input_data
+    assert task_input.source == DataSource.human
 
-    # Check that the example output was saved correctly
-    saved_outputs = example.outputs()
+    # Check that the task output was saved correctly
+    saved_outputs = task_input.outputs()
     assert len(saved_outputs) == 1
     saved_output = saved_outputs[0]
-    assert saved_output.parent.id == example.id
+    assert saved_output.parent.id == task_input.id
     assert saved_output.output == output_data
     assert saved_output.source == DataSource.synthetic
     assert saved_output.requirement_ratings == {}
 
     # Verify that the data can be read back from disk
     reloaded_task = Task.load_from_file(test_task.path)
-    reloaded_examples = reloaded_task.examples()
-    assert len(reloaded_examples) == 1
-    reloaded_example = reloaded_examples[0]
-    assert reloaded_example.input == input_data
-    assert reloaded_example.source == DataSource.human
+    reloaded_runs = reloaded_task.runs()
+    assert len(reloaded_runs) == 1
+    reloaded_run = reloaded_runs[0]
+    assert reloaded_run.input == input_data
+    assert reloaded_run.source == DataSource.human
 
-    reloaded_outputs = reloaded_example.outputs()
+    reloaded_outputs = reloaded_run.outputs()
     assert len(reloaded_outputs) == 1
     reloaded_output = reloaded_outputs[0]
-    assert reloaded_output.parent.id == reloaded_example.id
+    assert reloaded_output.parent.id == reloaded_run.id
     assert reloaded_output.output == output_data
     assert reloaded_output.source == DataSource.synthetic
     assert reloaded_output.requirement_ratings == {}
@@ -85,27 +85,27 @@ def test_save_example_isolation(test_task):
     else:
         assert "creator" not in reloaded_output.source_properties
 
-    # Run again, with same input and different output. Should create a new ExampleOutput under the same Example.
-    example = adapter.save_example(input_data, DataSource.human, "Different output")
-    assert len(test_task.examples()) == 1
-    assert len(example.outputs()) == 2
-    outputs = example.outputs()
+    # Run again, with same input and different output. Should create a new TaskOutput under the same TaskInput.
+    task_input = adapter.save_run(input_data, DataSource.human, "Different output")
+    assert len(test_task.runs()) == 1
+    assert len(task_input.outputs()) == 2
+    outputs = task_input.outputs()
     assert len(outputs) == 2
     assert set(output.output for output in outputs) == {output_data, "Different output"}
 
-    # run again with same input and same output. Should not create a new ExampleOutput.
-    example = adapter.save_example(input_data, DataSource.human, output_data)
-    assert len(test_task.examples()) == 1
-    assert len(example.outputs()) == 2
-    outputs = example.outputs()
+    # run again with same input and same output. Should not create a new TaskOutput.
+    task_input = adapter.save_run(input_data, DataSource.human, output_data)
+    assert len(test_task.runs()) == 1
+    assert len(task_input.outputs()) == 2
+    outputs = task_input.outputs()
     assert len(outputs) == 2
     assert set(output.output for output in outputs) == {output_data, "Different output"}
 
-    # run again with input of different type. Should create a new Example and ExampleOutput.
-    example = adapter.save_example(input_data, DataSource.synthetic, output_data)
-    assert len(test_task.examples()) == 2
-    assert len(example.outputs()) == 1
-    outputs = example.outputs()
+    # run again with input of different type. Should create a new TaskInput and TaskOutput.
+    task_input = adapter.save_run(input_data, DataSource.synthetic, output_data)
+    assert len(test_task.runs()) == 2
+    assert len(task_input.outputs()) == 1
+    outputs = task_input.outputs()
     assert len(outputs) == 1
     assert outputs[0].output == output_data
 
@@ -114,22 +114,22 @@ def test_save_example_isolation(test_task):
 async def test_autosave_false(test_task):
     with patch("kiln_ai.utils.config.Config.shared") as mock_shared:
         mock_config = mock_shared.return_value
-        mock_config.autosave_examples = False
+        mock_config.autosave_runs = False
 
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
         await adapter.invoke(input_data, DataSource.synthetic)
 
-        # Check that no examples were saved
-        assert len(test_task.examples()) == 0
+        # Check that no runs were saved
+        assert len(test_task.runs()) == 0
 
 
 @pytest.mark.asyncio
 async def test_autosave_true(test_task):
     with patch("kiln_ai.utils.config.Config.shared") as mock_shared:
         mock_config = mock_shared.return_value
-        mock_config.autosave_examples = True
+        mock_config.autosave_runs = True
         mock_config.user_id = "test_user"
 
         adapter = TestAdapter(test_task)
@@ -137,16 +137,16 @@ async def test_autosave_true(test_task):
 
         await adapter.invoke(input_data, DataSource.synthetic)
 
-        # Check that an example was saved
-        examples = test_task.examples()
-        assert len(examples) == 1
-        assert examples[0].input == input_data
-        assert examples[0].source == DataSource.synthetic
-        assert len(examples[0].outputs()) == 1
-        assert examples[0].outputs()[0].output == "Test output"
-        assert examples[0].outputs()[0].source_properties["creator"] == "test_user"
-        assert examples[0].outputs()[0].source == DataSource.synthetic
-        output = examples[0].outputs()[0]
+        # Check that an task input was saved
+        task_inputs = test_task.runs()
+        assert len(task_inputs) == 1
+        assert task_inputs[0].input == input_data
+        assert task_inputs[0].source == DataSource.synthetic
+        assert len(task_inputs[0].outputs()) == 1
+        assert task_inputs[0].outputs()[0].output == "Test output"
+        assert task_inputs[0].outputs()[0].source_properties["creator"] == "test_user"
+        assert task_inputs[0].outputs()[0].source == DataSource.synthetic
+        output = task_inputs[0].outputs()[0]
         assert output.source_properties["adapter_name"] == "mock_adapter"
         assert output.source_properties["model_name"] == "mock_model"
         assert output.source_properties["model_provider"] == "mock_provider"

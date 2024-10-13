@@ -52,14 +52,14 @@ class TaskOutputRating(KilnBaseModel):
 
 class TaskOutput(KilnParentedModel):
     """
-    An example output from a specific Example input, to a Task.
+    An output from a specific task input.
     """
 
     output: str = Field(
         description="The output of the task. JSON formatted for structured output, plaintext for unstructured output."
     )
     source: DataSource = Field(
-        description="The source of the example output: human or synthetic."
+        description="The source of the output: human or synthetic."
     )
     # TODO: add structure/validation to this. For human creator_id. Model ID and verion and provider for models
     source_properties: Dict[str, str] = Field(
@@ -77,10 +77,10 @@ class TaskOutput(KilnParentedModel):
 
     fixed_output: str | None = Field(
         default=None,
-        description="An version of the output with issues fixed by a human evaluator. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output example for this task unrelated to this output, generate a new ExampleOutput with type 'human' instead of using this field.",
+        description="An version of the output with issues fixed by a human evaluator. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field.",
     )
 
-    def parent_example(self) -> TaskInput | None:
+    def parent_task_input(self) -> TaskInput | None:
         if not isinstance(self.parent, TaskInput):
             return None
         return self.parent
@@ -105,18 +105,18 @@ class TaskOutput(KilnParentedModel):
         return self
 
     def task_for_validation(self) -> Task | None:
-        example = self.parent
-        if example is None:
+        task_input = self.parent_task_input()
+        if task_input is None:
             return None
-        if not isinstance(example, TaskInput):
-            raise ValueError("ExampleOutput must have a valid parent Example")
+        if not isinstance(task_input, TaskInput):
+            raise ValueError("TaskOutput must have a valid parent TaskInput")
 
-        task = example.parent
+        task = task_input.parent
         if task is None:
             return None
         if not isinstance(task, Task):
             raise ValueError(
-                "ExampleOutput's parent Example must have a valid parent Task"
+                "TaskOutput's parent TaskInput must have a valid parent Task"
             )
         return task
 
@@ -157,11 +157,11 @@ class TaskOutput(KilnParentedModel):
                 missing_keys.append(key)
             elif self.source_properties[key] == "":
                 raise ValueError(
-                    f"example output source_properties[{key}] must not be empty string for {self.source} outputs"
+                    f"TaskOutput source_properties[{key}] must not be empty string for {self.source} outputs"
                 )
         if len(missing_keys) > 0:
             raise ValueError(
-                f"example output source_properties must include {missing_keys} for {self.source} outputs"
+                f"TaskOutput source_properties must include {missing_keys} for {self.source} outputs"
             )
         return self
 
@@ -177,14 +177,14 @@ class DataSource(str, Enum):
 
 class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutput}):
     """
-    An example input to a specific Task.
+    An input to a specific Task.
     """
 
     input: str = Field(
         description="The inputs to the task. JSON formatted for structured input, plaintext for unstructured input."
     )
     source: DataSource = Field(
-        description="The source of the example input: human or synthetic."
+        description="The source of the input: human or synthetic."
     )
     # TODO add structure/validation to this. For human creator_id. Model: synthetic data tool and model version
     source_properties: Dict[str, str] = Field(
@@ -209,7 +209,7 @@ class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOu
             return self
         if not isinstance(task, Task):
             raise ValueError(
-                "ExampleOutput's parent Example must have a valid parent Task"
+                "TaskOutput's parent TaskInput must have a valid parent Task"
             )
 
         # validate output
@@ -239,7 +239,7 @@ class TaskDeterminism(str, Enum):
 class Task(
     KilnParentedModel,
     KilnParentModel,
-    parent_of={"requirements": TaskRequirement, "examples": TaskInput},
+    parent_of={"requirements": TaskRequirement, "runs": TaskInput},
 ):
     name: str = NAME_FIELD
     description: str = Field(default="")
@@ -265,8 +265,8 @@ class Task(
         return super().requirements()  # type: ignore
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
-    def examples(self) -> list[TaskInput]:
-        return super().examples()  # type: ignore
+    def runs(self) -> list[TaskInput]:
+        return super().runs()  # type: ignore
 
 
 class Project(KilnParentModel, parent_of={"tasks": Task}):

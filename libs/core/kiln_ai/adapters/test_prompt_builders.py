@@ -91,7 +91,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     )
     task.save_to_file()
 
-    # Create an example, but with no output
+    # Create an task input, but with no output
     e1 = TaskInput(
         input='{"subject": "Cows"}',
         source=DataSource.human,

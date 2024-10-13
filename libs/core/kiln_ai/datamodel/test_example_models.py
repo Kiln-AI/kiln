@@ -14,23 +14,23 @@ from kiln_ai.datamodel import (
 from pydantic import ValidationError
 
 
-def test_example_model_validation(tmp_path):
-    # Valid example
+def test_task_model_validation(tmp_path):
+    # Valid task
     task = Task(
         name="Test Task",
         instruction="test instruction",
         path=tmp_path / Task.base_filename(),
     )
     task.save_to_file()
-    valid_example = TaskInput(
+    task_input = TaskInput(
         parent=task,
         input="Test input",
         source=DataSource.human,
         source_properties={"creator": "John Doe"},
     )
-    assert valid_example.input == "Test input"
-    assert valid_example.source == DataSource.human
-    assert valid_example.source_properties == {"creator": "John Doe"}
+    assert task_input.input == "Test input"
+    assert task_input.source == DataSource.human
+    assert task_input.source_properties == {"creator": "John Doe"}
 
     # Invalid source
     with pytest.raises(ValidationError):
@@ -55,35 +55,35 @@ def test_example_model_validation(tmp_path):
         )
 
 
-def test_example_relationship(tmp_path):
+def test_task_input_relationship(tmp_path):
     task = Task(
         name="Test Task",
         instruction="test instruction",
         path=tmp_path / Task.base_filename(),
     )
     task.save_to_file()
-    example = TaskInput(
+    task_input = TaskInput(
         parent=task,
         input="Test input",
         source=DataSource.human,
         source_properties={},
     )
-    assert example.__class__.relationship_name() == "examples"
-    assert example.__class__.parent_type().__name__ == "Task"
+    assert task_input.__class__.relationship_name() == "runs"
+    assert task_input.__class__.parent_type().__name__ == "Task"
 
 
-def test_example_output_model_validation(tmp_path):
-    # Valid example output
+def test_task_output_model_validation(tmp_path):
+    # Valid task output
     task = Task(
         name="Test Task",
         instruction="test instruction",
         path=tmp_path / Task.base_filename(),
     )
     task.save_to_file()
-    example = TaskInput(input="Test input", source=DataSource.human, parent=task)
-    example.save_to_file()
+    task_input = TaskInput(input="Test input", source=DataSource.human, parent=task)
+    task_input.save_to_file()
     valid_output = TaskOutput(
-        parent=example,
+        parent=task_input,
         output="Test output",
         source=DataSource.human,
         source_properties={"creator": "Jane Doe"},
@@ -138,7 +138,7 @@ def test_example_output_model_validation(tmp_path):
 
 def test_structured_output_workflow(tmp_path):
     tmp_project_file = (
-        tmp_path / "test_structured_output_examples" / Project.base_filename()
+        tmp_path / "test_structured_output_runs" / Project.base_filename()
     )
     # Create project
     project = Project(name="Test Project", path=str(tmp_project_file))
@@ -167,26 +167,26 @@ def test_structured_output_workflow(tmp_path):
     req1.save_to_file()
     req2.save_to_file()
 
-    # Create examples
-    examples = []
+    # Create runs
+    runs = []
     for source in DataSource:
         for _ in range(2):
-            example = TaskInput(
+            task_input = TaskInput(
                 input="Generate info for John Doe",
                 source=source,
                 parent=task,
             )
-            example.save_to_file()
-            examples.append(example)
+            task_input.save_to_file()
+            runs.append(task_input)
 
     # Create outputs
     outputs = []
-    for example in examples:
+    for task_input in runs:
         output = TaskOutput(
             output='{"name": "John Doe", "age": 30}',
             source=DataSource.human,
             source_properties={"creator": "john_doe"},
-            parent=example,
+            parent=task_input,
         )
         output.save_to_file()
         outputs.append(output)
@@ -210,40 +210,40 @@ def test_structured_output_workflow(tmp_path):
 
     assert loaded_task.name == "Structured Output Task"
     assert len(loaded_task.requirements()) == 2
-    assert len(loaded_task.examples()) == 4
+    assert len(loaded_task.runs()) == 4
 
-    loaded_examples = loaded_task.examples()
-    for example in loaded_examples:
-        outputs = example.outputs()
+    loaded_runs = loaded_task.runs()
+    for task_input in loaded_runs:
+        outputs = task_input.outputs()
         assert len(outputs) == 1
         output = outputs[0]
         assert output.rating is not None
         assert len(output.requirement_ratings) == 2
 
-    # Find the example with the fixed output
-    example_with_fixed_output = next(
+    # Find the run with the fixed output
+    run_with_fixed_output = next(
         (
-            example
-            for example in loaded_examples
-            if example.outputs()[0].fixed_output is not None
+            task_input
+            for task_input in loaded_runs
+            if task_input.outputs()[0].fixed_output is not None
         ),
         None,
     )
-    assert example_with_fixed_output is not None, "No example found with fixed output"
+    assert run_with_fixed_output is not None, "No run found with fixed output"
     assert (
-        example_with_fixed_output.outputs()[0].fixed_output
+        run_with_fixed_output.outputs()[0].fixed_output
         == '{"name": "John Doe", "age": 31}'
     )
 
 
-def test_example_output_requirement_rating_keys(tmp_path):
+def test_task_output_requirement_rating_keys(tmp_path):
     # Create a project, task, and example hierarchy
     project = Project(name="Test Project", path=(tmp_path / "test_project"))
     project.save_to_file()
     task = Task(name="Test Task", parent=project, instruction="Task instruction")
     task.save_to_file()
-    example = TaskInput(input="Test input", source=DataSource.human, parent=task)
-    example.save_to_file()
+    task_input = TaskInput(input="Test input", source=DataSource.human, parent=task)
+    task_input.save_to_file()
 
     # Create task requirements
     req1 = TaskRequirement(
@@ -259,7 +259,7 @@ def test_example_output_requirement_rating_keys(tmp_path):
         output="Test output",
         source=DataSource.human,
         source_properties={"creator": "john_doe"},
-        parent=example,
+        parent=task_input,
         requirement_ratings={
             req1.id: {"rating": 5, "reason": "Excellent"},
             req2.id: {"rating": 4, "reason": "Good"},
@@ -277,7 +277,7 @@ def test_example_output_requirement_rating_keys(tmp_path):
             output="Test output",
             source=DataSource.human,
             source_properties={"creator": "john_doe"},
-            parent=example,
+            parent=task_input,
             requirement_ratings={
                 "unknown_id": {"rating": 4, "reason": "Good"},
             },
@@ -285,7 +285,7 @@ def test_example_output_requirement_rating_keys(tmp_path):
         output.save_to_file()
 
 
-def test_example_output_schema_validation(tmp_path):
+def test_task_output_schema_validation(tmp_path):
     # Create a project, task, and example hierarchy
     project = Project(name="Test Project", path=(tmp_path / "test_project"))
     project.save_to_file()
@@ -302,20 +302,20 @@ def test_example_output_schema_validation(tmp_path):
         ),
     )
     task.save_to_file()
-    example = TaskInput(
+    task_input = TaskInput(
         input="Test input",
         source=DataSource.human,
         parent=task,
         source_properties={"creator": "john_doe"},
     )
-    example.save_to_file()
+    task_input.save_to_file()
 
     # Create an example output with a valid schema
     valid_output = TaskOutput(
         output='{"name": "John Doe", "age": 30}',
         source=DataSource.human,
         source_properties={"creator": "john_doe"},
-        parent=example,
+        parent=task_input,
     )
     valid_output.save_to_file()
 
@@ -330,12 +330,12 @@ def test_example_output_schema_validation(tmp_path):
             output='{"name": "John Doe", "age": "thirty"}',
             source=DataSource.human,
             source_properties={"creator": "john_doe"},
-            parent=example,
+            parent=task_input,
         )
         output.save_to_file()
 
 
-def test_example_input_schema_validation(tmp_path):
+def test_task_input_schema_validation(tmp_path):
     # Create a project and task hierarchy
     project = Project(name="Test Project", path=(tmp_path / "test_project"))
     project.save_to_file()
@@ -354,29 +354,29 @@ def test_example_input_schema_validation(tmp_path):
     task.save_to_file()
 
     # Create an example with a valid input schema
-    valid_example = TaskInput(
+    valid_task_input = TaskInput(
         input='{"name": "John Doe", "age": 30}',
         source=DataSource.human,
         parent=task,
     )
-    valid_example.save_to_file()
+    valid_task_input.save_to_file()
 
     # Changing to invalid input
     with pytest.raises(ValueError):
-        valid_example.input = '{"name": "John Doe", "age": "thirty"}'
-        valid_example.save_to_file()
+        valid_task_input.input = '{"name": "John Doe", "age": "thirty"}'
+        valid_task_input.save_to_file()
 
     # Invalid case: input does not match task input schema
     with pytest.raises(ValueError):
-        example = TaskInput(
+        task_input = TaskInput(
             input='{"name": "John Doe", "age": "thirty"}',
             source=DataSource.human,
             parent=task,
         )
-        example.save_to_file()
+        task_input.save_to_file()
 
 
-def test_valid_human_example_output():
+def test_valid_human_task_output():
     output = TaskOutput(
         output="Test output",
         source=DataSource.human,
@@ -386,7 +386,7 @@ def test_valid_human_example_output():
     assert output.source_properties["creator"] == "John Doe"
 
 
-def test_invalid_human_example_output_missing_creator():
+def test_invalid_human_task_output_missing_creator():
     with pytest.raises(
         ValidationError,
         match="must include \['creator'\]",
@@ -394,7 +394,7 @@ def test_invalid_human_example_output_missing_creator():
         TaskOutput(output="Test output", source=DataSource.human, source_properties={})
 
 
-def test_invalid_human_example_output_empty_creator():
+def test_invalid_human_task_output_empty_creator():
     with pytest.raises(ValidationError, match="must not be empty string"):
         TaskOutput(
             output="Test output",
@@ -403,7 +403,7 @@ def test_invalid_human_example_output_empty_creator():
         )
 
 
-def test_valid_synthetic_example_output():
+def test_valid_synthetic_task_output():
     output = TaskOutput(
         output="Test output",
         source=DataSource.synthetic,
@@ -421,9 +421,9 @@ def test_valid_synthetic_example_output():
     assert output.source_properties["prompt_builder_name"] == "TestPromptBuilder"
 
 
-def test_invalid_synthetic_example_output_missing_keys():
+def test_invalid_synthetic_task_output_missing_keys():
     with pytest.raises(
-        ValidationError, match="example output source_properties must include"
+        ValidationError, match="TaskOutput source_properties must include"
     ):
         TaskOutput(
             output="Test output",
@@ -432,7 +432,7 @@ def test_invalid_synthetic_example_output_missing_keys():
         )
 
 
-def test_invalid_synthetic_example_output_empty_values():
+def test_invalid_synthetic_task_output_empty_values():
     with pytest.raises(ValidationError, match="must not be empty string"):
         TaskOutput(
             output="Test output",
@@ -446,7 +446,7 @@ def test_invalid_synthetic_example_output_empty_values():
         )
 
 
-def test_invalid_synthetic_example_output_non_string_values():
+def test_invalid_synthetic_task_output_non_string_values():
     with pytest.raises(ValidationError, match="Input should be a valid string"):
         TaskOutput(
             output="Test output",

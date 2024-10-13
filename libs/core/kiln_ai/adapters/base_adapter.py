@@ -50,9 +50,9 @@ class BaseAdapter(metaclass=ABCMeta):
                     f"response is not a string for non-structured task: {result}"
                 )
 
-        # Save the example and output
-        if Config.shared().autosave_examples:
-            self.save_example(input, input_source, result)
+        # Save the run and output
+        if Config.shared().autosave_runs:
+            self.save_run(input, input_source, result)
 
         return result
 
@@ -71,64 +71,64 @@ class BaseAdapter(metaclass=ABCMeta):
     def adapter_specific_instructions(self) -> str | None:
         return None
 
-    # create an example and example output
-    def save_example(
+    # create a run and task output
+    def save_run(
         self, input: Dict | str, input_source: DataSource, output: Dict | str
     ) -> TaskInput:
         # Convert input and output to JSON strings if they are dictionaries
         input_str = json.dumps(input) if isinstance(input, dict) else input
         output_str = json.dumps(output) if isinstance(output, dict) else output
 
-        # Check for existing example with matching parent.id, input, and source
-        existing_example = next(
+        # Check for existing task inputs with matching parent.id, input, and source
+        existing_task_input = next(
             (
-                example
-                for example in self.kiln_task.examples()
-                if (parent_task := example.parent_task()) is not None
+                task_input
+                for task_input in self.kiln_task.runs()
+                if (parent_task := task_input.parent_task()) is not None
                 and parent_task.id == self.kiln_task.id
-                and example.input == input_str
-                and example.source == input_source
+                and task_input.input == input_str
+                and task_input.source == input_source
             ),
             None,
         )
 
-        if existing_example:
-            example = existing_example
+        if existing_task_input:
+            task_input = existing_task_input
         else:
-            example = TaskInput(
+            task_input = TaskInput(
                 parent=self.kiln_task,
                 input=input_str,
                 source=input_source,
             )
-            example.save_to_file()
+            task_input.save_to_file()
 
-        # Check for existing ExampleOutput with matching parent.id, input, and source
+        # Check for existing TaskOutput with matching parent.id, input, and source
         existing_output = next(
             (
                 output
-                for output in example.outputs()
-                if (parent_example := output.parent_example()) is not None
-                and parent_example.id == example.id
+                for output in task_input.outputs()
+                if (parent_task_input := output.parent_task_input()) is not None
+                and parent_task_input.id == task_input.id
                 and output.output == output_str
             ),
             None,
         )
 
         if existing_output:
-            return example
+            return task_input
 
-        # Create a new ExampleOutput for the existing or new Example
-        example_output = TaskOutput(
-            parent=example,
+        # Create a new TaskOutput for the existing or new TaskInput
+        task_output = TaskOutput(
+            parent=task_input,
             output=output_str,
             # Synthetic since an adapter, not a human, is creating this
             source=DataSource.synthetic,
-            source_properties=self._properties_for_example_output(),
+            source_properties=self._properties_for_task_output(),
         )
-        example_output.save_to_file()
-        return example
+        task_output.save_to_file()
+        return task_input
 
-    def _properties_for_example_output(self) -> Dict:
+    def _properties_for_task_output(self) -> Dict:
         props = {}
 
         # creator user id

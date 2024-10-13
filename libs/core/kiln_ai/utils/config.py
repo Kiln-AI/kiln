@@ -33,9 +33,9 @@ class Config:
                 env_var="KILN_USER_ID",
                 default_lambda=_get_user_id,
             ),
-            "autosave_examples": ConfigProperty(
+            "autosave_runs": ConfigProperty(
                 bool,
-                env_var="KILN_AUTOSAVE_EXAMPLES",
+                env_var="KILN_AUTOSAVE_RUNS",
                 default=True,
             ),
             "open_ai_api_key": ConfigProperty(

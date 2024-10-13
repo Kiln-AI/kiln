@@ -34,7 +34,7 @@ class MultiShotPromptBuilder(BasePromptBuilder):
 
         # TODO: tons to do on selection here. This is just a quick version
         valid_examples: list[tuple[str, str]] = []
-        for example in self.task.examples():
+        for example in self.task.runs():
             valid_output = None
             for output in example.outputs():
                 if output.fixed_output is not None:
