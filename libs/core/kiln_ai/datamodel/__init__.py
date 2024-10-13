@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Dict, Self
+from typing import TYPE_CHECKING, Dict, List, Literal, Self, Union
 
 import jsonschema
 import jsonschema.exceptions
 from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel, KilnParentModel
 from .json_schema import validate_schema
@@ -173,6 +173,65 @@ class DataSourceType(str, Enum):
 
     human = "human"
     synthetic = "synthetic"
+
+
+class DataSourceProperty(BaseModel):
+    name: str
+    type: Union[Literal["str"], Literal["int"], Literal["float"]]
+    required_for: List[DataSourceType] = []
+    not_allowed_for: List[DataSourceType] = []
+
+
+class DataSource(BaseModel):
+    type: DataSourceType
+    properties: Dict[str, str | int | float] = Field(
+        default={},
+        description="Properties describing the data source. For synthetic things like model. For human, the human's name.",
+    )
+
+    _data_source_properties = [
+        DataSourceProperty(
+            name="created_by",
+            type="str",
+            required_for=[DataSourceType.human],
+            not_allowed_for=[DataSourceType.synthetic],
+        ),
+        DataSourceProperty(
+            name="model_name",
+            type="str",
+            required_for=[DataSourceType.synthetic],
+            not_allowed_for=[DataSourceType.human],
+        ),
+        DataSourceProperty(
+            name="model_provider",
+            type="str",
+            required_for=[DataSourceType.synthetic],
+            not_allowed_for=[DataSourceType.human],
+        ),
+        DataSourceProperty(
+            name="prompt_type",
+            type="str",
+            not_allowed_for=[DataSourceType.human],
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def validate_properties(self) -> "DataSource":
+        for prop in self._data_source_properties:
+            if self.type in prop.required_for:
+                if prop.name not in self.properties:
+                    raise ValueError(
+                        f"'{prop.name}' is required for {self.type} data source"
+                    )
+                if not isinstance(self.properties[prop.name], eval(prop.type)):
+                    raise ValueError(
+                        f"'{prop.name}' must be of type {prop.type} for {self.type} data source"
+                    )
+            elif self.type in prop.not_allowed_for and prop.name in self.properties:
+                raise ValueError(
+                    f"'{prop.name}' is not allowed for {self.type} data source"
+                )
+        return self
 
 
 class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutput}):
