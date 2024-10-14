@@ -36,5 +36,8 @@
     "vite": "^5.0.0",
     "vitest": "^1.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "posthog-js": "^1.167.1"
+  }
 }

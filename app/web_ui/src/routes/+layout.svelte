@@ -17,6 +17,14 @@
   import { createKilnError } from "$lib/utils/error_handlers"
   let loading = true
   let load_error: string | null = null
+  import posthog from "posthog-js"
+  import { browser } from "$app/environment"
+  import { beforeNavigate, afterNavigate } from "$app/navigation"
+
+  if (browser) {
+    beforeNavigate(() => posthog.capture("$pageleave"))
+    afterNavigate(() => posthog.capture("$pageview"))
+  }
 
   const check_needs_setup = async () => {
     try {
