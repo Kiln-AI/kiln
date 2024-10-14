@@ -112,6 +112,26 @@ def test_structured_output_workflow(tmp_path):
             task_run.save_to_file()
             runs.append(task_run)
 
+    # make a run with a repaired output
+    repaired_run = TaskRun(
+        input="Generate info for John Doe",
+        source=DataSourceType.human,
+        parent=task,
+        output=TaskOutput(
+            output='{"name": "John Doe", "age": 31}',
+            source=DataSourceType.human,
+            source_properties={"creator": "john_doe"},
+        ),
+        repair_instructions="The age should be 31 instead of 30",
+        repaired_output=TaskOutput(
+            output='{"name": "John Doe", "age": 31}',
+            source=DataSourceType.human,
+            source_properties={"creator": "john_doe"},
+        ),
+    )
+    repaired_run.save_to_file()
+    runs.append(repaired_run)
+
     # Update outputs with ratings
     for task_run in runs:
         task_run.output.rating = TaskOutputRating(
@@ -123,21 +143,13 @@ def test_structured_output_workflow(tmp_path):
         )
         task_run.save_to_file()
 
-    # Update first run with repaired output
-    runs[0].repaired_output = TaskOutput(
-        output='{"name": "John Doe", "age": 31}',
-        source=DataSourceType.human,
-        source_properties={"creator": "john_doe"},
-    )
-    runs[0].save_to_file()
-
     # Load from disk and validate
     loaded_project = Project.load_from_file(tmp_project_file)
     loaded_task = loaded_project.tasks()[0]
 
     assert loaded_task.name == "Structured Output Task"
     assert len(loaded_task.requirements()) == 2
-    assert len(loaded_task.runs()) == 4
+    assert len(loaded_task.runs()) == 5
 
     loaded_runs = loaded_task.runs()
     for task_run in loaded_runs:
@@ -427,12 +439,37 @@ def test_task_run_validate_repaired_output():
         input="test input",
         source=DataSourceType.human,
         output=TaskOutput(output="test output", source=DataSourceType.human),
+        repair_instructions="Fix the output",
         repaired_output=TaskOutput(
             output="repaired output", source=DataSourceType.human
         ),
     )
     assert valid_task_run_with_repair.repaired_output is not None
     assert valid_task_run_with_repair.repaired_output.rating is None
+
+    # test missing repair_instructions
+    with pytest.raises(ValidationError) as exc_info:
+        TaskRun(
+            input="test input",
+            source=DataSourceType.human,
+            output=TaskOutput(output="test output", source=DataSourceType.human),
+            repaired_output=TaskOutput(
+                output="repaired output", source=DataSourceType.human
+            ),
+        )
+
+    assert "Repair instructions are required" in str(exc_info.value)
+
+    # test missing repaired_output
+    with pytest.raises(ValidationError) as exc_info:
+        TaskRun(
+            input="test input",
+            source=DataSourceType.human,
+            output=TaskOutput(output="test output", source=DataSourceType.human),
+            repair_instructions="Fix the output",
+        )
+
+    assert "A repaired output is required" in str(exc_info.value)
 
     # Test case 3: Invalid TaskRun with repaired_output containing a rating
     with pytest.raises(ValidationError) as exc_info:

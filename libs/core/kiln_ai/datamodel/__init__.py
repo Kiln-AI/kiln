@@ -210,6 +210,10 @@ class TaskRun(KilnParentedModel):
     )
 
     output: TaskOutput = Field(description="The output of the task run.")
+    repair_instructions: str | None = Field(
+        default=None,
+        description="Instructions for fixing the output. Should define what is wrong, and how to fix it. Will be used by models for both generating a fixed output, and evaluating future models.",
+    )
     repaired_output: TaskOutput | None = Field(
         default=None,
         description="An version of the output with issues fixed. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field.",
@@ -266,6 +270,14 @@ class TaskRun(KilnParentedModel):
                 raise ValueError(
                     "Repaired output rating must be None. Repaired outputs are assumed to have a perfect rating, as they have been fixed."
                 )
+        if self.repair_instructions is None and self.repaired_output is not None:
+            raise ValueError(
+                "Repair instructions are required if providing a repaired output."
+            )
+        if self.repair_instructions is not None and self.repaired_output is None:
+            raise ValueError(
+                "A repaired output is required if providing repair instructions."
+            )
         return self
 
 
