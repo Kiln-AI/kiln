@@ -81,54 +81,40 @@ class BaseAdapter(metaclass=ABCMeta):
         input_str = json.dumps(input) if isinstance(input, dict) else input
         output_str = json.dumps(output) if isinstance(output, dict) else output
 
-        # Check for existing task inputs with matching parent.id, input, and source
+        new_task_run = TaskRun(
+            parent=self.kiln_task,
+            input=input_str,
+            source=input_source,
+            output=TaskOutput(
+                output=output_str,
+                # Synthetic since an adapter, not a human, is creating this
+                source=DataSourceType.synthetic,
+                source_properties=self._properties_for_task_output(),
+            ),
+        )
+
+        exclude_fields = {
+            "id": True,
+            "created_at": True,
+            "updated_at": True,
+            "output": {"id": True, "created_at": True, "updated_at": True},
+        }
+        new_run_dump = new_task_run.model_dump(exclude=exclude_fields)
+
+        # Check if the same run already exists
         existing_task_run = next(
             (
                 task_run
                 for task_run in self.kiln_task.runs()
-                if (parent_task := task_run.parent_task()) is not None
-                and parent_task.id == self.kiln_task.id
-                and task_run.input == input_str
-                and task_run.source == input_source
+                if task_run.model_dump(exclude=exclude_fields) == new_run_dump
             ),
             None,
         )
-
         if existing_task_run:
-            task_run = existing_task_run
-        else:
-            task_run = TaskRun(
-                parent=self.kiln_task,
-                input=input_str,
-                source=input_source,
-            )
-            task_run.save_to_file()
+            return existing_task_run
 
-        # Check for existing TaskOutput with matching parent.id, input, and source
-        existing_output = next(
-            (
-                output
-                for output in task_run.outputs()
-                if (parent_task_run := output.parent_task_run()) is not None
-                and parent_task_run.id == task_run.id
-                and output.output == output_str
-            ),
-            None,
-        )
-
-        if existing_output:
-            return task_run
-
-        # Create a new TaskOutput for the existing or new TaskRun
-        task_output = TaskOutput(
-            parent=task_run,
-            output=output_str,
-            # Synthetic since an adapter, not a human, is creating this
-            source=DataSourceType.synthetic,
-            source_properties=self._properties_for_task_output(),
-        )
-        task_output.save_to_file()
-        return task_run
+        new_task_run.save_to_file()
+        return new_task_run
 
     def _properties_for_task_output(self) -> Dict:
         props = {}

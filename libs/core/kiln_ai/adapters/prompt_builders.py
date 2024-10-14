@@ -34,17 +34,14 @@ class MultiShotPromptBuilder(BasePromptBuilder):
 
         # TODO: tons to do on selection here. This is just a quick version
         valid_examples: list[tuple[str, str]] = []
-        for example in self.task.runs():
+        for run in self.task.runs():
             valid_output = None
-            for output in example.outputs():
-                if output.fixed_output is not None:
-                    valid_output = output.fixed_output
-                    break
-                elif output.rating is not None and output.rating.rating >= 4:
-                    valid_output = output.output
-                    break
+            if run.repaired_output is not None:
+                valid_output = run.repaired_output.output
+            elif run.output.rating is not None and run.output.rating.is_high_quality():
+                valid_output = run.output.output
             if valid_output is not None:
-                valid_examples.append((example.input, valid_output))
+                valid_examples.append((run.input, valid_output))
                 if len(valid_examples) >= 10:
                     break
 

@@ -41,18 +41,15 @@ def test_save_run_isolation(test_task):
     input_data = "Test input"
     output_data = "Test output"
 
-    task_output = adapter.save_run(input_data, DataSourceType.human, output_data)
+    task_run = adapter.save_run(input_data, DataSourceType.human, output_data)
 
     # Check that the task input was saved correctly
-    assert task_output.parent == test_task
-    assert task_output.input == input_data
-    assert task_output.source == DataSourceType.human
+    assert task_run.parent == test_task
+    assert task_run.input == input_data
+    assert task_run.source == DataSourceType.human
 
     # Check that the task output was saved correctly
-    saved_outputs = task_output.outputs()
-    assert len(saved_outputs) == 1
-    saved_output = saved_outputs[0]
-    assert saved_output.parent.id == task_output.id
+    saved_output = task_run.output
     assert saved_output.output == output_data
     assert saved_output.source == DataSourceType.synthetic
     assert saved_output.rating is None
@@ -65,10 +62,7 @@ def test_save_run_isolation(test_task):
     assert reloaded_run.input == input_data
     assert reloaded_run.source == DataSourceType.human
 
-    reloaded_outputs = reloaded_run.outputs()
-    assert len(reloaded_outputs) == 1
-    reloaded_output = reloaded_outputs[0]
-    assert reloaded_output.parent.id == reloaded_run.id
+    reloaded_output = reloaded_run.output
     assert reloaded_output.output == output_data
     assert reloaded_output.source == DataSourceType.synthetic
     assert reloaded_output.rating is None
@@ -85,29 +79,24 @@ def test_save_run_isolation(test_task):
     else:
         assert "creator" not in reloaded_output.source_properties
 
-    # Run again, with same input and different output. Should create a new TaskOutput under the same TaskRun.
+    # Run again, with same input and different output. Should create a new TaskRun.
     task_output = adapter.save_run(input_data, DataSourceType.human, "Different output")
-    assert len(test_task.runs()) == 1
-    assert len(task_output.outputs()) == 2
-    outputs = task_output.outputs()
-    assert len(outputs) == 2
-    assert set(output.output for output in outputs) == {output_data, "Different output"}
+    assert len(test_task.runs()) == 2
+    assert "Different output" in set(run.output.output for run in test_task.runs())
 
-    # run again with same input and same output. Should not create a new TaskOutput.
+    # run again with same input and same output. Should not create a new TaskRun.
     task_output = adapter.save_run(input_data, DataSourceType.human, output_data)
-    assert len(test_task.runs()) == 1
-    assert len(task_output.outputs()) == 2
-    outputs = task_output.outputs()
-    assert len(outputs) == 2
-    assert set(output.output for output in outputs) == {output_data, "Different output"}
+    assert len(test_task.runs()) == 2
+    assert "Different output" in set(run.output.output for run in test_task.runs())
+    assert output_data in set(run.output.output for run in test_task.runs())
 
     # run again with input of different type. Should create a new TaskRun and TaskOutput.
     task_output = adapter.save_run(input_data, DataSourceType.synthetic, output_data)
-    assert len(test_task.runs()) == 2
-    assert len(task_output.outputs()) == 1
-    outputs = task_output.outputs()
-    assert len(outputs) == 1
-    assert outputs[0].output == output_data
+    assert len(test_task.runs()) == 3
+    assert task_output.input == input_data
+    assert task_output.source == DataSourceType.synthetic
+    assert "Different output" in set(run.output.output for run in test_task.runs())
+    assert output_data in set(run.output.output for run in test_task.runs())
 
 
 @pytest.mark.asyncio
@@ -138,15 +127,14 @@ async def test_autosave_true(test_task):
         await adapter.invoke(input_data, DataSourceType.synthetic)
 
         # Check that an task input was saved
-        task_outputs = test_task.runs()
-        assert len(task_outputs) == 1
-        assert task_outputs[0].input == input_data
-        assert task_outputs[0].source == DataSourceType.synthetic
-        assert len(task_outputs[0].outputs()) == 1
-        assert task_outputs[0].outputs()[0].output == "Test output"
-        assert task_outputs[0].outputs()[0].source_properties["creator"] == "test_user"
-        assert task_outputs[0].outputs()[0].source == DataSourceType.synthetic
-        output = task_outputs[0].outputs()[0]
+        task_runs = test_task.runs()
+        assert len(task_runs) == 1
+        assert task_runs[0].input == input_data
+        assert task_runs[0].source == DataSourceType.synthetic
+        output = task_runs[0].output
+        assert output.output == "Test output"
+        assert output.source_properties["creator"] == "test_user"
+        assert output.source == DataSourceType.synthetic
         assert output.source_properties["adapter_name"] == "mock_adapter"
         assert output.source_properties["model_name"] == "mock_model"
         assert output.source_properties["model_provider"] == "mock_provider"

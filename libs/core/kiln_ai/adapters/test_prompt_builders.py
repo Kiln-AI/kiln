@@ -91,28 +91,30 @@ def test_multi_shot_prompt_builder(tmp_path):
     )
     task.save_to_file()
 
+    check_example_outputs(task, 0)
+
     # Create an task input, but with no output
     e1 = TaskRun(
         input='{"subject": "Cows"}',
         source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=task,
+        output=TaskOutput(
+            output='{"joke": "Moo I am a cow joke."}',
+            source=DataSourceType.human,
+            source_properties={"creator": "john_doe"},
+        ),
     )
     e1.save_to_file()
+
+    ## still zero since not fixed and not rated highly
     check_example_outputs(task, 0)
 
-    # No review, so not valid
-    eo1 = TaskOutput(
-        output='{"joke": "Moo I am a cow joke."}',
-        source=DataSourceType.human,
-        source_properties={"creator": "john_doe"},
-        parent=e1,
+    e1.output.rating = TaskOutputRating(
+        rating=4,
     )
-    eo1.save_to_file()
-    check_example_outputs(task, 0)
-
-    eo1.rating = TaskOutputRating(rating=4, reason="It's a good joke")
-    eo1.save_to_file()
+    e1.save_to_file()
+    # Now that it's highly rated, it should be included
     check_example_outputs(task, 1)
 
     e2 = TaskRun(
@@ -120,16 +122,14 @@ def test_multi_shot_prompt_builder(tmp_path):
         source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=task,
+        output=TaskOutput(
+            output='{"joke": "This is a ruff joke."}',
+            source=DataSourceType.human,
+            source_properties={"creator": "john_doe"},
+            rating=TaskOutputRating(rating=4, reason="Bark"),
+        ),
     )
     e2.save_to_file()
-    eo2 = TaskOutput(
-        output='{"joke": "This is a ruff joke."}',
-        source=DataSourceType.human,
-        source_properties={"creator": "john_doe"},
-        parent=e2,
-        rating=TaskOutputRating(rating=4, reason="Bark"),
-    )
-    eo2.save_to_file()
     check_example_outputs(task, 2)
 
 

@@ -51,6 +51,12 @@ class TaskOutputRating(KilnBaseModel):
         description="The ratings of the requirements of the task. The keys are the ids of the requirements. The values are the ratings (typically 1-5 stars).",
     )
 
+    # Used to select high quality outputs for example selection (MultiShotPromptBuilder, etc)
+    def is_high_quality(self) -> bool:
+        if self.type == TaskOutputRatingType.five_star:
+            return self.rating >= 4
+        return False
+
     @model_validator(mode="after")
     def validate_rating(self) -> Self:
         if self.type not in TaskOutputRatingType:
@@ -73,10 +79,22 @@ class TaskOutputRating(KilnBaseModel):
                 f"{rating_name.capitalize()} of type five_star must be between 1 and 5 stars"
             )
 
+    def validate_requirement_rating_keys(self, task: Task) -> Self:
+        if len(self.requirement_ratings) == 0:
+            return self
 
-class TaskOutput(KilnParentedModel):
+        valid_requirement_ids = {req.id for req in task.requirements()}
+        for key in self.requirement_ratings.keys():
+            if key not in valid_requirement_ids:
+                raise ValueError(
+                    f"Requirement ID '{key}' is not a valid requirement ID for this task"
+                )
+        return self
+
+
+class TaskOutput(KilnBaseModel):
     """
-    An output from a specific task input.
+    An output for a specific task run.
     """
 
     output: str = Field(
@@ -94,25 +112,7 @@ class TaskOutput(KilnParentedModel):
         default=None, description="The rating of the output"
     )
 
-    fixed_output: str | None = Field(
-        default=None,
-        description="An version of the output with issues fixed by a human evaluator. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field.",
-    )
-
-    def parent_task_run(self) -> TaskRun | None:
-        if not isinstance(self.parent, TaskRun):
-            return None
-        return self.parent
-
-    # TODO validators for output and fixed_output: validate they follow the tas
-
-    @model_validator(mode="after")
-    def validate_output_format(self) -> Self:
-        task = self.task_for_validation()
-        if task is None:
-            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
-            return self
-
+    def validate_output_format(self, task: Task) -> Self:
         # validate output
         if task.output_json_schema is not None:
             try:
@@ -121,67 +121,6 @@ class TaskOutput(KilnParentedModel):
                 raise ValueError("Output is not a valid JSON object")
             except jsonschema.exceptions.ValidationError as e:
                 raise ValueError(f"Output does not match task output schema: {e}")
-        return self
-
-    def task_for_validation(self) -> Task | None:
-        task_output = self.parent_task_run()
-        if task_output is None:
-            return None
-        if not isinstance(task_output, TaskRun):
-            raise ValueError("TaskOutput must have a valid parent TaskRun")
-
-        task = task_output.parent
-        if task is None:
-            return None
-        if not isinstance(task, Task):
-            raise ValueError(
-                "TaskOutput's parent TaskRun must have a valid parent Task"
-            )
-        return task
-
-    @model_validator(mode="after")
-    def validate_requirement_rating_keys(self) -> Self:
-        if self.rating is None or len(self.rating.requirement_ratings) == 0:
-            return self
-        task = self.task_for_validation()
-        if task is None:
-            # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
-            return self
-
-        valid_requirement_ids = {req.id for req in task.requirements()}
-        for key in self.rating.requirement_ratings.keys():
-            if key not in valid_requirement_ids:
-                raise ValueError(
-                    f"Requirement ID '{key}' is not a valid requirement ID for this task"
-                )
-        return self
-
-    @model_validator(mode="after")
-    def validate_source_properties(self) -> Self:
-        if self.source == DataSourceType.synthetic:
-            required_keys = {
-                "adapter_name",
-                "model_name",
-                "model_provider",
-                "prompt_builder_name",
-            }
-        elif self.source == DataSourceType.human:
-            required_keys = {"creator"}
-        else:
-            raise ValueError(f"Invalid source type: {self.source}")
-
-        missing_keys = []
-        for key in required_keys:
-            if key not in self.source_properties:
-                missing_keys.append(key)
-            elif self.source_properties[key] == "":
-                raise ValueError(
-                    f"TaskOutput source_properties[{key}] must not be empty string for {self.source} outputs"
-                )
-        if len(missing_keys) > 0:
-            raise ValueError(
-                f"TaskOutput source_properties must include {missing_keys} for {self.source} outputs"
-            )
         return self
 
 
@@ -253,7 +192,7 @@ class DataSource(BaseModel):
         return self
 
 
-class TaskRun(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutput}):
+class TaskRun(KilnParentedModel):
     """
     An run of a specific Task, including the input and output.
     """
@@ -270,9 +209,11 @@ class TaskRun(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutp
         description="Additional properties of the source, e.g. the name of the human who provided the input or the model that generated the input.",
     )
 
-    # Needed for typechecking. TODO P2: fix this in KilnParentModel
-    def outputs(self) -> list[TaskOutput]:
-        return super().outputs()  # type: ignore
+    output: TaskOutput = Field(description="The output of the task run.")
+    repaired_output: TaskOutput | None = Field(
+        default=None,
+        description="An version of the output with issues fixed. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field.",
+    )
 
     def parent_task(self) -> Task | None:
         if not isinstance(self.parent, Task):
@@ -281,14 +222,10 @@ class TaskRun(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutp
 
     @model_validator(mode="after")
     def validate_input_format(self) -> Self:
-        task = self.parent
+        task = self.parent_task()
         if task is None:
             # don't validate this relationship until we have a path or parent. Give them time to build it (but will catch it before saving)
             return self
-        if not isinstance(task, Task):
-            raise ValueError(
-                "TaskOutput's parent TaskRun must have a valid parent Task"
-            )
 
         # validate output
         if task.input_json_schema is not None:
@@ -298,6 +235,37 @@ class TaskRun(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutp
                 raise ValueError("Input is not a valid JSON object")
             except jsonschema.exceptions.ValidationError as e:
                 raise ValueError(f"Input does not match task input schema: {e}")
+        return self
+
+    @model_validator(mode="after")
+    def validate_output_format(self) -> Self:
+        task = self.parent_task()
+        if task is None:
+            return self
+
+        self.output.validate_output_format(task)
+        return self
+
+    @model_validator(mode="after")
+    def validate_requirement_ratings(self) -> Self:
+        task = self.parent_task()
+        if task is None:
+            return self
+
+        if self.output.rating is not None:
+            self.output.rating.validate_requirement_rating_keys(task)
+        if self.repaired_output is not None and self.repaired_output.rating is not None:
+            self.repaired_output.rating.validate_requirement_rating_keys(task)
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_repaired_output(self) -> Self:
+        if self.repaired_output is not None:
+            if self.repaired_output.rating is not None:
+                raise ValueError(
+                    "Repaired output rating must be None. Repaired outputs are assumed to have a perfect rating, as they have been fixed."
+                )
         return self
 
 
