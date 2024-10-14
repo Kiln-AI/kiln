@@ -33,7 +33,8 @@ class Priority(IntEnum):
 
 # Only one rating type for now, but this allows for extensibility if we want to add more in the future
 class TaskOutputRatingType(str, Enum):
-    five_star_rating = "five_star_rating"
+    five_star = "five_star"
+    custom = "custom"
 
 
 class TaskOutputRating(KilnBaseModel):
@@ -43,7 +44,7 @@ class TaskOutputRating(KilnBaseModel):
     Only supports five star ratings for now, but extensible for custom values.
     """
 
-    type: TaskOutputRatingType = Field(default=TaskOutputRatingType.five_star_rating)
+    type: TaskOutputRatingType = Field(default=TaskOutputRatingType.five_star)
     rating: float = Field(description="The rating value (typically 1-5 stars).")
     requirement_ratings: Dict[ID_TYPE, float] = Field(
         default={},
@@ -55,23 +56,21 @@ class TaskOutputRating(KilnBaseModel):
         if self.type not in TaskOutputRatingType:
             raise ValueError(f"Invalid rating type: {self.type}")
 
-        if self.type == TaskOutputRatingType.five_star_rating:
-            self._validate_five_star_rating(self.rating, "overall rating")
+        if self.type == TaskOutputRatingType.five_star:
+            self._validate_five_star(self.rating, "overall rating")
             for req_id, req_rating in self.requirement_ratings.items():
-                self._validate_five_star_rating(
-                    req_rating, f"requirement rating for {req_id}"
-                )
+                self._validate_five_star(req_rating, f"requirement rating for {req_id}")
 
         return self
 
-    def _validate_five_star_rating(self, rating: float, rating_name: str) -> None:
+    def _validate_five_star(self, rating: float, rating_name: str) -> None:
         if not isinstance(rating, float) or not rating.is_integer():
             raise ValueError(
-                f"{rating_name.capitalize()} of type five_star_rating must be an integer value (1.0, 2.0, 3.0, 4.0, or 5.0)"
+                f"{rating_name.capitalize()} of type five_star must be an integer value (1.0, 2.0, 3.0, 4.0, or 5.0)"
             )
         if rating < 1 or rating > 5:
             raise ValueError(
-                f"{rating_name.capitalize()} of type five_star_rating must be between 1 and 5 stars"
+                f"{rating_name.capitalize()} of type five_star must be between 1 and 5 stars"
             )
 
 
