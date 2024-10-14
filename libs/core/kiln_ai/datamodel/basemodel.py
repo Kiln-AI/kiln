@@ -1,5 +1,4 @@
 import json
-import re
 import uuid
 from abc import ABCMeta
 from builtins import classmethod
@@ -17,6 +16,7 @@ from typing import (
 )
 
 from kiln_ai.utils.config import Config
+from kiln_ai.utils.formatting import snake_case
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -33,10 +33,6 @@ ID_FIELD = Field(default_factory=lambda: str(uuid.uuid4().int)[:12])
 ID_TYPE = str
 T = TypeVar("T", bound="KilnBaseModel")
 PT = TypeVar("PT", bound="KilnParentedModel")
-
-
-def snake_case(s: str) -> str:
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
 
 
 class KilnBaseModel(BaseModel):

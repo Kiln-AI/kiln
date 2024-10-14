@@ -12,6 +12,7 @@ from kiln_ai.datamodel import (
 )
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
+from kiln_ai.utils.formatting import snake_case
 
 
 @dataclass
@@ -149,8 +150,9 @@ class BasePromptBuilder(metaclass=ABCMeta):
         pass
 
     # override to change the name of the prompt builder (if changing class names)
-    def prompt_builder_name(self) -> str:
-        return self.__class__.__name__
+    @classmethod
+    def prompt_builder_name(cls) -> str:
+        return snake_case(cls.__name__)
 
     # Can be overridden to add more information to the user message
     def build_user_message(self, input: Dict | str) -> str:

@@ -1,6 +1,6 @@
 import json
 
-from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter, BasePromptBuilder
 from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromptBuilder
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
@@ -152,3 +152,8 @@ def check_example_outputs(task: Task, count: int):
     else:
         assert "# Example Outputs" in prompt
         assert f"## Example {count}" in prompt
+
+
+def test_prompt_builder_name():
+    assert SimplePromptBuilder.prompt_builder_name() == "simple_prompt_builder"
+    assert MultiShotPromptBuilder.prompt_builder_name() == "multi_shot_prompt_builder"
