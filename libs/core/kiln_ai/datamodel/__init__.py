@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Dict, List, Literal, Self, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Self, Type, Union
 
 import jsonschema
 import jsonschema.exceptions
@@ -100,13 +100,8 @@ class TaskOutput(KilnBaseModel):
     output: str = Field(
         description="The output of the task. JSON formatted for structured output, plaintext for unstructured output."
     )
-    source: DataSourceType = Field(
+    source: DataSource = Field(
         description="The source of the output: human or synthetic."
-    )
-    # TODO: add structure/validation to this. For human creator_id. Model ID and verion and provider for models
-    source_properties: Dict[str, str] = Field(
-        default={},
-        description="Additional properties of the source, e.g. the user name of the human who provided the output or the model that generated the output.",
     )
     rating: TaskOutputRating | None = Field(
         default=None, description="The rating of the output"
@@ -135,7 +130,7 @@ class DataSourceType(str, Enum):
 
 class DataSourceProperty(BaseModel):
     name: str
-    type: Union[Literal["str"], Literal["int"], Literal["float"]]
+    type: Type[Union[str, int, float]]
     required_for: List[DataSourceType] = []
     not_allowed_for: List[DataSourceType] = []
 
@@ -149,51 +144,70 @@ class DataSource(BaseModel):
 
     _data_source_properties = [
         DataSourceProperty(
-            name="created_by",
-            type="str",
+            name="creator",
+            type=str,
             required_for=[DataSourceType.human],
             not_allowed_for=[DataSourceType.synthetic],
         ),
         DataSourceProperty(
             name="model_name",
-            type="str",
+            type=str,
             required_for=[DataSourceType.synthetic],
             not_allowed_for=[DataSourceType.human],
         ),
         DataSourceProperty(
             name="model_provider",
-            type="str",
+            type=str,
             required_for=[DataSourceType.synthetic],
             not_allowed_for=[DataSourceType.human],
         ),
         DataSourceProperty(
             name="adapter_name",
-            type="str",
+            type=str,
             required_for=[DataSourceType.synthetic],
             not_allowed_for=[DataSourceType.human],
         ),
         DataSourceProperty(
             name="prompt_builder_name",
-            type="str",
+            type=str,
             not_allowed_for=[DataSourceType.human],
         ),
     ]
 
     @model_validator(mode="after")
+    def validate_type(self) -> "DataSource":
+        if self.type not in DataSourceType:
+            raise ValueError(f"Invalid data source type: {self.type}")
+        return self
+
+    @model_validator(mode="after")
     def validate_properties(self) -> "DataSource":
         for prop in self._data_source_properties:
+            # Check the property type is correct
+            if prop.name in self.properties:
+                if not isinstance(self.properties[prop.name], prop.type):
+                    raise ValueError(
+                        f"'{prop.name}' must be of type {prop.type.__name__} for {self.type} data source"
+                    )
+            # Check the property is required for the data source type
             if self.type in prop.required_for:
                 if prop.name not in self.properties:
                     raise ValueError(
                         f"'{prop.name}' is required for {self.type} data source"
                     )
-                if not isinstance(self.properties[prop.name], eval(prop.type)):
-                    raise ValueError(
-                        f"'{prop.name}' must be of type {prop.type} for {self.type} data source"
-                    )
+            # Check the property is not allowed for the data source type
             elif self.type in prop.not_allowed_for and prop.name in self.properties:
                 raise ValueError(
                     f"'{prop.name}' is not allowed for {self.type} data source"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_no_empty_properties(self) -> Self:
+        for prop, value in self.properties.items():
+            if isinstance(value, str) and value == "":
+                raise ValueError(
+                    f"Property '{prop}' must be a non-empty string for {self.type} data source"
                 )
         return self
 
@@ -206,13 +220,8 @@ class TaskRun(KilnParentedModel):
     input: str = Field(
         description="The inputs to the task. JSON formatted for structured input, plaintext for unstructured input."
     )
-    source: DataSourceType = Field(
+    source: DataSource = Field(
         description="The source of the input: human or synthetic."
-    )
-    # TODO add structure/validation to this. For human creator_id. Model: synthetic data tool and model version
-    source_properties: Dict[str, str] = Field(
-        default={},
-        description="Additional properties of the source, e.g. the name of the human who provided the input or the model that generated the input.",
     )
 
     output: TaskOutput = Field(description="The output of the task run.")

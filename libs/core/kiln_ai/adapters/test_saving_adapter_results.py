@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.datamodel import (
+    DataSource,
     DataSourceType,
     Project,
     Task,
@@ -41,17 +42,22 @@ def test_save_run_isolation(test_task):
     input_data = "Test input"
     output_data = "Test output"
 
-    task_run = adapter.save_run(input_data, DataSourceType.human, output_data)
+    task_run = adapter.save_run(input=input_data, input_source=None, output=output_data)
 
     # Check that the task input was saved correctly
     assert task_run.parent == test_task
     assert task_run.input == input_data
-    assert task_run.source == DataSourceType.human
+    assert task_run.source.type == DataSourceType.human
+    creator = Config.shared().user_id
+    if creator and creator != "":
+        assert task_run.source.properties["creator"] == creator
+    else:
+        assert "creator" not in task_run.source.properties
 
     # Check that the task output was saved correctly
     saved_output = task_run.output
     assert saved_output.output == output_data
-    assert saved_output.source == DataSourceType.synthetic
+    assert saved_output.source.type == DataSourceType.synthetic
     assert saved_output.rating is None
 
     # Verify that the data can be read back from disk
@@ -60,41 +66,49 @@ def test_save_run_isolation(test_task):
     assert len(reloaded_runs) == 1
     reloaded_run = reloaded_runs[0]
     assert reloaded_run.input == input_data
-    assert reloaded_run.source == DataSourceType.human
+    assert reloaded_run.source.type == DataSourceType.human
+    reloaded_output = reloaded_run.output
 
     reloaded_output = reloaded_run.output
     assert reloaded_output.output == output_data
-    assert reloaded_output.source == DataSourceType.synthetic
+    assert reloaded_output.source.type == DataSourceType.synthetic
     assert reloaded_output.rating is None
-    assert reloaded_output.source_properties["adapter_name"] == "mock_adapter"
-    assert reloaded_output.source_properties["model_name"] == "mock_model"
-    assert reloaded_output.source_properties["model_provider"] == "mock_provider"
+    assert reloaded_output.source.properties["adapter_name"] == "mock_adapter"
+    assert reloaded_output.source.properties["model_name"] == "mock_model"
+    assert reloaded_output.source.properties["model_provider"] == "mock_provider"
     assert (
-        reloaded_output.source_properties["prompt_builder_name"]
+        reloaded_output.source.properties["prompt_builder_name"]
         == "mock_prompt_builder"
     )
-    creator = Config.shared().user_id
-    if creator and creator != "":
-        assert reloaded_output.source_properties["creator"] == creator
-    else:
-        assert "creator" not in reloaded_output.source_properties
 
     # Run again, with same input and different output. Should create a new TaskRun.
-    task_output = adapter.save_run(input_data, DataSourceType.human, "Different output")
+    task_output = adapter.save_run(input_data, None, "Different output")
     assert len(test_task.runs()) == 2
     assert "Different output" in set(run.output.output for run in test_task.runs())
 
     # run again with same input and same output. Should not create a new TaskRun.
-    task_output = adapter.save_run(input_data, DataSourceType.human, output_data)
+    task_output = adapter.save_run(input_data, None, output_data)
     assert len(test_task.runs()) == 2
     assert "Different output" in set(run.output.output for run in test_task.runs())
     assert output_data in set(run.output.output for run in test_task.runs())
 
     # run again with input of different type. Should create a new TaskRun and TaskOutput.
-    task_output = adapter.save_run(input_data, DataSourceType.synthetic, output_data)
+    task_output = adapter.save_run(
+        input_data,
+        DataSource(
+            type=DataSourceType.synthetic,
+            properties={
+                "model_name": "mock_model",
+                "model_provider": "mock_provider",
+                "prompt_builder_name": "mock_prompt_builder",
+                "adapter_name": "mock_adapter",
+            },
+        ),
+        output_data,
+    )
     assert len(test_task.runs()) == 3
     assert task_output.input == input_data
-    assert task_output.source == DataSourceType.synthetic
+    assert task_output.source.type == DataSourceType.synthetic
     assert "Different output" in set(run.output.output for run in test_task.runs())
     assert output_data in set(run.output.output for run in test_task.runs())
 
@@ -124,18 +138,18 @@ async def test_autosave_true(test_task):
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
-        await adapter.invoke(input_data, DataSourceType.synthetic)
+        await adapter.invoke(input_data, None)
 
         # Check that an task input was saved
         task_runs = test_task.runs()
         assert len(task_runs) == 1
         assert task_runs[0].input == input_data
-        assert task_runs[0].source == DataSourceType.synthetic
+        assert task_runs[0].source.type == DataSourceType.human
+
         output = task_runs[0].output
         assert output.output == "Test output"
-        assert output.source_properties["creator"] == "test_user"
-        assert output.source == DataSourceType.synthetic
-        assert output.source_properties["adapter_name"] == "mock_adapter"
-        assert output.source_properties["model_name"] == "mock_model"
-        assert output.source_properties["model_provider"] == "mock_provider"
-        assert output.source_properties["prompt_builder_name"] == "mock_prompt_builder"
+        assert output.source.type == DataSourceType.synthetic
+        assert output.source.properties["adapter_name"] == "mock_adapter"
+        assert output.source.properties["model_name"] == "mock_model"
+        assert output.source.properties["model_provider"] == "mock_provider"
+        assert output.source.properties["prompt_builder_name"] == "mock_prompt_builder"

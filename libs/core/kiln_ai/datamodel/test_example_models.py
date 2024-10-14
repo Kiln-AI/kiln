@@ -2,6 +2,7 @@ import json
 
 import pytest
 from kiln_ai.datamodel import (
+    DataSource,
     DataSourceType,
     Project,
     Task,
@@ -25,12 +26,16 @@ def valid_task_run(tmp_path):
     return TaskRun(
         parent=task,
         input="Test input",
-        source=DataSourceType.human,
-        source_properties={"creator": "John Doe"},
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "John Doe"},
+        ),
         output=TaskOutput(
             output="Test output",
-            source=DataSourceType.human,
-            source_properties={"creator": "John Doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "John Doe"},
+            ),
         ),
     )
 
@@ -38,15 +43,22 @@ def valid_task_run(tmp_path):
 def test_task_model_validation(valid_task_run):
     task_run = valid_task_run
     task_run.model_validate(task_run, strict=True)
+    task_run.save_to_file()
     assert task_run.input == "Test input"
-    assert task_run.source == DataSourceType.human
-    assert task_run.source_properties == {"creator": "John Doe"}
+    assert task_run.source.type == DataSourceType.human
+    assert task_run.source.properties == {"creator": "John Doe"}
     assert task_run.output.output == "Test output"
+    assert task_run.output.source.type == DataSourceType.human
+    assert task_run.output.source.properties == {"creator": "John Doe"}
 
     # Invalid source
     with pytest.raises(ValidationError, match="Input should be"):
-        task_run = valid_task_run.model_copy()
-        task_run.source = "invalid"
+        DataSource(type="invalid")
+
+    with pytest.raises(ValidationError, match="Invalid data source type"):
+        task_run = valid_task_run.model_copy(deep=True)
+        task_run.source.type = "invalid"
+        DataSource.model_validate(task_run.source, strict=True)
 
     # Missing required field
     with pytest.raises(ValidationError, match="Input should be a valid string"):
@@ -54,9 +66,29 @@ def test_task_model_validation(valid_task_run):
         task_run.input = None
 
     # Invalid source_properties type
-    with pytest.raises(ValidationError, match="Input should be a valid dictionary"):
+    with pytest.raises(ValidationError):
         task_run = valid_task_run.model_copy()
-        task_run.source_properties = "invalid"
+        task_run.source.properties = "invalid"
+        DataSource.model_validate(task_run.source, strict=True)
+
+    # Test we catch nested validation errors
+    with pytest.raises(
+        ValidationError, match="'creator' is required for DataSourceType.human"
+    ):
+        task_run = TaskRun(
+            input="Test input",
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "John Doe"},
+            ),
+            output=TaskOutput(
+                output="Test output",
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"wrong_key": "John Doe"},
+                ),
+            ),
+        )
 
 
 def test_task_run_relationship(valid_task_run):
@@ -101,12 +133,27 @@ def test_structured_output_workflow(tmp_path):
         for _ in range(2):
             task_run = TaskRun(
                 input="Generate info for John Doe",
-                source=source,
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                )
+                if source == DataSourceType.human
+                else DataSource(
+                    type=DataSourceType.synthetic,
+                    properties={
+                        "adapter_name": "TestAdapter",
+                        "model_name": "GPT-4",
+                        "model_provider": "OpenAI",
+                        "prompt_builder_name": "TestPromptBuilder",
+                    },
+                ),
                 parent=task,
                 output=TaskOutput(
                     output='{"name": "John Doe", "age": 30}',
-                    source=DataSourceType.human,
-                    source_properties={"creator": "john_doe"},
+                    source=DataSource(
+                        type=DataSourceType.human,
+                        properties={"creator": "john_doe"},
+                    ),
                 ),
             )
             task_run.save_to_file()
@@ -115,18 +162,25 @@ def test_structured_output_workflow(tmp_path):
     # make a run with a repaired output
     repaired_run = TaskRun(
         input="Generate info for John Doe",
-        source=DataSourceType.human,
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
         parent=task,
         output=TaskOutput(
             output='{"name": "John Doe", "age": 31}',
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
         ),
         repair_instructions="The age should be 31 instead of 30",
         repaired_output=TaskOutput(
             output='{"name": "John Doe", "age": 31}',
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
         ),
     )
     repaired_run.save_to_file()
@@ -189,12 +243,17 @@ def test_task_output_requirement_rating_keys(tmp_path):
     # Valid case: all requirement IDs are valid
     task_run = TaskRun(
         input="Test input",
-        source=DataSourceType.human,
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
         parent=task,
         output=TaskOutput(
             output="Test output",
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
             rating=TaskOutputRating(
                 rating=4,
                 requirement_ratings={
@@ -214,12 +273,17 @@ def test_task_output_requirement_rating_keys(tmp_path):
     ):
         task_run = TaskRun(
             input="Test input",
-            source=DataSourceType.human,
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
             parent=task,
             output=TaskOutput(
                 output="Test output",
-                source=DataSourceType.human,
-                source_properties={"creator": "john_doe"},
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
                 rating=TaskOutputRating(
                     rating=4,
                     requirement_ratings={
@@ -252,13 +316,17 @@ def test_task_output_schema_validation(tmp_path):
     # Create an run output with a valid schema
     task_output = TaskRun(
         input="Test input",
-        source=DataSourceType.human,
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
         parent=task,
-        source_properties={"creator": "john_doe"},
         output=TaskOutput(
             output='{"name": "John Doe", "age": 30}',
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
         ),
     )
     task_output.save_to_file()
@@ -272,13 +340,17 @@ def test_task_output_schema_validation(tmp_path):
     with pytest.raises(ValueError, match="does not match task output schema"):
         task_output = TaskRun(
             input="Test input",
-            source=DataSourceType.human,
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
             parent=task,
-            source_properties={"creator": "john_doe"},
             output=TaskOutput(
                 output='{"name": "John Doe", "age": "thirty"}',
-                source=DataSourceType.human,
-                source_properties={"creator": "john_doe"},
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
             ),
         )
         task_output.save_to_file()
@@ -305,12 +377,17 @@ def test_task_input_schema_validation(tmp_path):
     # Create an example with a valid input schema
     valid_task_output = TaskRun(
         input='{"name": "John Doe", "age": 30}',
-        source=DataSourceType.human,
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
         parent=task,
         output=TaskOutput(
             output="Test output",
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
         ),
     )
     valid_task_output.save_to_file()
@@ -324,12 +401,17 @@ def test_task_input_schema_validation(tmp_path):
     with pytest.raises(ValueError, match="does not match task input schema"):
         task_output = TaskRun(
             input='{"name": "John Doe", "age": "thirty"}',
-            source=DataSourceType.human,
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
             parent=task,
             output=TaskOutput(
                 output="Test output",
-                source=DataSourceType.human,
-                source_properties={"creator": "john_doe"},
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
             ),
         )
         task_output.save_to_file()
@@ -338,85 +420,100 @@ def test_task_input_schema_validation(tmp_path):
 def test_valid_human_task_output():
     output = TaskOutput(
         output="Test output",
-        source=DataSourceType.human,
-        source_properties={"creator": "John Doe"},
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "John Doe"},
+        ),
     )
-    assert output.source == DataSourceType.human
-    assert output.source_properties["creator"] == "John Doe"
+    assert output.source.type == DataSourceType.human
+    assert output.source.properties["creator"] == "John Doe"
 
 
-@pytest.mark.skip(reason="Will bring this back for DataSource class")
 def test_invalid_human_task_output_missing_creator():
     with pytest.raises(
-        ValidationError,
-        match="must include \['creator'\]",
+        ValidationError, match="'creator' is required for DataSourceType.human"
     ):
         TaskOutput(
-            output="Test output", source=DataSourceType.human, source_properties={}
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={},
+            ),
         )
 
 
-@pytest.mark.skip(reason="Will bring this back for DataSource class")
 def test_invalid_human_task_output_empty_creator():
-    with pytest.raises(ValidationError, match="must not be empty string"):
+    with pytest.raises(
+        ValidationError, match="Property 'creator' must be a non-empty string"
+    ):
         TaskOutput(
             output="Test output",
-            source=DataSourceType.human,
-            source_properties={"creator": ""},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": ""},
+            ),
         )
 
 
 def test_valid_synthetic_task_output():
     output = TaskOutput(
         output="Test output",
-        source=DataSourceType.synthetic,
-        source_properties={
-            "adapter_name": "TestAdapter",
-            "model_name": "GPT-4",
-            "model_provider": "OpenAI",
-            "prompt_builder_name": "TestPromptBuilder",
-        },
-    )
-    assert output.source == DataSourceType.synthetic
-    assert output.source_properties["adapter_name"] == "TestAdapter"
-    assert output.source_properties["model_name"] == "GPT-4"
-    assert output.source_properties["model_provider"] == "OpenAI"
-    assert output.source_properties["prompt_builder_name"] == "TestPromptBuilder"
-
-
-@pytest.mark.skip(reason="Will bring this back for DataSource class")
-def test_invalid_synthetic_task_output_missing_keys():
-    with pytest.raises(
-        ValidationError, match="TaskOutput source_properties must include"
-    ):
-        TaskOutput(
-            output="Test output",
-            source=DataSourceType.synthetic,
-            source_properties={"adapter_name": "TestAdapter", "model_name": "GPT-4"},
-        )
-
-
-@pytest.mark.skip(reason="Will bring this back for DataSource class")
-def test_invalid_synthetic_task_output_empty_values():
-    with pytest.raises(ValidationError, match="must not be empty string"):
-        TaskOutput(
-            output="Test output",
-            source=DataSourceType.synthetic,
-            source_properties={
+        source=DataSource(
+            type=DataSourceType.synthetic,
+            properties={
                 "adapter_name": "TestAdapter",
-                "model_name": "",
+                "model_name": "GPT-4",
                 "model_provider": "OpenAI",
                 "prompt_builder_name": "TestPromptBuilder",
             },
+        ),
+    )
+    assert output.source.type == DataSourceType.synthetic
+    assert output.source.properties["adapter_name"] == "TestAdapter"
+    assert output.source.properties["model_name"] == "GPT-4"
+    assert output.source.properties["model_provider"] == "OpenAI"
+    assert output.source.properties["prompt_builder_name"] == "TestPromptBuilder"
+
+
+def test_invalid_synthetic_task_output_missing_keys():
+    with pytest.raises(
+        ValidationError,
+        match="'model_provider' is required for DataSourceType.synthetic",
+    ):
+        TaskOutput(
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.synthetic,
+                properties={"adapter_name": "TestAdapter", "model_name": "GPT-4"},
+            ),
+        )
+
+
+def test_invalid_synthetic_task_output_empty_values():
+    with pytest.raises(
+        ValidationError, match="'model_name' must be a non-empty string"
+    ):
+        TaskOutput(
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.synthetic,
+                properties={
+                    "adapter_name": "TestAdapter",
+                    "model_name": "",
+                    "model_provider": "OpenAI",
+                    "prompt_builder_name": "TestPromptBuilder",
+                },
+            ),
         )
 
 
 def test_invalid_synthetic_task_output_non_string_values():
-    with pytest.raises(ValidationError, match="Input should be a valid string"):
-        TaskOutput(
-            output="Test output",
-            source=DataSourceType.synthetic,
-            source_properties={
+    with pytest.raises(
+        ValidationError, match="'prompt_builder_name' must be of type str"
+    ):
+        DataSource(
+            type=DataSourceType.synthetic,
+            properties={
                 "adapter_name": "TestAdapter",
                 "model_name": "GPT-4",
                 "model_provider": "OpenAI",
@@ -429,19 +526,41 @@ def test_task_run_validate_repaired_output():
     # Test case 1: Valid TaskRun with no repaired_output
     valid_task_run = TaskRun(
         input="test input",
-        source=DataSourceType.human,
-        output=TaskOutput(output="test output", source=DataSourceType.human),
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
+        output=TaskOutput(
+            output="test output",
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
+        ),
     )
     assert valid_task_run.repaired_output is None
 
     # Test case 2: Valid TaskRun with repaired_output and no rating
     valid_task_run_with_repair = TaskRun(
         input="test input",
-        source=DataSourceType.human,
-        output=TaskOutput(output="test output", source=DataSourceType.human),
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
+        output=TaskOutput(
+            output="test output",
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
+        ),
         repair_instructions="Fix the output",
         repaired_output=TaskOutput(
-            output="repaired output", source=DataSourceType.human
+            output="repaired output",
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
         ),
     )
     assert valid_task_run_with_repair.repaired_output is not None
@@ -451,10 +570,23 @@ def test_task_run_validate_repaired_output():
     with pytest.raises(ValidationError) as exc_info:
         TaskRun(
             input="test input",
-            source=DataSourceType.human,
-            output=TaskOutput(output="test output", source=DataSourceType.human),
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
+            output=TaskOutput(
+                output="test output",
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
+            ),
             repaired_output=TaskOutput(
-                output="repaired output", source=DataSourceType.human
+                output="repaired output",
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
             ),
         )
 
@@ -464,8 +596,17 @@ def test_task_run_validate_repaired_output():
     with pytest.raises(ValidationError) as exc_info:
         TaskRun(
             input="test input",
-            source=DataSourceType.human,
-            output=TaskOutput(output="test output", source=DataSourceType.human),
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
+            output=TaskOutput(
+                output="test output",
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
+            ),
             repair_instructions="Fix the output",
         )
 
@@ -475,11 +616,23 @@ def test_task_run_validate_repaired_output():
     with pytest.raises(ValidationError) as exc_info:
         TaskRun(
             input="test input",
-            source=DataSourceType.human,
-            output=TaskOutput(output="test output", source=DataSourceType.human),
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
+            output=TaskOutput(
+                output="test output",
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
+            ),
             repaired_output=TaskOutput(
                 output="repaired output",
-                source=DataSourceType.human,
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"creator": "john_doe"},
+                ),
                 rating=TaskOutputRating(
                     type=TaskOutputRatingType.five_star, rating=5.0
                 ),

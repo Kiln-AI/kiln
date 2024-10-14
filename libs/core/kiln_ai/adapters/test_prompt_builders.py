@@ -5,6 +5,7 @@ from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromp
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
 from kiln_ai.datamodel import (
+    DataSource,
     DataSourceType,
     Project,
     Task,
@@ -96,13 +97,17 @@ def test_multi_shot_prompt_builder(tmp_path):
     # Create an task input, but with no output
     e1 = TaskRun(
         input='{"subject": "Cows"}',
-        source=DataSourceType.human,
-        source_properties={"creator": "john_doe"},
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
         parent=task,
         output=TaskOutput(
             output='{"joke": "Moo I am a cow joke."}',
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
         ),
     )
     e1.save_to_file()
@@ -119,13 +124,17 @@ def test_multi_shot_prompt_builder(tmp_path):
 
     e2 = TaskRun(
         input='{"subject": "Dogs"}',
-        source=DataSourceType.human,
-        source_properties={"creator": "john_doe"},
+        source=DataSource(
+            type=DataSourceType.human,
+            properties={"creator": "john_doe"},
+        ),
         parent=task,
         output=TaskOutput(
             output='{"joke": "This is a ruff joke."}',
-            source=DataSourceType.human,
-            source_properties={"creator": "john_doe"},
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"creator": "john_doe"},
+            ),
             rating=TaskOutputRating(rating=4, reason="Bark"),
         ),
     )

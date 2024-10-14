@@ -1,7 +1,7 @@
 import json
 import re
 import uuid
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from builtins import classmethod
 from datetime import datetime
 from pathlib import Path
