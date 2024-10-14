@@ -55,7 +55,7 @@ def test_save_run_isolation(test_task):
     assert saved_output.parent.id == task_input.id
     assert saved_output.output == output_data
     assert saved_output.source == DataSourceType.synthetic
-    assert saved_output.requirement_ratings == {}
+    assert saved_output.rating is None
 
     # Verify that the data can be read back from disk
     reloaded_task = Task.load_from_file(test_task.path)
@@ -71,7 +71,7 @@ def test_save_run_isolation(test_task):
     assert reloaded_output.parent.id == reloaded_run.id
     assert reloaded_output.output == output_data
     assert reloaded_output.source == DataSourceType.synthetic
-    assert reloaded_output.requirement_ratings == {}
+    assert reloaded_output.rating is None
     assert reloaded_output.source_properties["adapter_name"] == "mock_adapter"
     assert reloaded_output.source_properties["model_name"] == "mock_model"
     assert reloaded_output.source_properties["model_provider"] == "mock_provider"

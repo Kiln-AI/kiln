@@ -31,23 +31,48 @@ class Priority(IntEnum):
     p3 = 3
 
 
+# Only one rating type for now, but this allows for extensibility if we want to add more in the future
+class TaskOutputRatingType(str, Enum):
+    five_star_rating = "five_star_rating"
+
+
 class TaskOutputRating(KilnBaseModel):
     """
-    A combination of a rating (1-5 stars) and a reason for the rating.
+    A rating for a task output, including an overall rating and ratings for each requirement.
 
-    The reason should explain why the rating is given (why it's high when high, or why it's low when low).
+    Only supports five star ratings for now, but extensible for custom values.
     """
 
-    rating: int = Field(description="The rating (1-5 stars).", ge=1, le=5)
-    reason: str | None = Field(
-        default=None,
-        description="The reason for the rating. The reason may be used in training, prompts and evaluation so it should be readable, concise, informative and not reference data outside of the task/input/output.",
-        max_length=750,
+    type: TaskOutputRatingType = Field(default=TaskOutputRatingType.five_star_rating)
+    rating: float = Field(description="The rating value (typically 1-5 stars).")
+    requirement_ratings: Dict[ID_TYPE, float] = Field(
+        default={},
+        description="The ratings of the requirements of the task. The keys are the ids of the requirements. The values are the ratings (typically 1-5 stars).",
     )
-    comment: str | None = Field(
-        default=None,
-        description="A comment about the rating. Will never be used in training/prompts/evaluation, so it can be anything, such as notes for the team.",
-    )
+
+    @model_validator(mode="after")
+    def validate_rating(self) -> Self:
+        if self.type not in TaskOutputRatingType:
+            raise ValueError(f"Invalid rating type: {self.type}")
+
+        if self.type == TaskOutputRatingType.five_star_rating:
+            self._validate_five_star_rating(self.rating, "overall rating")
+            for req_id, req_rating in self.requirement_ratings.items():
+                self._validate_five_star_rating(
+                    req_rating, f"requirement rating for {req_id}"
+                )
+
+        return self
+
+    def _validate_five_star_rating(self, rating: float, rating_name: str) -> None:
+        if not isinstance(rating, float) or not rating.is_integer():
+            raise ValueError(
+                f"{rating_name.capitalize()} of type five_star_rating must be an integer value (1.0, 2.0, 3.0, 4.0, or 5.0)"
+            )
+        if rating < 1 or rating > 5:
+            raise ValueError(
+                f"{rating_name.capitalize()} of type five_star_rating must be between 1 and 5 stars"
+            )
 
 
 class TaskOutput(KilnParentedModel):
@@ -67,12 +92,7 @@ class TaskOutput(KilnParentedModel):
         description="Additional properties of the source, e.g. the user name of the human who provided the output or the model that generated the output.",
     )
     rating: TaskOutputRating | None = Field(
-        default=None,
-        description="The rating of the output, along with a reason this rating was given.",
-    )
-    requirement_ratings: Dict[ID_TYPE, TaskOutputRating] = Field(
-        default={},
-        description="The ratings of the requirements of the task, along with a reason this rating was given. The keys are the ids of the requirements.",
+        default=None, description="The rating of the output"
     )
 
     fixed_output: str | None = Field(
@@ -122,7 +142,7 @@ class TaskOutput(KilnParentedModel):
 
     @model_validator(mode="after")
     def validate_requirement_rating_keys(self) -> Self:
-        if len(self.requirement_ratings) == 0:
+        if self.rating is None or len(self.rating.requirement_ratings) == 0:
             return self
         task = self.task_for_validation()
         if task is None:
@@ -130,7 +150,7 @@ class TaskOutput(KilnParentedModel):
             return self
 
         valid_requirement_ids = {req.id for req in task.requirements()}
-        for key in self.requirement_ratings.keys():
+        for key in self.rating.requirement_ratings.keys():
             if key not in valid_requirement_ids:
                 raise ValueError(
                     f"Requirement ID '{key}' is not a valid requirement ID for this task"

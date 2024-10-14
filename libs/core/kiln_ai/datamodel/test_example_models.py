@@ -87,12 +87,10 @@ def test_task_output_model_validation(tmp_path):
         output="Test output",
         source=DataSourceType.human,
         source_properties={"creator": "Jane Doe"},
-        requirement_ratings={},
     )
     assert valid_output.output == "Test output"
     assert valid_output.source == DataSourceType.human
     assert valid_output.source_properties == {"creator": "Jane Doe"}
-    assert len(valid_output.requirement_ratings) == 0
 
     # Invalid source
     with pytest.raises(ValidationError):
@@ -101,7 +99,6 @@ def test_task_output_model_validation(tmp_path):
             output="Test output",
             source="invalid_source",
             source_properties={},
-            requirement_ratings={},
         )
 
     # Missing required field
@@ -110,29 +107,6 @@ def test_task_output_model_validation(tmp_path):
             path="/test/path",
             source=DataSourceType.human,
             source_properties={},
-            requirement_ratings={},
-        )
-
-    # Invalid rating in TaskOutputRating
-    with pytest.raises(ValidationError):
-        TaskOutput(
-            path="/test/path",
-            output="Test output",
-            source=DataSourceType.human,
-            source_properties={},
-            requirement_ratings={
-                "req1": TaskOutputRating(rating=6, reason="Invalid rating")
-            },
-        )
-
-    # Invalid requirement_ratings type
-    with pytest.raises(ValidationError):
-        TaskOutput(
-            path="/test/path",
-            output="Test output",
-            source=DataSourceType.human,
-            source_properties={},
-            requirement_ratings="invalid",
         )
 
 
@@ -193,11 +167,13 @@ def test_structured_output_workflow(tmp_path):
 
     # Update outputs with ratings
     for output in outputs:
-        output.rating = TaskOutputRating(rating=4, reason="Good output")
-        output.requirement_ratings = {
-            req1.id: TaskOutputRating(rating=5, reason="Name is capitalized"),
-            req2.id: TaskOutputRating(rating=5, reason="Age is positive"),
-        }
+        output.rating = TaskOutputRating(
+            rating=4,
+            requirement_ratings={
+                req1.id: 5,
+                req2.id: 5,
+            },
+        )
         output.save_to_file()
 
     # Update outputs with fixed_output
@@ -218,7 +194,7 @@ def test_structured_output_workflow(tmp_path):
         assert len(outputs) == 1
         output = outputs[0]
         assert output.rating is not None
-        assert len(output.requirement_ratings) == 2
+        assert len(output.rating.requirement_ratings) == 2
 
     # Find the run with the fixed output
     run_with_fixed_output = next(
@@ -260,13 +236,16 @@ def test_task_output_requirement_rating_keys(tmp_path):
         source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
         parent=task_input,
-        requirement_ratings={
-            req1.id: {"rating": 5, "reason": "Excellent"},
-            req2.id: {"rating": 4, "reason": "Good"},
-        },
+        rating=TaskOutputRating(
+            rating=4,
+            requirement_ratings={
+                req1.id: 5,
+                req2.id: 4,
+            },
+        ),
     )
     valid_output.save_to_file()
-    assert valid_output.requirement_ratings is not None
+    assert valid_output.rating.requirement_ratings is not None
 
     # Invalid case: unknown requirement ID
     with pytest.raises(
@@ -278,9 +257,12 @@ def test_task_output_requirement_rating_keys(tmp_path):
             source=DataSourceType.human,
             source_properties={"creator": "john_doe"},
             parent=task_input,
-            requirement_ratings={
-                "unknown_id": {"rating": 4, "reason": "Good"},
-            },
+            rating=TaskOutputRating(
+                rating=4,
+                requirement_ratings={
+                    "unknown_id": 5,
+                },
+            ),
         )
         output.save_to_file()
 
