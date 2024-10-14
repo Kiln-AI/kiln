@@ -167,7 +167,13 @@ class DataSource(BaseModel):
             not_allowed_for=[DataSourceType.human],
         ),
         DataSourceProperty(
-            name="prompt_type",
+            name="adapter_name",
+            type="str",
+            required_for=[DataSourceType.synthetic],
+            not_allowed_for=[DataSourceType.human],
+        ),
+        DataSourceProperty(
+            name="prompt_builder_name",
             type="str",
             not_allowed_for=[DataSourceType.human],
         ),

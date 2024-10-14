@@ -17,13 +17,15 @@ def test_valid_synthetic_data_source():
         properties={
             "model_name": "GPT-4",
             "model_provider": "OpenAI",
-            "prompt_type": "completion",
+            "prompt_builder_name": "completion",
+            "adapter_name": "langchain",
         },
     )
     assert data_source.type == DataSourceType.synthetic
     assert data_source.properties["model_name"] == "GPT-4"
     assert data_source.properties["model_provider"] == "OpenAI"
-    assert data_source.properties["prompt_type"] == "completion"
+    assert data_source.properties["prompt_builder_name"] == "completion"
+    assert data_source.properties["adapter_name"] == "langchain"
 
 
 def test_missing_required_property():
@@ -65,6 +67,7 @@ def test_extra_properties():
         properties={
             "model_name": "GPT-4",
             "model_provider": "OpenAI",
+            "adapter_name": "langchain",
             "temperature": 0.7,
             "max_tokens": 100,
         },
@@ -76,9 +79,13 @@ def test_extra_properties():
 def test_prompt_type_optional_for_synthetic():
     data_source = DataSource(
         type=DataSourceType.synthetic,
-        properties={"model_name": "GPT-4", "model_provider": "OpenAI"},
+        properties={
+            "model_name": "GPT-4",
+            "model_provider": "OpenAI",
+            "adapter_name": "langchain",
+        },
     )
-    assert "prompt_type" not in data_source.properties
+    assert "prompt_builder_name" not in data_source.properties
 
 
 def test_private_data_source_properties_not_serialized():
@@ -87,6 +94,7 @@ def test_private_data_source_properties_not_serialized():
         properties={
             "model_name": "GPT-4",
             "model_provider": "OpenAI",
+            "adapter_name": "langchain",
         },
     )
     serialized = data_source.model_dump()
@@ -95,4 +103,5 @@ def test_private_data_source_properties_not_serialized():
     assert serialized["properties"] == {
         "model_name": "GPT-4",
         "model_provider": "OpenAI",
+        "adapter_name": "langchain",
     }
