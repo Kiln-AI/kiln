@@ -99,8 +99,8 @@ class TaskOutput(KilnParentedModel):
         description="An version of the output with issues fixed by a human evaluator. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field.",
     )
 
-    def parent_task_input(self) -> TaskInput | None:
-        if not isinstance(self.parent, TaskInput):
+    def parent_task_run(self) -> TaskRun | None:
+        if not isinstance(self.parent, TaskRun):
             return None
         return self.parent
 
@@ -124,18 +124,18 @@ class TaskOutput(KilnParentedModel):
         return self
 
     def task_for_validation(self) -> Task | None:
-        task_input = self.parent_task_input()
-        if task_input is None:
+        task_output = self.parent_task_run()
+        if task_output is None:
             return None
-        if not isinstance(task_input, TaskInput):
-            raise ValueError("TaskOutput must have a valid parent TaskInput")
+        if not isinstance(task_output, TaskRun):
+            raise ValueError("TaskOutput must have a valid parent TaskRun")
 
-        task = task_input.parent
+        task = task_output.parent
         if task is None:
             return None
         if not isinstance(task, Task):
             raise ValueError(
-                "TaskOutput's parent TaskInput must have a valid parent Task"
+                "TaskOutput's parent TaskRun must have a valid parent Task"
             )
         return task
 
@@ -253,9 +253,9 @@ class DataSource(BaseModel):
         return self
 
 
-class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutput}):
+class TaskRun(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOutput}):
     """
-    An input to a specific Task.
+    An run of a specific Task, including the input and output.
     """
 
     input: str = Field(
@@ -287,7 +287,7 @@ class TaskInput(KilnParentedModel, KilnParentModel, parent_of={"outputs": TaskOu
             return self
         if not isinstance(task, Task):
             raise ValueError(
-                "TaskOutput's parent TaskInput must have a valid parent Task"
+                "TaskOutput's parent TaskRun must have a valid parent Task"
             )
 
         # validate output
@@ -317,7 +317,7 @@ class TaskDeterminism(str, Enum):
 class Task(
     KilnParentedModel,
     KilnParentModel,
-    parent_of={"requirements": TaskRequirement, "runs": TaskInput},
+    parent_of={"requirements": TaskRequirement, "runs": TaskRun},
 ):
     name: str = NAME_FIELD
     description: str = Field(default="")
@@ -343,7 +343,7 @@ class Task(
         return super().requirements()  # type: ignore
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
-    def runs(self) -> list[TaskInput]:
+    def runs(self) -> list[TaskRun]:
         return super().runs()  # type: ignore
 
 

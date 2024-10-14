@@ -6,8 +6,8 @@ from typing import Dict
 from kiln_ai.datamodel import (
     DataSourceType,
     Task,
-    TaskInput,
     TaskOutput,
+    TaskRun,
 )
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
@@ -76,59 +76,59 @@ class BaseAdapter(metaclass=ABCMeta):
     # create a run and task output
     def save_run(
         self, input: Dict | str, input_source: DataSourceType, output: Dict | str
-    ) -> TaskInput:
+    ) -> TaskRun:
         # Convert input and output to JSON strings if they are dictionaries
         input_str = json.dumps(input) if isinstance(input, dict) else input
         output_str = json.dumps(output) if isinstance(output, dict) else output
 
         # Check for existing task inputs with matching parent.id, input, and source
-        existing_task_input = next(
+        existing_task_run = next(
             (
-                task_input
-                for task_input in self.kiln_task.runs()
-                if (parent_task := task_input.parent_task()) is not None
+                task_run
+                for task_run in self.kiln_task.runs()
+                if (parent_task := task_run.parent_task()) is not None
                 and parent_task.id == self.kiln_task.id
-                and task_input.input == input_str
-                and task_input.source == input_source
+                and task_run.input == input_str
+                and task_run.source == input_source
             ),
             None,
         )
 
-        if existing_task_input:
-            task_input = existing_task_input
+        if existing_task_run:
+            task_run = existing_task_run
         else:
-            task_input = TaskInput(
+            task_run = TaskRun(
                 parent=self.kiln_task,
                 input=input_str,
                 source=input_source,
             )
-            task_input.save_to_file()
+            task_run.save_to_file()
 
         # Check for existing TaskOutput with matching parent.id, input, and source
         existing_output = next(
             (
                 output
-                for output in task_input.outputs()
-                if (parent_task_input := output.parent_task_input()) is not None
-                and parent_task_input.id == task_input.id
+                for output in task_run.outputs()
+                if (parent_task_run := output.parent_task_run()) is not None
+                and parent_task_run.id == task_run.id
                 and output.output == output_str
             ),
             None,
         )
 
         if existing_output:
-            return task_input
+            return task_run
 
-        # Create a new TaskOutput for the existing or new TaskInput
+        # Create a new TaskOutput for the existing or new TaskRun
         task_output = TaskOutput(
-            parent=task_input,
+            parent=task_run,
             output=output_str,
             # Synthetic since an adapter, not a human, is creating this
             source=DataSourceType.synthetic,
             source_properties=self._properties_for_task_output(),
         )
         task_output.save_to_file()
-        return task_input
+        return task_run
 
     def _properties_for_task_output(self) -> Dict:
         props = {}

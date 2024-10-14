@@ -8,9 +8,9 @@ from kiln_ai.datamodel import (
     DataSourceType,
     Project,
     Task,
-    TaskInput,
     TaskOutput,
     TaskOutputRating,
+    TaskRun,
 )
 
 
@@ -92,7 +92,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     task.save_to_file()
 
     # Create an task input, but with no output
-    e1 = TaskInput(
+    e1 = TaskRun(
         input='{"subject": "Cows"}',
         source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
@@ -115,7 +115,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     eo1.save_to_file()
     check_example_outputs(task, 1)
 
-    e2 = TaskInput(
+    e2 = TaskRun(
         input='{"subject": "Dogs"}',
         source=DataSourceType.human,
         source_properties={"creator": "john_doe"},
