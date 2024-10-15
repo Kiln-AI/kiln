@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
-from kiln_ai.datamodel import Task
+from kiln_ai.datamodel import Task, TaskRun
 from pydantic import BaseModel
 
 from libs.studio.kiln_studio.project_management import project_from_id
@@ -15,9 +15,14 @@ class RunTaskRequest(BaseModel):
     structured_input: Dict[str, Any] | None = None
 
 
-class RunTaskResponse(BaseModel):
+class RunTaskOutputResponse(BaseModel):
     plaintext_output: str | None = None
     structured_output: Dict[str, Any] | List[Any] | None = None
+
+
+class RunTaskResponse(BaseModel):
+    output: RunTaskOutputResponse
+    run: TaskRun | None = None
 
 
 def connect_task_management(app: FastAPI):
@@ -56,7 +61,9 @@ def connect_task_management(app: FastAPI):
         )
 
     @app.post("/api/projects/{project_id}/task/{task_id}/run")
-    async def run_task(project_id: str, task_id: str, request: RunTaskRequest):
+    async def run_task(
+        project_id: str, task_id: str, request: RunTaskRequest
+    ) -> RunTaskResponse:
         parent_project = project_from_id(project_id)
         task = next(
             (task for task in parent_project.tasks() if task.id == task_id), None
@@ -81,11 +88,13 @@ def connect_task_management(app: FastAPI):
                 detail="No input provided. Ensure your provided the proper format (plaintext or structured).",
             )
 
-        output = await adapter.invoke(input)
-        response = RunTaskResponse()
-        if isinstance(output, str):
-            response.plaintext_output = output
+        adapter_run = await adapter.invoke_returning_run(input)
+        response_output = None
+        if isinstance(adapter_run.output, str):
+            response_output = RunTaskOutputResponse(plaintext_output=adapter_run.output)
         else:
-            response.structured_output = output
+            response_output = RunTaskOutputResponse(
+                structured_output=adapter_run.output
+            )
 
-        return response
+        return RunTaskResponse(output=response_output, run=adapter_run.run)

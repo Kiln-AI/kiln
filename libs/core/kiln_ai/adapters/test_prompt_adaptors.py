@@ -81,6 +81,27 @@ async def test_mock(tmp_path):
     assert "mock response" in answer
 
 
+async def test_mock_returning_run(tmp_path):
+    task = build_test_task(tmp_path)
+    mockChatModel = FakeListChatModel(responses=["mock response"])
+    adapter = LangChainPromptAdapter(task, custom_model=mockChatModel)
+    adapter_response = await adapter.invoke_returning_run(
+        "You are a mock, send me the response!"
+    )
+    assert adapter_response.output == "mock response"
+    assert adapter_response.run is not None
+    assert adapter_response.run.id is not None
+    assert adapter_response.run.input == "You are a mock, send me the response!"
+    assert adapter_response.run.output.output == "mock response"
+    assert "creator" in adapter_response.run.source.properties
+    assert adapter_response.run.output.source.properties == {
+        "adapter_name": "kiln_langchain_adapter",
+        "model_name": "custom.langchain:unknown_model",
+        "model_provider": "custom.langchain:FakeListChatModel",
+        "prompt_builder_name": "simple_prompt_builder",
+    }
+
+
 @pytest.mark.paid
 @pytest.mark.ollama
 async def test_all_built_in_models(tmp_path):
@@ -131,12 +152,20 @@ async def run_simple_test(tmp_path: Path, model_name: str, provider: str | None 
 async def run_simple_task(task: datamodel.Task, model_name: str, provider: str):
     adapter = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
 
-    answer = await adapter.invoke(
+    adapter_response = await adapter.invoke_returning_run(
         "You should answer the following question: four plus six times 10"
     )
-    assert "64" in answer
-    model_info = adapter.adapter_info()
-    assert model_info.model_name == model_name
-    assert model_info.model_provider == provider
-    assert model_info.adapter_name == "kiln_langchain_adapter"
-    assert model_info.prompt_builder_name == "simple_prompt_builder"
+    assert "64" in adapter_response.output
+    assert adapter_response.run is not None
+    assert adapter_response.run.id is not None
+    assert (
+        adapter_response.run.input
+        == "You should answer the following question: four plus six times 10"
+    )
+    assert "64" in adapter_response.run.output.output
+    assert adapter_response.run.output.source.properties == {
+        "adapter_name": "kiln_langchain_adapter",
+        "model_name": model_name,
+        "model_provider": provider,
+        "prompt_builder_name": "simple_prompt_builder",
+    }

@@ -1,9 +1,9 @@
-import datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
+from kiln_ai.adapters.base_adapter import AdapterRun
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.datamodel import Project, Task
 
@@ -216,10 +216,10 @@ async def test_run_task_success(client, tmp_path):
     with patch(
         "libs.studio.kiln_studio.task_management.project_from_id"
     ) as mock_project_from_id, patch.object(
-        LangChainPromptAdapter, "invoke", new_callable=AsyncMock
+        LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
     ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
         mock_project_from_id.return_value = project
-        mock_invoke.return_value = "Test output"
+        mock_invoke.return_value = AdapterRun(run=None, output="Test output")
 
         # Mock the Config class
         mock_config_instance = MockConfig.return_value
@@ -231,8 +231,9 @@ async def test_run_task_success(client, tmp_path):
 
     assert response.status_code == 200
     res = response.json()
-    assert res["plaintext_output"] == "Test output"
-    assert res["structured_output"] is None
+    assert res["output"]["plaintext_output"] == "Test output"
+    assert res["output"]["structured_output"] is None
+    assert res["run"] is None
 
 
 @pytest.mark.asyncio
@@ -259,10 +260,10 @@ async def test_run_task_structured_output(client, tmp_path):
     with patch(
         "libs.studio.kiln_studio.task_management.project_from_id"
     ) as mock_project_from_id, patch.object(
-        LangChainPromptAdapter, "invoke", new_callable=AsyncMock
+        LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
     ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
         mock_project_from_id.return_value = project
-        mock_invoke.return_value = {"key": "value"}
+        mock_invoke.return_value = AdapterRun(run=None, output={"key": "value"})
 
         # Mock the Config class
         mock_config_instance = MockConfig.return_value
@@ -275,8 +276,9 @@ async def test_run_task_structured_output(client, tmp_path):
 
     res = response.json()
     assert response.status_code == 200
-    assert res["plaintext_output"] is None
-    assert res["structured_output"] == {"key": "value"}
+    assert res["output"]["plaintext_output"] is None
+    assert res["output"]["structured_output"] == {"key": "value"}
+    assert res["run"] is None
 
 
 @pytest.mark.asyncio
@@ -368,10 +370,12 @@ async def test_run_task_structured_input(client, tmp_path):
         with patch(
             "libs.studio.kiln_studio.task_management.project_from_id"
         ) as mock_project_from_id, patch.object(
-            LangChainPromptAdapter, "invoke", new_callable=AsyncMock
+            LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
         ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
             mock_project_from_id.return_value = project
-            mock_invoke.return_value = "Structured input processed"
+            mock_invoke.return_value = AdapterRun(
+                run=None, output="Structured input processed"
+            )
 
             # Mock the Config class
             mock_config_instance = MockConfig.return_value
@@ -384,5 +388,6 @@ async def test_run_task_structured_input(client, tmp_path):
 
     assert response.status_code == 200
     res = response.json()
-    assert res["plaintext_output"] == "Structured input processed"
-    assert res["structured_output"] is None
+    assert res["output"]["plaintext_output"] == "Structured input processed"
+    assert res["output"]["structured_output"] is None
+    assert res["run"] is None

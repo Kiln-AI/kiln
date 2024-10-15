@@ -16,6 +16,12 @@ export type AllProjects = {
   error: string | null
 }
 
+export type TaskRequirement = {
+  id: string
+  name: string
+  instruction: string
+}
+
 export type Task = {
   id: string
   name: string
@@ -25,11 +31,21 @@ export type Task = {
   created_by: string
   output_json_schema: string | null
   input_json_schema: string | null
+  requirements: TaskRequirement[]
+}
+
+export type RunResponse = {
+  run: TaskRun | null
+  output: RunOutput | null
 }
 
 export type RunOutput = {
   plaintext_output: string | null
   structured_output: Record<string, unknown> | null
+}
+
+export type TaskRun = {
+  id: string
 }
 
 // UI State stored in the browser. For more client centric state

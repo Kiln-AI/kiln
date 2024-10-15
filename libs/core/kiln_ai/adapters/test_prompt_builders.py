@@ -1,6 +1,6 @@
 import json
 
-from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter, BasePromptBuilder
+from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
 from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromptBuilder
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task

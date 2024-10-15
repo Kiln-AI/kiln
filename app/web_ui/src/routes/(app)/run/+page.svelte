@@ -1,7 +1,7 @@
 <script lang="ts">
   import AppPage from "../app_page.svelte"
   import { current_task, current_project } from "$lib/stores"
-  import type { RunOutput } from "$lib/stores"
+  import type { RunOutput, RunResponse } from "$lib/stores"
   import { createKilnError } from "$lib/utils/error_handlers"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
@@ -19,12 +19,22 @@
 
   // TODO: real values for adapters and models
   let prompt_method = "basic"
-  let model = "openai/gpt_4o"
+  let model = "openai/gpt_4o_mini"
 
   $: model_name = model.split("/")[1]
   $: provider = model.split("/")[0]
 
-  let output: RunOutput | null = null
+  // TODO: remove test data
+  let response: RunResponse | null = {
+    run: {
+      id: "123",
+    },
+    output: {
+      plaintext_output: "",
+      structured_output: { a: 1, b: "asdf" },
+    },
+  }
+  $: output = response?.output
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
@@ -32,8 +42,8 @@
     try {
       submitting = true
       error = null
-      output = null
-      const response = await fetch(
+      response = null
+      const fetch_response = await fetch(
         `http://localhost:8757/api/projects/${$current_project?.id}/task/${$current_task?.id}/run`,
         {
           method: "POST",
@@ -47,10 +57,10 @@
           }),
         },
       )
-      const data = await response.json()
-      // Check if data conforms to RunOutput type
-      if (isRunOutput(data)) {
-        output = data
+      const data = await fetch_response.json()
+      // Check if data conforms to RunResponse type
+      if (isRunResponse(data)) {
+        response = data
       } else {
         throw new Error("Invalid response format")
       }
@@ -59,6 +69,16 @@
     } finally {
       submitting = false
     }
+  }
+
+  function isRunResponse(data: unknown): data is RunResponse {
+    return (
+      typeof data === "object" &&
+      data !== null &&
+      "run" in data &&
+      "output" in data &&
+      isRunOutput(data.output)
+    )
   }
 
   // Add this type guard function
@@ -151,8 +171,9 @@
       />
     </FormContainer>
   </div>
-  <div class="mt-10 {submitting || output == null ? 'hidden' : ''}">
-    <div class="text-xl font-bold">Outputs</div>
-    <Output {output} json_schema={$current_task?.output_json_schema} />
+  <div
+    class="mt-10 max-w-[1400px] {submitting || output == null ? 'hidden' : ''}"
+  >
+    <Output {response} json_schema={$current_task?.output_json_schema} />
   </div>
 </AppPage>

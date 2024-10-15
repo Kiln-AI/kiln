@@ -13,6 +13,7 @@ from kiln_ai.datamodel import (
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
 from kiln_ai.utils.formatting import snake_case
+from pydantic import BaseModel
 
 
 @dataclass
@@ -21,6 +22,11 @@ class AdapterInfo:
     model_name: str
     model_provider: str
     prompt_builder_name: str
+
+
+class AdapterRun(BaseModel):
+    run: TaskRun | None
+    output: Dict | str
 
 
 class BaseAdapter(metaclass=ABCMeta):
@@ -34,6 +40,14 @@ class BaseAdapter(metaclass=ABCMeta):
         input: Dict | str,
         input_source: DataSource | None = None,
     ) -> Dict | str:
+        result = await self.invoke_returning_run(input, input_source)
+        return result.output
+
+    async def invoke_returning_run(
+        self,
+        input: Dict | str,
+        input_source: DataSource | None = None,
+    ) -> AdapterRun:
         # validate input
         if self.input_schema is not None:
             if not isinstance(input, dict):
@@ -55,10 +69,11 @@ class BaseAdapter(metaclass=ABCMeta):
                 )
 
         # Save the run and output
+        run = None
         if Config.shared().autosave_runs:
-            self.save_run(input, input_source, result)
+            run = self.save_run(input, input_source, result)
 
-        return result
+        return AdapterRun(run=run, output=result)
 
     def has_structured_output(self) -> bool:
         return self.output_schema is not None
