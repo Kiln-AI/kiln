@@ -6,12 +6,12 @@ class SimplePromptBuilder(BasePromptBuilder):
         base_prompt = self.task.instruction
 
         # TODO: this is just a quick version. Formatting and best practices TBD
-        if len(self.task.requirements()) > 0:
+        if len(self.task.requirements) > 0:
             base_prompt += (
                 "\n\nYour response should respect the following requirements:\n"
             )
             # iterate requirements, formatting them in numbereed list like 1) task.instruction\n2)...
-            for i, requirement in enumerate(self.task.requirements()):
+            for i, requirement in enumerate(self.task.requirements):
                 base_prompt += f"{i+1}) {requirement.instruction}\n"
 
         if self.adapter is not None:
@@ -26,9 +26,9 @@ class MultiShotPromptBuilder(BasePromptBuilder):
     def build_prompt(self) -> str:
         base_prompt = f"# Instruction\n\n{ self.task.instruction }\n\n"
 
-        if len(self.task.requirements()) > 0:
+        if len(self.task.requirements) > 0:
             base_prompt += "# Requirements\n\nYour response should respect the following requirements:\n"
-            for i, requirement in enumerate(self.task.requirements()):
+            for i, requirement in enumerate(self.task.requirements):
                 base_prompt += f"{i+1}) {requirement.instruction}\n"
             base_prompt += "\n"
 

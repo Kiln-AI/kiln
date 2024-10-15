@@ -138,7 +138,7 @@ def build_structured_output_test_task(tmp_path: Path):
     assert schema["properties"]["punchline"]["type"] == "string"
     task.save_to_file()
     assert task.name == "test task"
-    assert len(task.requirements()) == 0
+    assert len(task.requirements) == 0
     return task
 
 
@@ -176,7 +176,7 @@ def build_structured_input_test_task(tmp_path: Path):
     assert schema["required"] == ["a", "b", "c"]
     task.save_to_file()
     assert task.name == "test task"
-    assert len(task.requirements()) == 0
+    assert len(task.requirements) == 0
     return task
 
 

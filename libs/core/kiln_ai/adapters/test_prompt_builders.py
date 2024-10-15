@@ -25,9 +25,9 @@ def test_simple_prompt_builder(tmp_path):
         in prompt
     )
 
-    assert "1) " + task.requirements()[0].instruction in prompt
-    assert "2) " + task.requirements()[1].instruction in prompt
-    assert "3) " + task.requirements()[2].instruction in prompt
+    assert "1) " + task.requirements[0].instruction in prompt
+    assert "2) " + task.requirements[1].instruction in prompt
+    assert "3) " + task.requirements[2].instruction in prompt
 
     user_msg = builder.build_user_message(input)
     assert input in user_msg

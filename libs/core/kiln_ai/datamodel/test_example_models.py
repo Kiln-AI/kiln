@@ -105,6 +105,9 @@ def test_structured_output_workflow(tmp_path):
     project.save_to_file()
 
     # Create task with requirements
+    req1 = TaskRequirement(name="Req1", instruction="Name must be capitalized")
+    req2 = TaskRequirement(name="Req2", instruction="Age must be positive")
+
     task = Task(
         name="Structured Output Task",
         parent=project,
@@ -117,15 +120,12 @@ def test_structured_output_workflow(tmp_path):
                 "required": ["name", "age"],
             }
         ),
+        requirements=[
+            req1,
+            req2,
+        ],
     )
     task.save_to_file()
-
-    req1 = TaskRequirement(
-        name="Req1", instruction="Name must be capitalized", parent=task
-    )
-    req2 = TaskRequirement(name="Req2", instruction="Age must be positive", parent=task)
-    req1.save_to_file()
-    req2.save_to_file()
 
     # Create runs
     runs = []
@@ -202,7 +202,7 @@ def test_structured_output_workflow(tmp_path):
     loaded_task = loaded_project.tasks()[0]
 
     assert loaded_task.name == "Structured Output Task"
-    assert len(loaded_task.requirements()) == 2
+    assert len(loaded_task.requirements) == 2
     assert len(loaded_task.runs()) == 5
 
     loaded_runs = loaded_task.runs()
@@ -227,18 +227,21 @@ def test_task_output_requirement_rating_keys(tmp_path):
     # Create a project, task, and example hierarchy
     project = Project(name="Test Project", path=(tmp_path / "test_project"))
     project.save_to_file()
-    task = Task(name="Test Task", parent=project, instruction="Task instruction")
-    task.save_to_file()
 
     # Create task requirements
     req1 = TaskRequirement(
-        name="Requirement 1", parent=task, instruction="Requirement 1 instruction"
+        name="Requirement 1", instruction="Requirement 1 instruction"
     )
-    req1.save_to_file()
     req2 = TaskRequirement(
-        name="Requirement 2", parent=task, instruction="Requirement 2 instruction"
+        name="Requirement 2", instruction="Requirement 2 instruction"
     )
-    req2.save_to_file()
+    task = Task(
+        name="Test Task",
+        parent=project,
+        instruction="Task instruction",
+        requirements=[req1, req2],
+    )
+    task.save_to_file()
 
     # Valid case: all requirement IDs are valid
     task_run = TaskRun(

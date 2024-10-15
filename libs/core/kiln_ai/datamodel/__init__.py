@@ -9,7 +9,13 @@ import jsonschema.exceptions
 from kiln_ai.datamodel.json_schema import JsonObjectSchema, schema_from_json_str
 from pydantic import BaseModel, Field, model_validator
 
-from .basemodel import ID_TYPE, KilnBaseModel, KilnParentedModel, KilnParentModel
+from .basemodel import (
+    ID_FIELD,
+    ID_TYPE,
+    KilnBaseModel,
+    KilnParentedModel,
+    KilnParentModel,
+)
 from .json_schema import validate_schema
 
 if TYPE_CHECKING:
@@ -83,7 +89,7 @@ class TaskOutputRating(KilnBaseModel):
         if len(self.requirement_ratings) == 0:
             return self
 
-        valid_requirement_ids = {req.id for req in task.requirements()}
+        valid_requirement_ids = {req.id for req in task.requirements}
         for key in self.requirement_ratings.keys():
             if key not in valid_requirement_ids:
                 raise ValueError(
@@ -296,7 +302,8 @@ class TaskRun(KilnParentedModel):
         return self
 
 
-class TaskRequirement(KilnParentedModel):
+class TaskRequirement(BaseModel):
+    id: ID_TYPE = ID_FIELD
     name: str = NAME_FIELD
     description: str = Field(default="")
     instruction: str = Field(min_length=1)
@@ -312,13 +319,14 @@ class TaskDeterminism(str, Enum):
 class Task(
     KilnParentedModel,
     KilnParentModel,
-    parent_of={"requirements": TaskRequirement, "runs": TaskRun},
+    parent_of={"runs": TaskRun},
 ):
     name: str = NAME_FIELD
     description: str = Field(default="")
     priority: Priority = Field(default=Priority.p2)
     determinism: TaskDeterminism = Field(default=TaskDeterminism.flexible)
     instruction: str = Field(min_length=1)
+    requirements: List[TaskRequirement] = Field(default=[])
     # TODO: make this required, or formalize the default message output schema
     output_json_schema: JsonObjectSchema | None = None
     input_json_schema: JsonObjectSchema | None = None
@@ -332,10 +340,6 @@ class Task(
         if self.input_json_schema is None:
             return None
         return schema_from_json_str(self.input_json_schema)
-
-    # Needed for typechecking. TODO P2: fix this in KilnParentModel
-    def requirements(self) -> list[TaskRequirement]:
-        return super().requirements()  # type: ignore
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def runs(self) -> list[TaskRun]:

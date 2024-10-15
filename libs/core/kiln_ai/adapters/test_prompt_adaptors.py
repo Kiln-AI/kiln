@@ -99,33 +99,27 @@ def build_test_task(tmp_path: Path):
     project.save_to_file()
     assert project.name == "test"
 
+    r1 = datamodel.TaskRequirement(
+        name="BEDMAS",
+        instruction="You follow order of mathematical operation (BEDMAS)",
+    )
+    r2 = datamodel.TaskRequirement(
+        name="only basic math",
+        instruction="If the problem has anything other than addition, subtraction, multiplication, division, and brackets, you will not answer it. Reply instead with 'I'm just a basic calculator, I don't know how to do that'.",
+    )
+    r3 = datamodel.TaskRequirement(
+        name="Answer format",
+        instruction="The answer can contain any content about your reasoning, but at the end it should include the final answer in numerals in square brackets. For example if the answer is one hundred, the end of your response should be [100].",
+    )
     task = datamodel.Task(
         parent=project,
         name="test task",
         instruction="You are an assistant which performs math tasks provided in plain text.",
+        requirements=[r1, r2, r3],
     )
     task.save_to_file()
     assert task.name == "test task"
-
-    r1 = datamodel.TaskRequirement(
-        parent=task,
-        name="BEDMAS",
-        instruction="You follow order of mathematical operation (BEDMAS)",
-    )
-    r1.save_to_file()
-    r2 = datamodel.TaskRequirement(
-        parent=task,
-        name="only basic math",
-        instruction="If the problem has anything other than addition, subtraction, multiplication, division, and brackets, you will not answer it. Reply instead with 'I'm just a basic calculator, I don't know how to do that'.",
-    )
-    r2.save_to_file()
-    r3 = datamodel.TaskRequirement(
-        parent=task,
-        name="Answer format",
-        instruction="The answer can contain any content about your reasoning, but at the end it should include the final answer in numerals in square brackets. For example if the answer is one hundred, the end of your response should be [100].",
-    )
-    r3.save_to_file()
-    assert len(task.requirements()) == 3
+    assert len(task.requirements) == 3
     return task
 
 
@@ -145,4 +139,4 @@ async def run_simple_task(task: datamodel.Task, model_name: str, provider: str):
     assert model_info.model_name == model_name
     assert model_info.model_provider == provider
     assert model_info.adapter_name == "kiln_langchain_adapter"
-    assert model_info.prompt_builder_name == "SimplePromptBuilder"
+    assert model_info.prompt_builder_name == "simple_prompt_builder"
