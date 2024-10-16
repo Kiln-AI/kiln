@@ -414,7 +414,7 @@ export interface components {
              */
             input: string;
             /** @description The source of the input: human or synthetic. */
-            source: components["schemas"]["DataSource"];
+            input_source: components["schemas"]["DataSource"];
             /** @description The output of the task run. */
             output: components["schemas"]["TaskOutput"];
             /**

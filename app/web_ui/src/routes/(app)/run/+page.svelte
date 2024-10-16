@@ -33,7 +33,7 @@
       id: "123",
       input: "asdf",
       model_type: "run",
-      source: {
+      input_source: {
         type: "human",
         properties: {
           a: 1,
