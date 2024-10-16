@@ -503,7 +503,7 @@ def test_deep_update_with_none_values():
 def test_update_run_method():
     run = TaskRun(
         input="Test input",
-        source=DataSource(
+        input_source=DataSource(
             type=DataSourceType.human, properties={"creator": "Jane Doe"}
         ),
         output=TaskOutput(
@@ -546,7 +546,7 @@ async def test_update_run(client, tmp_path):
     run = TaskRun(
         parent=task,
         input="Test input",
-        source=DataSource(
+        input_source=DataSource(
             type=DataSourceType.human, properties={"creator": "Jane Doe"}
         ),
         output=TaskOutput(

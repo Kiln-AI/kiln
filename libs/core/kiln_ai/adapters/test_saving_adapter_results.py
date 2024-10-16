@@ -47,12 +47,12 @@ def test_save_run_isolation(test_task):
     # Check that the task input was saved correctly
     assert task_run.parent == test_task
     assert task_run.input == input_data
-    assert task_run.source.type == DataSourceType.human
+    assert task_run.input_source.type == DataSourceType.human
     creator = Config.shared().user_id
     if creator and creator != "":
-        assert task_run.source.properties["creator"] == creator
+        assert task_run.input_source.properties["creator"] == creator
     else:
-        assert "creator" not in task_run.source.properties
+        assert "creator" not in task_run.input_source.properties
 
     # Check that the task output was saved correctly
     saved_output = task_run.output
@@ -66,7 +66,7 @@ def test_save_run_isolation(test_task):
     assert len(reloaded_runs) == 1
     reloaded_run = reloaded_runs[0]
     assert reloaded_run.input == input_data
-    assert reloaded_run.source.type == DataSourceType.human
+    assert reloaded_run.input_source.type == DataSourceType.human
     reloaded_output = reloaded_run.output
 
     reloaded_output = reloaded_run.output
@@ -108,7 +108,7 @@ def test_save_run_isolation(test_task):
     )
     assert len(test_task.runs()) == 3
     assert task_output.input == input_data
-    assert task_output.source.type == DataSourceType.synthetic
+    assert task_output.input_source.type == DataSourceType.synthetic
     assert "Different output" in set(run.output.output for run in test_task.runs())
     assert output_data in set(run.output.output for run in test_task.runs())
 
@@ -144,7 +144,7 @@ async def test_autosave_true(test_task):
         task_runs = test_task.runs()
         assert len(task_runs) == 1
         assert task_runs[0].input == input_data
-        assert task_runs[0].source.type == DataSourceType.human
+        assert task_runs[0].input_source.type == DataSourceType.human
 
         output = task_runs[0].output
         assert output.output == "Test output"

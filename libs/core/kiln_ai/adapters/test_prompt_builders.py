@@ -97,7 +97,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     # Create an task input, but with no output
     e1 = TaskRun(
         input='{"subject": "Cows"}',
-        source=DataSource(
+        input_source=DataSource(
             type=DataSourceType.human,
             properties={"creator": "john_doe"},
         ),
@@ -122,7 +122,7 @@ def test_multi_shot_prompt_builder(tmp_path):
 
     e2 = TaskRun(
         input='{"subject": "Dogs"}',
-        source=DataSource(
+        input_source=DataSource(
             type=DataSourceType.human,
             properties={"creator": "john_doe"},
         ),

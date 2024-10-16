@@ -93,7 +93,7 @@ async def test_mock_returning_run(tmp_path):
     assert adapter_response.run.id is not None
     assert adapter_response.run.input == "You are a mock, send me the response!"
     assert adapter_response.run.output.output == "mock response"
-    assert "creator" in adapter_response.run.source.properties
+    assert "creator" in adapter_response.run.input_source.properties
     assert adapter_response.run.output.source.properties == {
         "adapter_name": "kiln_langchain_adapter",
         "model_name": "custom.langchain:unknown_model",

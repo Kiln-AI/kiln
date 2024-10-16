@@ -230,7 +230,7 @@ class TaskRun(KilnParentedModel):
     input: str = Field(
         description="The inputs to the task. JSON formatted for structured input, plaintext for unstructured input."
     )
-    source: DataSource = Field(
+    input_source: DataSource = Field(
         description="The source of the input: human or synthetic."
     )
 

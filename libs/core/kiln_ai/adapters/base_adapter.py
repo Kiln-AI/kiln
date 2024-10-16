@@ -108,7 +108,7 @@ class BaseAdapter(metaclass=ABCMeta):
         new_task_run = TaskRun(
             parent=self.kiln_task,
             input=input_str,
-            source=input_source,
+            input_source=input_source,
             output=TaskOutput(
                 output=output_str,
                 # Synthetic since an adapter, not a human, is creating this
