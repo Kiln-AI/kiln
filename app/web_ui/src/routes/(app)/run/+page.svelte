@@ -5,7 +5,7 @@
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import { KilnError } from "$lib/utils/error_handlers"
-  import Output from "./output.svelte"
+  import Run from "./run.svelte"
   import createClient from "openapi-fetch"
   import { type components, type paths } from "$lib/api_schema.d"
 
@@ -41,7 +41,7 @@
       },
       output: {
         v: 1,
-        output: "asdf",
+        output: '{"a": 1, "b": "asdf"}',
         source: {
           type: "synthetic",
           properties: {
@@ -49,6 +49,18 @@
           },
         },
         model_type: "output",
+        rating: {
+          v: 1,
+          id: "270303291267",
+          created_at: "2024-10-16T10:24:00.872146",
+          created_by: "scosman",
+          type: "five_star",
+          value: null,
+          requirement_ratings: {
+            "148753630565": 3,
+          },
+          model_type: "task_output_rating",
+        },
       },
     },
     output: {
@@ -175,13 +187,31 @@
     </FormContainer>
   </div>
   {#if $current_task && !submitting && response != null && $current_project}
-    <div class="mt-10 max-w-[1400px]">
-      <Output
-        {response}
-        json_schema={$current_task?.output_json_schema}
-        task={$current_task}
-        project_id={$current_project.id}
-      />
-    </div>
+    {#if response.run != null}
+      <div class="mt-10 max-w-[1400px]">
+        <Run
+          initial_run={response?.run}
+          task={$current_task}
+          project_id={$current_project.id}
+        />
+      </div>
+    {:else if response?.output}
+      <!-- The response.run object may be nil if the run isn't saved (env var option for this). We still want to show the output though. -->
+      <div class="text-xl font-bold mt-10">Run Output</div>
+      {#if response.output.structured_output}
+        <pre
+          class="mt-3 bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{JSON.stringify(
+            response.output.structured_output,
+            null,
+            2,
+          )}</pre>
+      {:else if response.output.plaintext_output}
+        <pre
+          class="mt-4 bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{response
+            .output.plaintext_output}</pre>
+      {:else}
+        <div>No run output yet</div>
+      {/if}
+    {/if}
   {/if}
 </AppPage>
