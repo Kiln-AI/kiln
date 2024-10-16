@@ -5,10 +5,10 @@ from pydantic import ValidationError
 
 def test_valid_human_data_source():
     data_source = DataSource(
-        type=DataSourceType.human, properties={"creator": "John Doe"}
+        type=DataSourceType.human, properties={"created_by": "John Doe"}
     )
     assert data_source.type == DataSourceType.human
-    assert data_source.properties["creator"] == "John Doe"
+    assert data_source.properties["created_by"] == "John Doe"
 
 
 def test_valid_synthetic_data_source():
@@ -30,7 +30,7 @@ def test_valid_synthetic_data_source():
 
 def test_missing_required_property():
     with pytest.raises(
-        ValidationError, match="'creator' is required for DataSourceType.human data"
+        ValidationError, match="'created_by' is required for DataSourceType.human data"
     ):
         DataSource(type=DataSourceType.human)
 
@@ -49,14 +49,14 @@ def test_wrong_property_type():
 def test_not_allowed_property():
     with pytest.raises(
         ValidationError,
-        match="'creator' is not allowed for DataSourceType.synthetic data",
+        match="'created_by' is not allowed for DataSourceType.synthetic data",
     ):
         DataSource(
             type=DataSourceType.synthetic,
             properties={
                 "model_name": "GPT-4",
                 "model_provider": "OpenAI",
-                "creator": "John Doe",
+                "created_by": "John Doe",
             },
         )
 

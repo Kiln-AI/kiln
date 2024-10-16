@@ -28,13 +28,13 @@ def valid_task_run(tmp_path):
         input="Test input",
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "John Doe"},
+            properties={"created_by": "John Doe"},
         ),
         output=TaskOutput(
             output="Test output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "John Doe"},
+                properties={"created_by": "John Doe"},
             ),
         ),
     )
@@ -46,10 +46,10 @@ def test_task_model_validation(valid_task_run):
     task_run.save_to_file()
     assert task_run.input == "Test input"
     assert task_run.input_source.type == DataSourceType.human
-    assert task_run.input_source.properties == {"creator": "John Doe"}
+    assert task_run.input_source.properties == {"created_by": "John Doe"}
     assert task_run.output.output == "Test output"
     assert task_run.output.source.type == DataSourceType.human
-    assert task_run.output.source.properties == {"creator": "John Doe"}
+    assert task_run.output.source.properties == {"created_by": "John Doe"}
 
     # Invalid source
     with pytest.raises(ValidationError, match="Input should be"):
@@ -73,13 +73,13 @@ def test_task_model_validation(valid_task_run):
 
     # Test we catch nested validation errors
     with pytest.raises(
-        ValidationError, match="'creator' is required for DataSourceType.human"
+        ValidationError, match="'created_by' is required for DataSourceType.human"
     ):
         task_run = TaskRun(
             input="Test input",
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "John Doe"},
+                properties={"created_by": "John Doe"},
             ),
             output=TaskOutput(
                 output="Test output",
@@ -135,7 +135,7 @@ def test_structured_output_workflow(tmp_path):
                 input="Generate info for John Doe",
                 input_source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 )
                 if source == DataSourceType.human
                 else DataSource(
@@ -152,7 +152,7 @@ def test_structured_output_workflow(tmp_path):
                     output='{"name": "John Doe", "age": 30}',
                     source=DataSource(
                         type=DataSourceType.human,
-                        properties={"creator": "john_doe"},
+                        properties={"created_by": "john_doe"},
                     ),
                 ),
             )
@@ -164,14 +164,14 @@ def test_structured_output_workflow(tmp_path):
         input="Generate info for John Doe",
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         parent=task,
         output=TaskOutput(
             output='{"name": "John Doe", "age": 31}',
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
         repair_instructions="The age should be 31 instead of 30",
@@ -179,7 +179,7 @@ def test_structured_output_workflow(tmp_path):
             output='{"name": "John Doe", "age": 31}',
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
     )
@@ -249,14 +249,14 @@ def test_task_output_requirement_rating_keys(tmp_path):
         input="Test input",
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         parent=task,
         output=TaskOutput(
             output="Test output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             rating=TaskOutputRating(
                 value=4,
@@ -279,14 +279,14 @@ def test_task_output_requirement_rating_keys(tmp_path):
             input="Test input",
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             parent=task,
             output=TaskOutput(
                 output="Test output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
                 rating=TaskOutputRating(
                     value=4,
@@ -322,14 +322,14 @@ def test_task_output_schema_validation(tmp_path):
         input="Test input",
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         parent=task,
         output=TaskOutput(
             output='{"name": "John Doe", "age": 30}',
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
     )
@@ -346,14 +346,14 @@ def test_task_output_schema_validation(tmp_path):
             input="Test input",
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             parent=task,
             output=TaskOutput(
                 output='{"name": "John Doe", "age": "thirty"}',
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
             ),
         )
@@ -383,14 +383,14 @@ def test_task_input_schema_validation(tmp_path):
         input='{"name": "John Doe", "age": 30}',
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         parent=task,
         output=TaskOutput(
             output="Test output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
     )
@@ -407,14 +407,14 @@ def test_task_input_schema_validation(tmp_path):
             input='{"name": "John Doe", "age": "thirty"}',
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             parent=task,
             output=TaskOutput(
                 output="Test output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
             ),
         )
@@ -426,16 +426,16 @@ def test_valid_human_task_output():
         output="Test output",
         source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "John Doe"},
+            properties={"created_by": "John Doe"},
         ),
     )
     assert output.source.type == DataSourceType.human
-    assert output.source.properties["creator"] == "John Doe"
+    assert output.source.properties["created_by"] == "John Doe"
 
 
-def test_invalid_human_task_output_missing_creator():
+def test_invalid_human_task_output_missing_created_by():
     with pytest.raises(
-        ValidationError, match="'creator' is required for DataSourceType.human"
+        ValidationError, match="'created_by' is required for DataSourceType.human"
     ):
         TaskOutput(
             output="Test output",
@@ -446,15 +446,15 @@ def test_invalid_human_task_output_missing_creator():
         )
 
 
-def test_invalid_human_task_output_empty_creator():
+def test_invalid_human_task_output_empty_created_by():
     with pytest.raises(
-        ValidationError, match="Property 'creator' must be a non-empty string"
+        ValidationError, match="Property 'created_by' must be a non-empty string"
     ):
         TaskOutput(
             output="Test output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": ""},
+                properties={"created_by": ""},
             ),
         )
 
@@ -532,13 +532,13 @@ def test_task_run_validate_repaired_output():
         input="test input",
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         output=TaskOutput(
             output="test output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
     )
@@ -549,13 +549,13 @@ def test_task_run_validate_repaired_output():
         input="test input",
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         output=TaskOutput(
             output="test output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
         repair_instructions="Fix the output",
@@ -563,7 +563,7 @@ def test_task_run_validate_repaired_output():
             output="repaired output",
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
     )
@@ -576,20 +576,20 @@ def test_task_run_validate_repaired_output():
             input="test input",
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             output=TaskOutput(
                 output="test output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
             ),
             repaired_output=TaskOutput(
                 output="repaired output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
             ),
         )
@@ -602,13 +602,13 @@ def test_task_run_validate_repaired_output():
             input="test input",
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             output=TaskOutput(
                 output="test output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
             ),
             repair_instructions="Fix the output",
@@ -622,20 +622,20 @@ def test_task_run_validate_repaired_output():
             input="test input",
             input_source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             output=TaskOutput(
                 output="test output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
             ),
             repaired_output=TaskOutput(
                 output="repaired output",
                 source=DataSource(
                     type=DataSourceType.human,
-                    properties={"creator": "john_doe"},
+                    properties={"created_by": "john_doe"},
                 ),
                 rating=TaskOutputRating(type=TaskOutputRatingType.five_star, value=5.0),
             ),

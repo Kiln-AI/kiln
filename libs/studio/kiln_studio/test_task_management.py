@@ -504,12 +504,12 @@ def test_update_run_method():
     run = TaskRun(
         input="Test input",
         input_source=DataSource(
-            type=DataSourceType.human, properties={"creator": "Jane Doe"}
+            type=DataSourceType.human, properties={"created_by": "Jane Doe"}
         ),
         output=TaskOutput(
             output="Test output",
             source=DataSource(
-                type=DataSourceType.human, properties={"creator": "Jane Doe"}
+                type=DataSourceType.human, properties={"created_by": "Jane Doe"}
             ),
         ),
     )
@@ -547,12 +547,12 @@ async def test_update_run(client, tmp_path):
         parent=task,
         input="Test input",
         input_source=DataSource(
-            type=DataSourceType.human, properties={"creator": "Jane Doe"}
+            type=DataSourceType.human, properties={"created_by": "Jane Doe"}
         ),
         output=TaskOutput(
             output="Test output",
             source=DataSource(
-                type=DataSourceType.human, properties={"creator": "Jane Doe"}
+                type=DataSourceType.human, properties={"created_by": "Jane Doe"}
             ),
         ),
     )

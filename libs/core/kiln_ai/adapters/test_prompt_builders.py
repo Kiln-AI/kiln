@@ -99,14 +99,14 @@ def test_multi_shot_prompt_builder(tmp_path):
         input='{"subject": "Cows"}',
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         parent=task,
         output=TaskOutput(
             output='{"joke": "Moo I am a cow joke."}',
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
         ),
     )
@@ -124,14 +124,14 @@ def test_multi_shot_prompt_builder(tmp_path):
         input='{"subject": "Dogs"}',
         input_source=DataSource(
             type=DataSourceType.human,
-            properties={"creator": "john_doe"},
+            properties={"created_by": "john_doe"},
         ),
         parent=task,
         output=TaskOutput(
             output='{"joke": "This is a ruff joke."}',
             source=DataSource(
                 type=DataSourceType.human,
-                properties={"creator": "john_doe"},
+                properties={"created_by": "john_doe"},
             ),
             rating=TaskOutputRating(value=4, reason="Bark"),
         ),

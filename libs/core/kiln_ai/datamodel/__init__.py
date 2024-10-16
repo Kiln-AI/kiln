@@ -154,7 +154,7 @@ class DataSource(BaseModel):
 
     _data_source_properties = [
         DataSourceProperty(
-            name="creator",
+            name="created_by",
             type=str,
             required_for=[DataSourceType.human],
             not_allowed_for=[DataSourceType.synthetic],

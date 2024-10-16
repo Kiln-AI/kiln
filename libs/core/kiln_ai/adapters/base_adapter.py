@@ -102,7 +102,7 @@ class BaseAdapter(metaclass=ABCMeta):
         if input_source is None:
             input_source = DataSource(
                 type=DataSourceType.human,
-                properties={"creator": Config.shared().user_id},
+                properties={"created_by": Config.shared().user_id},
             )
 
         new_task_run = TaskRun(

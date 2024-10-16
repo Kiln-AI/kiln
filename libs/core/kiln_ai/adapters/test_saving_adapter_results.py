@@ -48,11 +48,11 @@ def test_save_run_isolation(test_task):
     assert task_run.parent == test_task
     assert task_run.input == input_data
     assert task_run.input_source.type == DataSourceType.human
-    creator = Config.shared().user_id
-    if creator and creator != "":
-        assert task_run.input_source.properties["creator"] == creator
+    created_by = Config.shared().user_id
+    if created_by and created_by != "":
+        assert task_run.input_source.properties["created_by"] == created_by
     else:
-        assert "creator" not in task_run.input_source.properties
+        assert "created_by" not in task_run.input_source.properties
 
     # Check that the task output was saved correctly
     saved_output = task_run.output
