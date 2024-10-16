@@ -377,10 +377,10 @@ export interface components {
             /** @default five_star */
             type: components["schemas"]["TaskOutputRatingType"];
             /**
-             * Rating
-             * @description The rating value (typically 1-5 stars).
+             * Value
+             * @description The overall rating value (typically 1-5 stars).
              */
-            rating: number;
+            value?: number | null;
             /**
              * Requirement Ratings
              * @description The ratings of the requirements of the task. The keys are the ids of the requirements. The values are the ratings (typically 1-5 stars).

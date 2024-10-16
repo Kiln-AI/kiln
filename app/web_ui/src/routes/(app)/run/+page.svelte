@@ -59,7 +59,6 @@
       },
     },
   }
-  $: output = response?.output
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
@@ -175,9 +174,14 @@
       />
     </FormContainer>
   </div>
-  <div
-    class="mt-10 max-w-[1400px] {submitting || output == null ? 'hidden' : ''}"
-  >
-    <Output {response} json_schema={$current_task?.output_json_schema} />
-  </div>
+  {#if $current_task && !submitting && response != null && $current_project}
+    <div class="mt-10 max-w-[1400px]">
+      <Output
+        {response}
+        json_schema={$current_task?.output_json_schema}
+        task={$current_task}
+        project_id={$current_project.id}
+      />
+    </div>
+  {/if}
 </AppPage>

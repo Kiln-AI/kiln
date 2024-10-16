@@ -51,7 +51,10 @@ class TaskOutputRating(KilnBaseModel):
     """
 
     type: TaskOutputRatingType = Field(default=TaskOutputRatingType.five_star)
-    value: float = Field(description="The overall rating value (typically 1-5 stars).")
+    value: float | None = Field(
+        description="The overall rating value (typically 1-5 stars).",
+        default=None,
+    )
     requirement_ratings: Dict[ID_TYPE, float] = Field(
         default={},
         description="The ratings of the requirements of the task. The keys are the ids of the requirements. The values are the ratings (typically 1-5 stars).",
@@ -60,7 +63,7 @@ class TaskOutputRating(KilnBaseModel):
     # Used to select high quality outputs for example selection (MultiShotPromptBuilder, etc)
     def is_high_quality(self) -> bool:
         if self.type == TaskOutputRatingType.five_star:
-            return self.value >= 4
+            return self.value is not None and self.value >= 4
         return False
 
     @model_validator(mode="after")
@@ -69,7 +72,8 @@ class TaskOutputRating(KilnBaseModel):
             raise ValueError(f"Invalid rating type: {self.type}")
 
         if self.type == TaskOutputRatingType.five_star:
-            self._validate_five_star(self.value, "overall rating")
+            if self.value is not None:
+                self._validate_five_star(self.value, "overall rating")
             for req_id, req_rating in self.requirement_ratings.items():
                 self._validate_five_star(req_rating, f"requirement rating for {req_id}")
 

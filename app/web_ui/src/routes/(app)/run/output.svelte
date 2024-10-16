@@ -1,51 +1,100 @@
 <script lang="ts">
-  import type { Task, TaskRequirement } from "$lib/stores"
-  import { current_task } from "$lib/stores"
+  import type { Task } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import Rating from "./rating.svelte"
   export let json_schema: string | null = null
   let repair_instructions: string | null = null
-  import { type components } from "$lib/api_schema.d"
+  import createClient from "openapi-fetch"
+  import { type components, type paths } from "$lib/api_schema.d"
 
-  export let response: components["schemas"]["RunTaskResponse"] | null = null
+  export let project_id: string
+  export let task: Task
+  export let response: components["schemas"]["RunTaskResponse"]
   $: output = response?.output
   $: output_valid =
     output &&
     ((json_schema && output.structured_output) ||
       (!json_schema && output.plaintext_output))
-  // TODO warn_before_onload
+  let updated_run: components["schemas"]["TaskRun"] | null = null
+  $: run = updated_run || response?.run
 
+  // TODO warn_before_unload
+
+  // TODO: we aren't loading existing ratings from the server
   let overall_rating: 1 | 2 | 3 | 4 | 5 | null = null
-  let requirement_ratings: (1 | 2 | 3 | 4 | 5 | null)[] = []
-  let prior_task: Task | null = null
+  let requirement_ratings: (1 | 2 | 3 | 4 | 5 | null)[] = Array(
+    task.requirements.length,
+  ).fill(null)
 
-  current_task.subscribe((task) => {
-    if (task) {
-      let original_ratings = requirement_ratings
-      requirement_ratings = []
-      for (const requirement of task.requirements) {
-        // Look up prior rating, if any
-        let prior_index = prior_task?.requirements.findIndex(
-          (req: TaskRequirement) => req.id === requirement.id,
-        )
-        let value =
-          prior_index && prior_index >= 0 ? original_ratings[prior_index] : null
-        requirement_ratings.push(value)
+  async function save_ratings() {
+    try {
+      let requirement_ratings_obj: Record<string, 1 | 2 | 3 | 4 | 5 | null> = {}
+      task.requirements.forEach((req, index) => {
+        requirement_ratings_obj[req.id] = requirement_ratings[index]
+      })
+      let patch_body = {
+        output: {
+          rating: {
+            value: overall_rating,
+            type: "five_star",
+            requirement_ratings: requirement_ratings_obj,
+          },
+        },
       }
-      prior_task = task
+      const client = createClient<paths>({
+        baseUrl: "http://localhost:8757",
+      })
+      const {
+        data, // only present if 2XX response
+        error: fetch_error, // only present if 4XX or 5XX response
+      } = await client.PATCH(
+        "/api/projects/{project_id}/task/{task_id}/run/{run_id}",
+        {
+          params: {
+            path: {
+              project_id: project_id,
+              task_id: task.id || "",
+              run_id: run?.id || "",
+            },
+          },
+          // @ts-expect-error type checking and PATCH don't mix
+          body: patch_body,
+        },
+      )
+      if (fetch_error) {
+        // TODO: check error message extraction
+        throw new Error("Failed to run task: " + fetch_error)
+      }
+      updated_run = data
+    } catch (err) {
+      // TODO: better error handling
+      console.error("Failed to save ratings", err)
     }
-  })
-
-  function save_ratings() {
-    console.log("Overall rating", overall_rating)
-    $current_task?.requirements.forEach((req, index) => {
-      console.log("Requirement", req.name, requirement_ratings[index])
-    })
   }
 
   function attempt_repair() {
     console.log("Attempting repair")
+  }
+
+  // Watch for changes to ratings and save them if they change
+  let prior_overall_rating: 1 | 2 | 3 | 4 | 5 | null = overall_rating
+  let prior_requirement_ratings: (1 | 2 | 3 | 4 | 5 | null)[] =
+    requirement_ratings
+  $: {
+    if (
+      overall_rating !== prior_overall_rating ||
+      !areArraysEqual(requirement_ratings, prior_requirement_ratings)
+    ) {
+      save_ratings()
+    }
+    prior_overall_rating = overall_rating
+    prior_requirement_ratings = [...requirement_ratings]
+  }
+
+  function areArraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
+    if (arr1.length !== arr2.length) return false
+    return arr1.every((value, index) => value === arr2[index])
   }
 </script>
 
@@ -98,8 +147,8 @@
           <div class="flex items-center">
             <Rating bind:rating={overall_rating} size={7} />
           </div>
-          {#if $current_task?.requirements}
-            {#each $current_task.requirements as requirement, index}
+          {#if task.requirements}
+            {#each task.requirements as requirement, index}
               <div class="flex items-center">
                 {requirement.name}:
               </div>
@@ -109,7 +158,6 @@
             {/each}
           {/if}
         </div>
-        <button class="mt-4 link" on:click={save_ratings}>Save Ratings</button>
       </div>
     </div>
 
@@ -133,4 +181,7 @@
       </FormContainer>
     {/if}
   {/if}
+
+  <h1>Raw Data</h1>
+  <pre>{JSON.stringify(run, null, 2)}</pre>
 </div>

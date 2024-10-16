@@ -401,13 +401,6 @@ async def test_run_task_structured_input(client, tmp_path):
     assert res["run"] is None
 
 
-def test_deep_update_with_none_source():
-    source = None
-    update = {"a": 1, "b": {"c": 2}}
-    result = deep_update(source, update)
-    assert result == {"a": 1, "b": {"c": 2}}
-
-
 def test_deep_update_with_empty_source():
     source = {}
     update = {"a": 1, "b": {"c": 2}}
@@ -443,6 +436,72 @@ def test_deep_update_with_mixed_types():
     assert result == {"a": "new", "b": {"c": 4, "d": {"e": 5}}}
 
 
+def test_deep_update_with_none_values():
+    # Test case 1: Basic removal of keys
+    source = {"a": 1, "b": 2, "c": 3}
+    update = {"a": None, "b": 4}
+    result = deep_update(source, update)
+    assert result == {"b": 4, "c": 3}
+
+    # Test case 2: Nested dictionaries
+    source = {"x": 1, "y": {"y1": 10, "y2": 20, "y3": {"y3a": 100, "y3b": 200}}, "z": 3}
+    update = {"y": {"y2": None, "y3": {"y3b": None, "y3c": 300}}, "z": None}
+    result = deep_update(source, update)
+    assert result == {"x": 1, "y": {"y1": 10, "y3": {"y3a": 100, "y3c": 300}}}
+
+    # Test case 3: Update with empty dictionary
+    source = {"a": 1, "b": 2}
+    update = {}
+    result = deep_update(source, update)
+    assert result == {"a": 1, "b": 2}
+
+    # Test case 4: Update missing with none elements
+    source = {"a": 1, "b": {"d": 1}}
+    update = {"b": {"e": {"f": {"h": 1, "j": None}, "g": None}}}
+    result = deep_update(source, update)
+    assert result == {"a": 1, "b": {"d": 1, "e": {"f": {"h": 1}}}}
+
+    # Test case 5: Mixed types
+    source = {"a": 1, "b": {"x": 10, "y": 20}, "c": [1, 2, 3]}
+    update = {"b": {"y": None, "z": 30}, "c": None, "d": 4}
+    result = deep_update(source, update)
+    assert result == {"a": 1, "b": {"x": 10, "z": 30}, "d": 4}
+
+    # Test case 6: Update with
+    source = {}
+    update = {"a": {"b": None, "c": None}}
+    result = deep_update(source, update)
+    assert result == {"a": {}}
+
+    # Test case 7: Update with
+    source = {
+        "output": {
+            "rating": None,
+        },
+    }
+    update = {
+        "output": {
+            "rating": {
+                "value": 2,
+                "type": "five_star",
+                "requirement_ratings": {
+                    "148753630565": None,
+                    "988847661375": 3,
+                    "474350686960": None,
+                },
+            }
+        }
+    }
+    result = deep_update(source, update)
+    assert result["output"]["rating"]["value"] == 2
+    assert result["output"]["rating"]["type"] == "five_star"
+    assert result["output"]["rating"]["requirement_ratings"] == {
+        # "148753630565": None,
+        "988847661375": 3,
+        # "474350686960": None,
+    }
+
+
 def test_update_run_method():
     run = TaskRun(
         input="Test input",
@@ -463,12 +522,12 @@ def test_update_run_method():
     assert updated_run.input == "Updated input"
 
     update = {
-        "output": {"rating": {"rating": 4, "type": TaskOutputRatingType.five_star}}
+        "output": {"rating": {"value": 4, "type": TaskOutputRatingType.five_star}}
     }
     dumped = run.model_dump()
     merged = deep_update(dumped, update)
     updated_run = TaskRun.model_validate(merged)
-    assert updated_run.output.rating.rating == 4
+    assert updated_run.output.rating.value == 4
     assert updated_run.output.rating.type == TaskOutputRatingType.five_star
 
 
@@ -506,12 +565,12 @@ async def test_update_run(client, tmp_path):
             "name": "Update output rating",
             "patch": {
                 "output": {
-                    "rating": {"rating": 4, "type": TaskOutputRatingType.five_star},
+                    "rating": {"value": 4, "type": TaskOutputRatingType.five_star},
                 }
             },
             "expected": {
                 "output": {
-                    "rating": {"rating": 4, "type": TaskOutputRatingType.five_star},
+                    "rating": {"value": 4, "type": TaskOutputRatingType.five_star},
                 }
             },
         },

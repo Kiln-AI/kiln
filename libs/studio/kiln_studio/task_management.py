@@ -29,21 +29,26 @@ class RunTaskResponse(BaseModel):
     run: TaskRun | None = None
 
 
-def deep_update(source, update):
+def deep_update(
+    source: Dict[str, Any] | None, update: Dict[str, Any | None]
+) -> Dict[str, Any]:
     if source is None:
-        return update
+        return {k: v for k, v in update.items() if v is not None}
     for key, value in update.items():
-        if isinstance(value, dict):
-            source[key] = deep_update(source.get(key, {}), value)
+        if value is None:
+            source.pop(key, None)
+        elif isinstance(value, dict):
+            if key not in source or not isinstance(source[key], dict):
+                source[key] = {}
+            source[key] = deep_update(source[key], value)
         else:
             source[key] = value
-    return source
+    return {k: v for k, v in source.items() if v is not None}
 
 
 def connect_task_management(app: FastAPI):
     @app.post("/api/projects/{project_id}/task")
     async def create_task(project_id: str, task_data: Dict[str, Any]):
-        print(f"Creating task for project {project_id} with data {task_data}")
         parent_project = project_from_id(project_id)
 
         task = Task.validate_and_save_with_subrelations(
