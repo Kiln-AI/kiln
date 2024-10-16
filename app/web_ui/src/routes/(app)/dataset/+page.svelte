@@ -2,4 +2,4 @@
   import AppPage from "../app_page.svelte"
 </script>
 
-<AppPage title="Examples" />
+<AppPage title="Dataset" />

@@ -5,7 +5,7 @@
   import { page } from "$app/stores"
 
   enum Section {
-    Examples,
+    Dataset,
     SettingsMain,
     SettingsProviders,
     SettingsManageProjects,
@@ -30,8 +30,8 @@
 
   let section: Section = Section.None
   $: {
-    if (path_start("/examples", $page.url.pathname)) {
-      section = Section.Examples
+    if (path_start("/dataset", $page.url.pathname)) {
+      section = Section.Dataset
     } else if (path_start("/settings/providers", $page.url.pathname)) {
       section = Section.SettingsProviders
     } else if (path_start("/settings/manage_projects", $page.url.pathname)) {
@@ -142,7 +142,7 @@
         >
       </li>
       <li class="menu-lg">
-        <a href="/examples" class={section == Section.Examples ? "active" : ""}>
+        <a href="/dataset" class={section == Section.Dataset ? "active" : ""}>
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524492/database -->
           <svg
             class="w-6 h-6 mr-2"
@@ -178,7 +178,7 @@
               stroke-width="1.5"
             />
           </svg>
-          Examples</a
+          Dataset</a
         >
       </li>
       <li class="menu-lg">
