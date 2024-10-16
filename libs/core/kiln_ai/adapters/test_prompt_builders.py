@@ -115,9 +115,7 @@ def test_multi_shot_prompt_builder(tmp_path):
     ## still zero since not fixed and not rated highly
     check_example_outputs(task, 0)
 
-    e1.output.rating = TaskOutputRating(
-        rating=4,
-    )
+    e1.output.rating = TaskOutputRating(value=4)
     e1.save_to_file()
     # Now that it's highly rated, it should be included
     check_example_outputs(task, 1)
@@ -135,7 +133,7 @@ def test_multi_shot_prompt_builder(tmp_path):
                 type=DataSourceType.human,
                 properties={"creator": "john_doe"},
             ),
-            rating=TaskOutputRating(rating=4, reason="Bark"),
+            rating=TaskOutputRating(value=4, reason="Bark"),
         ),
     )
     e2.save_to_file()

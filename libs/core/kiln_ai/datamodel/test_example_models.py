@@ -189,7 +189,7 @@ def test_structured_output_workflow(tmp_path):
     # Update outputs with ratings
     for task_run in runs:
         task_run.output.rating = TaskOutputRating(
-            rating=4,
+            value=4,
             requirement_ratings={
                 req1.id: 5,
                 req2.id: 5,
@@ -209,6 +209,7 @@ def test_structured_output_workflow(tmp_path):
     for task_run in loaded_runs:
         output = task_run.output
         assert output.rating is not None
+        assert output.rating.value == 4
         assert len(output.rating.requirement_ratings) == 2
 
     # Find the run with the fixed output
@@ -258,7 +259,7 @@ def test_task_output_requirement_rating_keys(tmp_path):
                 properties={"creator": "john_doe"},
             ),
             rating=TaskOutputRating(
-                rating=4,
+                value=4,
                 requirement_ratings={
                     req1.id: 5,
                     req2.id: 4,
@@ -288,7 +289,7 @@ def test_task_output_requirement_rating_keys(tmp_path):
                     properties={"creator": "john_doe"},
                 ),
                 rating=TaskOutputRating(
-                    rating=4,
+                    value=4,
                     requirement_ratings={
                         "unknown_id": 5,
                     },
@@ -636,9 +637,7 @@ def test_task_run_validate_repaired_output():
                     type=DataSourceType.human,
                     properties={"creator": "john_doe"},
                 ),
-                rating=TaskOutputRating(
-                    type=TaskOutputRatingType.five_star, rating=5.0
-                ),
+                rating=TaskOutputRating(type=TaskOutputRatingType.five_star, value=5.0),
             ),
         )
 
