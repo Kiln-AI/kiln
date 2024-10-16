@@ -14,6 +14,8 @@
   let updated_run: components["schemas"]["TaskRun"] | null = null
   $: run = updated_run || initial_run
 
+  let show_raw_data = false
+
   // TODO warn_before_unload
 
   // TODO: we aren't loading existing ratings from the server
@@ -160,6 +162,22 @@
     </FormContainer>
   {/if}
 
-  <h1>Raw Data</h1>
-  <pre>{JSON.stringify(run, null, 2)}</pre>
+  <div class="mt-16">
+    <button
+      class="btn btn-wide"
+      on:click={() => (show_raw_data = !show_raw_data)}
+      >{show_raw_data ? "Hide" : "Show"} Raw Data</button
+    >
+  </div>
+
+  <div class={show_raw_data ? "" : "hidden"}>
+    <h1 class="text-xl font-bold mt-10 mb-4">Raw Data</h1>
+    <div class="text-sm">
+      <pre class="bg-base-200 p-4 rounded-lg">{JSON.stringify(
+          run,
+          null,
+          2,
+        )}</pre>
+    </div>
+  </div>
 </div>
