@@ -34,20 +34,6 @@ export type Task = {
   requirements: TaskRequirement[]
 }
 
-export type RunResponse = {
-  run: TaskRun | null
-  output: RunOutput | null
-}
-
-export type RunOutput = {
-  plaintext_output: string | null
-  structured_output: Record<string, unknown> | null
-}
-
-export type TaskRun = {
-  id: string
-}
-
 // UI State stored in the browser. For more client centric state
 export type UIState = {
   current_project_id: string | null

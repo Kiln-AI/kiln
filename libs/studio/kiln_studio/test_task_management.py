@@ -5,10 +5,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from kiln_ai.adapters.base_adapter import AdapterRun
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
-from kiln_ai.datamodel import Project, Task
+from kiln_ai.datamodel import (
+    DataSource,
+    DataSourceType,
+    Project,
+    Task,
+    TaskOutput,
+    TaskOutputRatingType,
+    TaskRun,
+)
 
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
-from libs.studio.kiln_studio.task_management import connect_task_management
+from libs.studio.kiln_studio.task_management import connect_task_management, deep_update
 
 
 @pytest.fixture
@@ -391,3 +399,200 @@ async def test_run_task_structured_input(client, tmp_path):
     assert res["output"]["plaintext_output"] == "Structured input processed"
     assert res["output"]["structured_output"] is None
     assert res["run"] is None
+
+
+def test_deep_update_with_none_source():
+    source = None
+    update = {"a": 1, "b": {"c": 2}}
+    result = deep_update(source, update)
+    assert result == {"a": 1, "b": {"c": 2}}
+
+
+def test_deep_update_with_empty_source():
+    source = {}
+    update = {"a": 1, "b": {"c": 2}}
+    result = deep_update(source, update)
+    assert result == {"a": 1, "b": {"c": 2}}
+
+
+def test_deep_update_with_existing_keys():
+    source = {"a": 0, "b": {"c": 1}}
+    update = {"a": 1, "b": {"d": 2}}
+    result = deep_update(source, update)
+    assert result == {"a": 1, "b": {"c": 1, "d": 2}}
+
+
+def test_deep_update_with_nested_dicts():
+    source = {"a": {"b": {"c": 1}}}
+    update = {"a": {"b": {"d": 2}, "e": 3}}
+    result = deep_update(source, update)
+    assert result == {"a": {"b": {"c": 1, "d": 2}, "e": 3}}
+
+
+def test_deep_update_with_non_dict_values():
+    source = {"a": 1, "b": [1, 2, 3]}
+    update = {"a": 2, "b": [4, 5, 6], "c": "new"}
+    result = deep_update(source, update)
+    assert result == {"a": 2, "b": [4, 5, 6], "c": "new"}
+
+
+def test_deep_update_with_mixed_types():
+    source = {"a": 1, "b": {"c": [1, 2, 3]}}
+    update = {"a": "new", "b": {"c": 4, "d": {"e": 5}}}
+    result = deep_update(source, update)
+    assert result == {"a": "new", "b": {"c": 4, "d": {"e": 5}}}
+
+
+def test_update_run_method():
+    run = TaskRun(
+        input="Test input",
+        source=DataSource(
+            type=DataSourceType.human, properties={"creator": "Jane Doe"}
+        ),
+        output=TaskOutput(
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.human, properties={"creator": "Jane Doe"}
+            ),
+        ),
+    )
+
+    dumped = run.model_dump()
+    merged = deep_update(dumped, {"input": "Updated input"})
+    updated_run = TaskRun.model_validate(merged)
+    assert updated_run.input == "Updated input"
+
+    update = {
+        "output": {"rating": {"rating": 4, "type": TaskOutputRatingType.five_star}}
+    }
+    dumped = run.model_dump()
+    merged = deep_update(dumped, update)
+    updated_run = TaskRun.model_validate(merged)
+    assert updated_run.output.rating.rating == 4
+    assert updated_run.output.rating.type == TaskOutputRatingType.five_star
+
+
+@pytest.mark.asyncio
+async def test_update_run(client, tmp_path):
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+    task.save_to_file()
+    run = TaskRun(
+        parent=task,
+        input="Test input",
+        source=DataSource(
+            type=DataSourceType.human, properties={"creator": "Jane Doe"}
+        ),
+        output=TaskOutput(
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.human, properties={"creator": "Jane Doe"}
+            ),
+        ),
+    )
+    run.save_to_file()
+
+    test_cases = [
+        {
+            "name": "Update output rating",
+            "patch": {
+                "output": {
+                    "rating": {"rating": 4, "type": TaskOutputRatingType.five_star},
+                }
+            },
+            "expected": {
+                "output": {
+                    "rating": {"rating": 4, "type": TaskOutputRatingType.five_star},
+                }
+            },
+        },
+        {
+            "name": "Update input",
+            "patch": {
+                "input": "Updated input",
+            },
+            "expected": {
+                "input": "Updated input",
+            },
+        },
+    ]
+
+    for case in test_cases:
+        with patch(
+            "libs.studio.kiln_studio.task_management.project_from_id"
+        ) as mock_project_from_id:
+            mock_project_from_id.return_value = project
+
+            response = client.patch(
+                f"/api/projects/project1-id/task/{task.id}/run/{run.id}",
+                json=case["patch"],
+            )
+
+            assert response.status_code == 200, f"Failed on case: {case['name']}"
+
+    # Test error cases, including deep validation
+    error_cases = [
+        {
+            "name": "Task not found",
+            "task_id": "non_existent_task_id",
+            "run_id": run.id,
+            "expected_status": 404,
+            "expected_detail": "Task not found. ID: non_existent_task_id",
+            "updates": {"input": "Updated input"},
+        },
+        {
+            "name": "Run not found",
+            "task_id": task.id,
+            "run_id": "non_existent_run_id",
+            "expected_status": 404,
+            "expected_detail": "Run not found. ID: non_existent_run_id",
+            "updates": {"input": "Updated input"},
+        },
+        {
+            "name": "Invalid input",
+            "task_id": task.id,
+            "run_id": run.id,
+            "expected_status": 422,
+            "expected_detail": "Input: Input should be a valid string",
+            "updates": {"input": 123},
+        },
+        {
+            "name": "Invalid rating without value",
+            "task_id": task.id,
+            "run_id": run.id,
+            "expected_status": 422,
+            "expected_detail": "Output.Rating.Type: Input should be 'five_star' or 'custom'",
+            "updates": {
+                "output": {
+                    "rating": {"type": "invalid", "rating": 1},
+                }
+            },
+        },
+    ]
+
+    for case in error_cases:
+        with patch(
+            "libs.studio.kiln_studio.task_management.project_from_id"
+        ) as mock_project_from_id:
+            mock_project_from_id.return_value = project
+
+            response = client.patch(
+                f"/api/projects/project1-id/task/{case['task_id']}/run/{case['run_id']}",
+                json=case["updates"],
+            )
+
+            assert (
+                response.status_code == case["expected_status"]
+            ), f"Failed on case: {case['name']}"
+            assert (
+                response.json()["message"] == case["expected_detail"]
+            ), f"Failed on case: {case['name']}"

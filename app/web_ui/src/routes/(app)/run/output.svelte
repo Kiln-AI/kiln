@@ -1,13 +1,14 @@
 <script lang="ts">
-  import type { Task, TaskRequirement, RunResponse } from "$lib/stores"
+  import type { Task, TaskRequirement } from "$lib/stores"
   import { current_task } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import Rating from "./rating.svelte"
   export let json_schema: string | null = null
   let repair_instructions: string | null = null
+  import { type components } from "$lib/api_schema.d"
 
-  export let response: RunResponse | null = null
+  export let response: components["schemas"]["RunTaskResponse"] | null = null
   $: output = response?.output
   $: output_valid =
     output &&

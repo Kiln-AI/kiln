@@ -1,12 +1,13 @@
 <script lang="ts">
   import AppPage from "../app_page.svelte"
   import { current_task, current_project } from "$lib/stores"
-  import type { RunOutput, RunResponse } from "$lib/stores"
   import { createKilnError } from "$lib/utils/error_handlers"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import { KilnError } from "$lib/utils/error_handlers"
   import Output from "./output.svelte"
+  import createClient from "openapi-fetch"
+  import { type components, type paths } from "$lib/api_schema.d"
 
   // TODO: implement checking input content
   let warn_before_unload = false
@@ -25,13 +26,37 @@
   $: provider = model.split("/")[0]
 
   // TODO: remove test data
-  let response: RunResponse | null = {
+  let response: components["schemas"]["RunTaskResponse"] | null = {
     run: {
+      v: 1,
       id: "123",
+      input: "asdf",
+      model_type: "run",
+      source: {
+        type: "human",
+        properties: {
+          a: 1,
+          b: "asdf",
+        },
+      },
+      output: {
+        v: 1,
+        output: "asdf",
+        source: {
+          type: "synthetic",
+          properties: {
+            model_type: "openai/gpt_4o_mini",
+          },
+        },
+        model_type: "output",
+      },
     },
     output: {
       plaintext_output: "",
-      structured_output: { a: 1, b: "asdf" },
+      structured_output: {
+        setup: "Why did the scarecrow win an award?",
+        punchline: "Because he was outstanding in his field!",
+      },
     },
   }
   $: output = response?.output
@@ -43,56 +68,35 @@
       submitting = true
       error = null
       response = null
-      const fetch_response = await fetch(
-        `http://localhost:8757/api/projects/${$current_project?.id}/task/${$current_task?.id}/run`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      const client = createClient<paths>({
+        baseUrl: "http://localhost:8757",
+      })
+      const {
+        data, // only present if 2XX response
+        error: fetch_error, // only present if 4XX or 5XX response
+      } = await client.POST("/api/projects/{project_id}/task/{task_id}/run", {
+        params: {
+          path: {
+            project_id: $current_project?.id || "",
+            task_id: $current_task?.id || "",
           },
-          body: JSON.stringify({
-            model_name: model_name,
-            provider: provider,
-            plaintext_input: plaintext_input,
-          }),
         },
-      )
-      const data = await fetch_response.json()
-      // Check if data conforms to RunResponse type
-      if (isRunResponse(data)) {
-        response = data
-      } else {
-        throw new Error("Invalid response format")
+        body: {
+          model_name: model_name,
+          provider: provider,
+          plaintext_input: plaintext_input,
+        },
+      })
+      if (fetch_error) {
+        // TODO: check error message extraction
+        throw new Error("Failed to run task: " + fetch_error)
       }
+      response = data
     } catch (e) {
       error = createKilnError(e)
     } finally {
       submitting = false
     }
-  }
-
-  function isRunResponse(data: unknown): data is RunResponse {
-    return (
-      typeof data === "object" &&
-      data !== null &&
-      "run" in data &&
-      "output" in data &&
-      isRunOutput(data.output)
-    )
-  }
-
-  // Add this type guard function
-  function isRunOutput(data: unknown): data is RunOutput {
-    // Implement the type check based on RunOutput structure
-    // This is a basic example, adjust according to your RunOutput type
-    return (
-      typeof data === "object" &&
-      data !== null &&
-      (("plaintext_output" in data &&
-        typeof data.plaintext_output === "string") ||
-        ("structured_output" in data &&
-          typeof data.structured_output === "object"))
-    )
   }
 </script>
 

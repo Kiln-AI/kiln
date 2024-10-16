@@ -1,3 +1,4 @@
+from asyncio import Lock
 from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException
@@ -6,6 +7,9 @@ from kiln_ai.datamodel import Task, TaskRun
 from pydantic import BaseModel
 
 from libs.studio.kiln_studio.project_management import project_from_id
+
+# Add this at the module level
+update_run_lock = Lock()
 
 
 class RunTaskRequest(BaseModel):
@@ -17,12 +21,23 @@ class RunTaskRequest(BaseModel):
 
 class RunTaskOutputResponse(BaseModel):
     plaintext_output: str | None = None
-    structured_output: Dict[str, Any] | List[Any] | None = None
+    structured_output: Dict[str, Any | None] | List[Any] | None = None
 
 
 class RunTaskResponse(BaseModel):
     output: RunTaskOutputResponse
     run: TaskRun | None = None
+
+
+def deep_update(source, update):
+    if source is None:
+        return update
+    for key, value in update.items():
+        if isinstance(value, dict):
+            source[key] = deep_update(source.get(key, {}), value)
+        else:
+            source[key] = value
+    return source
 
 
 def connect_task_management(app: FastAPI):
@@ -98,3 +113,40 @@ def connect_task_management(app: FastAPI):
             )
 
         return RunTaskResponse(output=response_output, run=adapter_run.run)
+
+    @app.patch("/api/projects/{project_id}/task/{task_id}/run/{run_id}")
+    async def update_run_route(
+        project_id: str, task_id: str, run_id: str, run_data: Dict[str, Any]
+    ) -> TaskRun:
+        return await update_run(project_id, task_id, run_id, run_data)
+
+
+async def update_run(
+    project_id: str, task_id: str, run_id: str, run_data: Dict[str, Any]
+) -> TaskRun:
+    # Lock to prevent overwriting concurrent updates
+    async with update_run_lock:
+        parent_project = project_from_id(project_id)
+        task = next(
+            (task for task in parent_project.tasks() if task.id == task_id), None
+        )
+        if task is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task not found. ID: {task_id}",
+            )
+
+        run = next((run for run in task.runs() if run.id == run_id), None)
+        if run is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Run not found. ID: {run_id}",
+            )
+
+        # Update and save
+        old_run_dumped = run.model_dump()
+        merged = deep_update(old_run_dumped, run_data)
+        updated_run = TaskRun.model_validate(merged)
+        updated_run.path = run.path
+        updated_run.save_to_file()
+        return updated_run
