@@ -1,5 +1,6 @@
+import json
 from asyncio import Lock
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
@@ -19,14 +20,9 @@ class RunTaskRequest(BaseModel):
     structured_input: Dict[str, Any] | None = None
 
 
-class RunTaskOutputResponse(BaseModel):
-    plaintext_output: str | None = None
-    structured_output: Dict[str, Any | None] | List[Any] | None = None
-
-
 class RunTaskResponse(BaseModel):
-    output: RunTaskOutputResponse
     run: TaskRun | None = None
+    raw_output: str | None = None
 
 
 def deep_update(
@@ -111,13 +107,11 @@ def connect_task_management(app: FastAPI):
         adapter_run = await adapter.invoke_returning_run(input)
         response_output = None
         if isinstance(adapter_run.output, str):
-            response_output = RunTaskOutputResponse(plaintext_output=adapter_run.output)
+            response_output = adapter_run.output
         else:
-            response_output = RunTaskOutputResponse(
-                structured_output=adapter_run.output
-            )
+            response_output = json.dumps(adapter_run.output)
 
-        return RunTaskResponse(output=response_output, run=adapter_run.run)
+        return RunTaskResponse(raw_output=response_output, run=adapter_run.run)
 
     @app.patch("/api/projects/{project_id}/task/{task_id}/run/{run_id}")
     async def update_run_route(

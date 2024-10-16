@@ -8,6 +8,7 @@
   import Run from "./run.svelte"
   import createClient from "openapi-fetch"
   import { type components, type paths } from "$lib/api_schema.d"
+  import Output from "./output.svelte"
 
   // TODO: implement checking input content
   let warn_before_unload = false
@@ -63,13 +64,8 @@
         },
       },
     },
-    output: {
-      plaintext_output: "",
-      structured_output: {
-        setup: "Why did the scarecrow win an award?",
-        punchline: "Because he was outstanding in his field!",
-      },
-    },
+    raw_output:
+      '{"setup": "Why did the scarecrow win an award?", "punchline": "Because he was outstanding in his field!"}',
   }
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
@@ -195,23 +191,13 @@
           project_id={$current_project.id}
         />
       </div>
-    {:else if response?.output}
+    {:else if response?.raw_output}
       <!-- The response.run object may be nil if the run isn't saved (env var option for this). We still want to show the output though. -->
-      <div class="text-xl font-bold mt-10">Run Output</div>
-      {#if response.output.structured_output}
-        <pre
-          class="mt-3 bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{JSON.stringify(
-            response.output.structured_output,
-            null,
-            2,
-          )}</pre>
-      {:else if response.output.plaintext_output}
-        <pre
-          class="mt-4 bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{response
-            .output.plaintext_output}</pre>
-      {:else}
-        <div>No run output yet</div>
-      {/if}
+      <div class="text-xl font-bold mt-10 mb-4">Run Output</div>
+      <Output
+        structured={!!$current_task?.output_json_schema}
+        raw_output={response.raw_output}
+      />
     {/if}
   {/if}
 </AppPage>

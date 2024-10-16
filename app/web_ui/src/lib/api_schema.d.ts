@@ -297,15 +297,6 @@ export interface components {
              */
             description: string;
         };
-        /** RunTaskOutputResponse */
-        RunTaskOutputResponse: {
-            /** Plaintext Output */
-            plaintext_output?: string | null;
-            /** Structured Output */
-            structured_output?: {
-                [key: string]: unknown | null;
-            } | unknown[] | null;
-        };
         /** RunTaskRequest */
         RunTaskRequest: {
             /** Model Name */
@@ -319,8 +310,9 @@ export interface components {
         };
         /** RunTaskResponse */
         RunTaskResponse: {
-            output: components["schemas"]["RunTaskOutputResponse"];
             run?: components["schemas"]["TaskRun"] | null;
+            /** Raw Output */
+            raw_output?: string | null;
         };
         /**
          * TaskOutput

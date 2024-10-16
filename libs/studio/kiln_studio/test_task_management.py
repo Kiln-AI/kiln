@@ -239,8 +239,7 @@ async def test_run_task_success(client, tmp_path):
 
     assert response.status_code == 200
     res = response.json()
-    assert res["output"]["plaintext_output"] == "Test output"
-    assert res["output"]["structured_output"] is None
+    assert res["raw_output"] == "Test output"
     assert res["run"] is None
 
 
@@ -284,8 +283,7 @@ async def test_run_task_structured_output(client, tmp_path):
 
     res = response.json()
     assert response.status_code == 200
-    assert res["output"]["plaintext_output"] is None
-    assert res["output"]["structured_output"] == {"key": "value"}
+    assert res["raw_output"] == '{"key": "value"}'
     assert res["run"] is None
 
 
@@ -396,8 +394,7 @@ async def test_run_task_structured_input(client, tmp_path):
 
     assert response.status_code == 200
     res = response.json()
-    assert res["output"]["plaintext_output"] == "Structured input processed"
-    assert res["output"]["structured_output"] is None
+    assert res["raw_output"] == "Structured input processed"
     assert res["run"] is None
 
 
@@ -477,6 +474,7 @@ def test_deep_update_with_none_values():
     source = {
         "output": {
             "rating": None,
+            "model_type": "task_output",
         },
     }
     update = {

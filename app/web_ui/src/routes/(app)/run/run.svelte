@@ -6,15 +6,13 @@
   let repair_instructions: string | null = null
   import createClient from "openapi-fetch"
   import { type components, type paths } from "$lib/api_schema.d"
+  import Output from "./output.svelte"
 
   export let project_id: string
   export let task: Task
   export let initial_run: components["schemas"]["TaskRun"]
   let updated_run: components["schemas"]["TaskRun"] | null = null
   $: run = updated_run || initial_run
-  $: formatted_output = task.output_json_schema
-    ? JSON.stringify(JSON.parse(run.output.output), null, 2)
-    : run.output.output
 
   // TODO warn_before_unload
 
@@ -100,7 +98,7 @@
     <div class="grow">
       <div class="text-xl font-bold mb-1">Outputs</div>
       {#if task.output_json_schema}
-        <div class="text-xs font-medium text-gray-500 flex flex-row">
+        <div class="text-xs font-medium text-gray-500 flex flex-row mb-2">
           <svg
             fill="currentColor"
             class="w-4 h-4 mr-[2px]"
@@ -113,8 +111,10 @@
           Structure Valid
         </div>
       {/if}
-      <pre
-        class="mt-3 bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{formatted_output}</pre>
+      <Output
+        structured={!!task.output_json_schema}
+        raw_output={run.output.output}
+      />
     </div>
 
     <div>
