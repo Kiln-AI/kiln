@@ -208,7 +208,9 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
         cls: Type[PT], parent_path: Path | None
     ) -> list[PT]:
         if parent_path is None:
-            raise ValueError("Parent path must be set to load children")
+            # children are disk based. If not saved, they don't exist
+            return []
+
         # Determine the parent folder
         if parent_path.is_file():
             parent_folder = parent_path.parent

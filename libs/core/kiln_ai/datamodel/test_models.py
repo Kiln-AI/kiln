@@ -139,11 +139,10 @@ def test_load_tasks(test_project_file):
     assert all(task.instruction != "" for task in tasks)
 
 
-# verify error on non-saved model
+# verify no error on non-saved model
 def test_load_children_no_path():
     project = Project(name="Test Project")
-    with pytest.raises(ValueError):
-        project.tasks()
+    assert len(project.tasks()) == 0
 
 
 def test_check_model_type(test_project_file, test_task_file):

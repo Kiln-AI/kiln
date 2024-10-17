@@ -68,10 +68,12 @@ class BaseAdapter(metaclass=ABCMeta):
                     f"response is not a string for non-structured task: {result}"
                 )
 
-        # Save the run and output
-        run = None
-        if Config.shared().autosave_runs:
-            run = self.save_run(input, input_source, result)
+        # Generate the run and output
+        run = self.generate_run(input, input_source, result)
+
+        # Save the run if configured to do so, and we have a path to save to
+        if Config.shared().autosave_runs and self.kiln_task.path is not None:
+            run.save_to_file()
 
         return AdapterRun(run=run, output=result)
 
@@ -91,7 +93,7 @@ class BaseAdapter(metaclass=ABCMeta):
         return None
 
     # create a run and task output
-    def save_run(
+    def generate_run(
         self, input: Dict | str, input_source: DataSource | None, output: Dict | str
     ) -> TaskRun:
         # Convert input and output to JSON strings if they are dictionaries
@@ -139,7 +141,6 @@ class BaseAdapter(metaclass=ABCMeta):
         if existing_task_run:
             return existing_task_run
 
-        new_task_run.save_to_file()
         return new_task_run
 
     def _properties_for_task_output(self) -> Dict[str, str | int | float]:

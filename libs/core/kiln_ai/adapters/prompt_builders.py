@@ -58,3 +58,9 @@ class MultiShotPromptBuilder(BasePromptBuilder):
                 base_prompt += f"# Format Instructions\n\n{adapter_instructions}\n\n"
 
         return base_prompt
+
+
+prompt_builder_registry = {
+    "simple_prompt_builder": SimplePromptBuilder,
+    "multi_shot_prompt_builder": MultiShotPromptBuilder,
+}

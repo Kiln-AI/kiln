@@ -42,7 +42,10 @@ def test_save_run_isolation(test_task):
     input_data = "Test input"
     output_data = "Test output"
 
-    task_run = adapter.save_run(input=input_data, input_source=None, output=output_data)
+    task_run = adapter.generate_run(
+        input=input_data, input_source=None, output=output_data
+    )
+    task_run.save_to_file()
 
     # Check that the task input was saved correctly
     assert task_run.parent == test_task
@@ -82,18 +85,20 @@ def test_save_run_isolation(test_task):
     )
 
     # Run again, with same input and different output. Should create a new TaskRun.
-    task_output = adapter.save_run(input_data, None, "Different output")
+    task_output = adapter.generate_run(input_data, None, "Different output")
+    task_output.save_to_file()
     assert len(test_task.runs()) == 2
     assert "Different output" in set(run.output.output for run in test_task.runs())
 
     # run again with same input and same output. Should not create a new TaskRun.
-    task_output = adapter.save_run(input_data, None, output_data)
+    task_output = adapter.generate_run(input_data, None, output_data)
+    task_output.save_to_file()
     assert len(test_task.runs()) == 2
     assert "Different output" in set(run.output.output for run in test_task.runs())
     assert output_data in set(run.output.output for run in test_task.runs())
 
     # run again with input of different type. Should create a new TaskRun and TaskOutput.
-    task_output = adapter.save_run(
+    task_output = adapter.generate_run(
         input_data,
         DataSource(
             type=DataSourceType.synthetic,
@@ -106,6 +111,7 @@ def test_save_run_isolation(test_task):
         ),
         output_data,
     )
+    task_output.save_to_file()
     assert len(test_task.runs()) == 3
     assert task_output.input == input_data
     assert task_output.input_source.type == DataSourceType.synthetic
@@ -118,11 +124,12 @@ async def test_autosave_false(test_task):
     with patch("kiln_ai.utils.config.Config.shared") as mock_shared:
         mock_config = mock_shared.return_value
         mock_config.autosave_runs = False
+        mock_config.user_id = "test_user"
 
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
-        await adapter.invoke(input_data, DataSourceType.synthetic)
+        await adapter.invoke(input_data)
 
         # Check that no runs were saved
         assert len(test_task.runs()) == 0
