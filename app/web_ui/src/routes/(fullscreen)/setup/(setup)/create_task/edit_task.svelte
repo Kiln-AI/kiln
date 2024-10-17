@@ -209,6 +209,7 @@
       id="task_name"
       description="A description for you and your team, not used by the model."
       bind:value={task_name}
+      max_length={120}
     />
 
     <FormElement
@@ -259,6 +260,7 @@
               id="requirement_name_{item_index}"
               light_label={true}
               bind:value={task_requirements[item_index].name}
+              max_length={20}
             />
           </div>
           <div class="flex flex-col gap-1">

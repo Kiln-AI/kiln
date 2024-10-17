@@ -99,6 +99,7 @@
           id="project_name"
           inputType="input"
           bind:value={project_name}
+          max_length={120}
         />
         <FormElement
           label="Project Description"

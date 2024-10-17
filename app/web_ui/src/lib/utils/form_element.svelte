@@ -5,20 +5,56 @@
   export let value: unknown
   export let description: string = ""
   export let optional: boolean = false
+  export let max_length: number | null = null
   export let error_message: string | null = null // start null because they haven't had a chance to edit it yet
   export let light_label: boolean = false // styling
   export let select_options: [unknown, string][] = []
   export let select_options_grouped: [string, [unknown, string][]][] = []
 
-  // Export to let parent redefine this. This is a basic "Optional" check
-  export let validator: (value: unknown) => string | null = () => {
-    if (optional) {
-      return null
+  function is_empty(value: unknown): boolean {
+    if (value === null || value === undefined) {
+      return true
     }
-    if (!value) {
+    if (typeof value === "string") {
+      return value.length === 0
+    }
+    return false
+  }
+
+  // Export to let parent redefine this. This is a basic "Optional" and max length check
+  export let validator: (value: unknown) => string | null = () => {
+    if (!optional && is_empty(value)) {
       return '"' + label + '" is required'
     }
+    if (max_length && typeof value === "string" && value.length > max_length) {
+      return (
+        '"' +
+        label +
+        '" is too long. Max length is ' +
+        max_length +
+        " characters."
+      )
+    }
     return null
+  }
+
+  // Shorter error message that appears in a badge over the input
+  let inline_error: string | null = null
+  let initial_run = true
+  $: {
+    if (initial_run) {
+      initial_run = false
+    } else if (!optional && is_empty(value)) {
+      inline_error = "Required"
+    } else if (
+      max_length &&
+      typeof value === "string" &&
+      value.length > max_length
+    ) {
+      inline_error = "" + value.length + "/" + max_length
+    } else {
+      inline_error = null
+    }
   }
 
   function run_validator() {
@@ -46,47 +82,56 @@
       </div>
     {/if}
   </label>
-  {#if inputType === "textarea"}
-    <textarea
-      placeholder={error_message || label}
-      {id}
-      class="textarea text-base textarea-bordered w-full h-18 wrap-pre text-left align-top
+  <div class="relative">
+    {#if inputType === "textarea"}
+      <textarea
+        placeholder={error_message || label}
+        {id}
+        class="textarea text-base textarea-bordered w-full h-18 wrap-pre text-left align-top
        {error_message ? 'textarea-error' : ''}"
-      bind:value
-      on:input={run_validator}
-      autocomplete="off"
-    />
-  {:else if inputType === "input"}
-    <input
-      type="text"
-      placeholder={error_message || label}
-      {id}
-      class="input text-base input-bordered w-full font-base {error_message
-        ? 'input-error'
-        : ''}"
-      bind:value
-      on:input={run_validator}
-      autocomplete="off"
-    />
-  {:else if inputType === "select"}
-    <select {id} class="select select-bordered" bind:value>
-      {#if select_options_grouped.length > 0}
-        {#each select_options_grouped as group}
-          <optgroup label={group[0]}>
-            {#each group[1] as option}
-              <option value={option[0]} selected={option[0] === value}
-                >{option[1]}</option
-              >
-            {/each}
-          </optgroup>
-        {/each}
-      {:else}
-        {#each select_options as option}
-          <option value={option[0]} selected={option[0] === value}
-            >{option[1]}</option
-          >
-        {/each}
-      {/if}
-    </select>
-  {/if}
+        bind:value
+        on:input={run_validator}
+        autocomplete="off"
+      />
+    {:else if inputType === "input"}
+      <input
+        type="text"
+        placeholder={error_message || label}
+        {id}
+        class="input text-base input-bordered w-full font-base {error_message
+          ? 'input-error'
+          : ''}"
+        bind:value
+        on:input={run_validator}
+        autocomplete="off"
+      />
+    {:else if inputType === "select"}
+      <select {id} class="select select-bordered" bind:value>
+        {#if select_options_grouped.length > 0}
+          {#each select_options_grouped as group}
+            <optgroup label={group[0]}>
+              {#each group[1] as option}
+                <option value={option[0]} selected={option[0] === value}
+                  >{option[1]}</option
+                >
+              {/each}
+            </optgroup>
+          {/each}
+        {:else}
+          {#each select_options as option}
+            <option value={option[0]} selected={option[0] === value}
+              >{option[1]}</option
+            >
+          {/each}
+        {/if}
+      </select>
+    {/if}
+    {#if inline_error}
+      <span
+        class="absolute right-3 bottom-4 badge badge-error badge-sm badge-outline text-xs bg-base-100"
+      >
+        {inline_error}
+      </span>
+    {/if}
+  </div>
 </div>
