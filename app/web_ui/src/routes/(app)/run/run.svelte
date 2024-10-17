@@ -16,6 +16,8 @@
 
   let show_raw_data = false
 
+  let save_rating_error: string | null = null
+
   // TODO warn_before_unload
 
   // TODO: we aren't loading existing ratings from the server
@@ -65,8 +67,11 @@
       }
       updated_run = data
     } catch (err) {
-      // TODO: better error handling
-      console.error("Failed to save ratings", err)
+      save_rating_error =
+        "Failed to save ratings. Error: " +
+        ((err as Error).message ||
+          (err as { detail?: string }).detail ||
+          "unknown")
     }
   }
 
@@ -120,7 +125,22 @@
     </div>
 
     <div>
-      <div class="text-xl font-bold mt-10 lg:mt-0 mb-6">Output Rating</div>
+      <div class="text-xl font-bold mt-10 lg:mt-0 mb-6">
+        Output Rating
+        {#if save_rating_error}
+          <button class="tooltip" data-tip={save_rating_error}>
+            <svg
+              class="w-5 h-5 ml-1 text-error inline"
+              viewBox="0 0 1024 1024"
+              xmlns="http://www.w3.org/2000/svg"
+              ><path
+                fill="currentColor"
+                d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896zm0 192a58.432 58.432 0 0 0-58.24 63.744l23.36 256.384a35.072 35.072 0 0 0 69.76 0l23.296-256.384A58.432 58.432 0 0 0 512 256zm0 512a51.2 51.2 0 1 0 0-102.4 51.2 51.2 0 0 0 0 102.4z"
+              /></svg
+            >
+          </button>
+        {/if}
+      </div>
       <div class="grid grid-cols-[auto,1fr] gap-4">
         <div class="font-medium flex items-center text-nowrap">
           Overall Rating:

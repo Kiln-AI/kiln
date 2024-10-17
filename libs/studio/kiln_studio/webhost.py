@@ -41,4 +41,7 @@ def connect_webhost(app: FastAPI):
     # add pretty 404s
     @app.exception_handler(404)
     def not_found_exception_handler(request, exc):
+        # don't handle /api routes, which return JSON errors
+        if request.url.path.startswith("/api"):
+            raise exc
         return FileResponse(os.path.join(studio_path(), "404.html"), status_code=404)
