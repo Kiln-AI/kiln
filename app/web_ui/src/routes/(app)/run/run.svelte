@@ -120,7 +120,7 @@
 </script>
 
 <div>
-  <div class="flex flex-col xl:flex-row gap-8">
+  <div class="flex flex-col xl:flex-row gap-8 xl:gap-16">
     <div class="grow">
       <div class="text-xl font-bold mb-1">Outputs</div>
       {#if task.output_json_schema}
@@ -143,7 +143,7 @@
       />
     </div>
 
-    <div>
+    <div class="w-72 2xl:w-96">
       <div class="text-xl font-bold mt-10 lg:mt-0 mb-6">
         Output Rating
         {#if save_rating_error}
@@ -160,8 +160,8 @@
           </button>
         {/if}
       </div>
-      <div class="grid grid-cols-[auto,1fr] gap-4">
-        <div class="font-medium flex items-center text-nowrap">
+      <div class="grid grid-cols-[auto,1fr] gap-4 text-sm 2xl:text-base">
+        <div class="font-medium flex items-center text-nowrap 2xl:min-w-32">
           Overall Rating:
         </div>
         <div class="flex items-center">

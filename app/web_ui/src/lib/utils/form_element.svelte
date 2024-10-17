@@ -106,7 +106,7 @@
         autocomplete="off"
       />
     {:else if inputType === "select"}
-      <select {id} class="select select-bordered" bind:value>
+      <select {id} class="select select-bordered w-full" bind:value>
         {#if select_options_grouped.length > 0}
           {#each select_options_grouped as group}
             <optgroup label={group[0]}>

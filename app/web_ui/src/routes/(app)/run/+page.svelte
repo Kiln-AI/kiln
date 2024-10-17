@@ -108,17 +108,28 @@
 </script>
 
 <AppPage title="Run" bind:subtitle>
-  <div class="flex flex-col gap-2 w-full max-w-[800px]">
-    <FormContainer
-      submit_label="Run"
-      on:submit={run_task}
-      bind:warn_before_unload
-      bind:error
-      bind:submitting
-    >
-      <div class="flex flex-row gap-2 items-center">
-        <div class="text-xl font-bold">Inputs</div>
-        <div class="grow"></div>
+  <div class="max-w-[1400px]">
+    <div class="flex flex-col xl:flex-row gap-8 xl:gap-16">
+      <div class="grow">
+        <div class="text-xl font-bold">Input</div>
+        <FormContainer
+          submit_label="Run"
+          on:submit={run_task}
+          bind:warn_before_unload
+          bind:error
+          bind:submitting
+        >
+          <div class="flex flex-row gap-2 items-center"></div>
+          <FormElement
+            label="Plaintext Input"
+            inputType="textarea"
+            bind:value={plaintext_input}
+            id="plaintext_input"
+          />
+        </FormContainer>
+      </div>
+      <div class="w-72 2xl:w-96 flex flex-col gap-4">
+        <div class="text-xl font-bold">Options</div>
         <FormElement
           label="Prompt Method"
           inputType="select"
@@ -126,8 +137,8 @@
           id="prompt_method"
           select_options={[
             ["basic", "Basic Prompt (Zero Shot)"],
-            ["few_shot", "Few Shot (include a few examples)"],
-            ["many_shot", "Multi Shot (include many examples)"],
+            ["few_shot", "Few Shot"],
+            ["many_shot", "Multi Shot"],
           ]}
         />
         <FormElement
@@ -174,30 +185,24 @@
           ]}
         />
       </div>
-      <FormElement
-        label="Plaintext Input"
-        inputType="textarea"
-        bind:value={plaintext_input}
-        id="plaintext_input"
-      />
-    </FormContainer>
-  </div>
-  {#if $current_task && !submitting && response != null && $current_project}
-    {#if response.run != null}
-      <div class="mt-10 max-w-[1400px]">
-        <Run
-          initial_run={response?.run}
-          task={$current_task}
-          project_id={$current_project.id}
+    </div>
+    {#if $current_task && !submitting && response != null && $current_project}
+      {#if response.run != null}
+        <div class="mt-10 xl:mt-32">
+          <Run
+            initial_run={response?.run}
+            task={$current_task}
+            project_id={$current_project.id}
+          />
+        </div>
+      {:else if response?.raw_output}
+        <!-- The response.run object may be nil if the run isn't saved (env var option for this). We still want to show the output though. -->
+        <div class="text-xl font-bold mt-10 mb-4">Run Output</div>
+        <Output
+          structured={!!$current_task?.output_json_schema}
+          raw_output={response.raw_output}
         />
-      </div>
-    {:else if response?.raw_output}
-      <!-- The response.run object may be nil if the run isn't saved (env var option for this). We still want to show the output though. -->
-      <div class="text-xl font-bold mt-10 mb-4">Run Output</div>
-      <Output
-        structured={!!$current_task?.output_json_schema}
-        raw_output={response.raw_output}
-      />
+      {/if}
     {/if}
-  {/if}
+  </div>
 </AppPage>
