@@ -1,0 +1,57 @@
+name: Test Count Badge
+
+on:
+  push:
+    branches:
+      - main # Adjust this if your main branch has a different name
+
+jobs:
+  count_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+
+      - name: Install NPM dependencies
+        run: npm install
+        working-directory: ./app/web_ui
+
+      - name: Count Python tests
+        run: |
+          PYTHON_TEST_COUNT=$(python3 -m pytest --collect-only -q . | grep "tests collected" | awk '{print $1}' | sed 's/[^0-9]//g')
+          echo "PYTHON_TEST_COUNT=$PYTHON_TEST_COUNT" >> $GITHUB_ENV
+
+      - name: Count NPM tests
+        run: |
+          JS_TEST_COUNT=$(npx vitest run --no-color | grep 'Tests  *[0-9]* passed ([0-9]*)' | awk '{print $2}' | sed 's/[^0-9]*//g')
+          echo "JS_TEST_COUNT=$JS_TEST_COUNT" >> $GITHUB_ENV
+        working-directory: ./app/web_ui
+
+      - name: Calculate total test count
+        run: |
+          TOTAL_TEST_COUNT=$((PYTHON_TEST_COUNT + JS_TEST_COUNT))
+          echo "TOTAL_TEST_COUNT=$TOTAL_TEST_COUNT" >> $GITHUB_ENV
+
+      - name: Create test count badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 57742c1b1b60d597a6aba5d5148d728e
+          filename: test_count_kiln.json
+          label: Test Count
+          message: ${{ env.TOTAL_TEST_COUNT }}
+          color: brightgreen
