@@ -20,11 +20,34 @@
 
   // TODO warn_before_unload
 
-  // TODO: we aren't loading existing ratings from the server
   let overall_rating: 1 | 2 | 3 | 4 | 5 | null = null
-  let requirement_ratings: (1 | 2 | 3 | 4 | 5 | null)[] = Array(
-    task.requirements.length,
-  ).fill(null)
+  let requirement_ratings: (1 | 2 | 3 | 4 | 5 | null)[] = []
+
+  function load_server_ratings(
+    new_run: components["schemas"]["TaskRun"] | null,
+  ) {
+    // Fill ratings with nulls
+    requirement_ratings = Array(task.requirements.length).fill(null)
+    if (!new_run) {
+      return
+    }
+    overall_rating = (new_run.output.rating?.value || null) as
+      | 1
+      | 2
+      | 3
+      | 4
+      | 5
+      | null
+    Object.entries(new_run.output.rating?.requirement_ratings || {}).forEach(
+      ([req_id, rating]) => {
+        let index = task.requirements.findIndex((req) => req.id === req_id)
+        if (index !== -1) {
+          requirement_ratings[index] = rating as 1 | 2 | 3 | 4 | 5 | null
+        }
+      },
+    )
+  }
+  load_server_ratings(initial_run)
 
   async function save_ratings() {
     try {
@@ -66,6 +89,7 @@
         throw new Error("Failed to run task: " + fetch_error)
       }
       updated_run = data
+      load_server_ratings(updated_run)
     } catch (err) {
       save_rating_error =
         "Failed to save ratings. Error: " +
@@ -164,10 +188,9 @@
 
   <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
   {#if overall_rating === 5}
-    <p>Repair not needed.</p>
+    <p>Repair not needed for a 5-star output.</p>
     <p class="pt-1 text-sm">
-      If the response can be improved, reduce the overall rating to 4-stars or
-      lower.
+      If the response can be improved, reduce the overall rating.
     </p>
   {:else if overall_rating == null}
     <p>You must set an overall rating before repairing.</p>

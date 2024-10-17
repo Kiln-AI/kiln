@@ -56,9 +56,9 @@
           created_at: "2024-10-16T10:24:00.872146",
           created_by: "scosman",
           type: "five_star",
-          value: null,
+          value: 4,
           requirement_ratings: {
-            "148753630565": 3,
+            "570793306757": 3,
           },
           model_type: "task_output_rating",
         },
