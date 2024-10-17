@@ -20,8 +20,9 @@
 
   // TODO warn_before_unload
 
-  let overall_rating: 1 | 2 | 3 | 4 | 5 | null = null
-  let requirement_ratings: (1 | 2 | 3 | 4 | 5 | null)[] = []
+  type FiveStarRating = 1 | 2 | 3 | 4 | 5 | null
+  let overall_rating: FiveStarRating = null
+  let requirement_ratings: FiveStarRating[] = []
 
   function load_server_ratings(
     new_run: components["schemas"]["TaskRun"] | null,
@@ -31,18 +32,12 @@
     if (!new_run) {
       return
     }
-    overall_rating = (new_run.output.rating?.value || null) as
-      | 1
-      | 2
-      | 3
-      | 4
-      | 5
-      | null
+    overall_rating = (new_run.output.rating?.value || null) as FiveStarRating
     Object.entries(new_run.output.rating?.requirement_ratings || {}).forEach(
       ([req_id, rating]) => {
         let index = task.requirements.findIndex((req) => req.id === req_id)
         if (index !== -1) {
-          requirement_ratings[index] = rating as 1 | 2 | 3 | 4 | 5 | null
+          requirement_ratings[index] = rating as FiveStarRating
         }
       },
     )
@@ -51,7 +46,7 @@
 
   async function save_ratings() {
     try {
-      let requirement_ratings_obj: Record<string, 1 | 2 | 3 | 4 | 5 | null> = {}
+      let requirement_ratings_obj: Record<string, FiveStarRating> = {}
       task.requirements.forEach((req, index) => {
         requirement_ratings_obj[req.id] = requirement_ratings[index]
       })
