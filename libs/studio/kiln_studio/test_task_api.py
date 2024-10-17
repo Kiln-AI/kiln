@@ -16,13 +16,13 @@ from kiln_ai.datamodel import (
 )
 
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
-from libs.studio.kiln_studio.task_management import connect_task_management, deep_update
+from libs.studio.kiln_studio.task_api import connect_task_api, deep_update
 
 
 @pytest.fixture
 def app():
     app = FastAPI()
-    connect_task_management(app)
+    connect_task_api(app)
     connect_custom_errors(app)
     return app
 
@@ -43,7 +43,7 @@ def test_create_task_success(client, tmp_path):
     }
 
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id, patch(
         "libs.core.kiln_ai.datamodel.Task.save_to_file"
     ) as mock_save:
@@ -86,7 +86,7 @@ def test_create_task_project_load_error(client, tmp_path):
         "description": "This is a test task",
     }
 
-    with patch("libs.studio.kiln_studio.task_management.project_from_id") as mock_load:
+    with patch("libs.studio.kiln_studio.task_api.project_from_id") as mock_load:
         mock_load.side_effect = HTTPException(
             status_code=404, detail="Project not found"
         )
@@ -111,7 +111,7 @@ def test_create_task_real_project(client, tmp_path):
         "instruction": "Task instruction",
     }
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
 
@@ -150,7 +150,7 @@ def test_get_task_success(client, tmp_path):
     task.save_to_file()
 
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
         response = client.get(f"/api/projects/project1-id/task/{task.id}")
@@ -169,7 +169,7 @@ def test_get_task_not_found(client, tmp_path):
     project = Project(name="Test Project", path=str(project_path))
     project.save_to_file()
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
         response = client.get("/api/projects/project1-id/task/non_existent_task_id")
@@ -180,7 +180,7 @@ def test_get_task_not_found(client, tmp_path):
 
 def test_get_task_project_not_found(client):
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id:
         mock_project_from_id.side_effect = HTTPException(
             status_code=404, detail="Project not found"
@@ -222,7 +222,7 @@ async def test_run_task_success(client, tmp_path):
     }
 
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id, patch.object(
         LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
     ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
@@ -265,7 +265,7 @@ async def test_run_task_structured_output(client, tmp_path):
     }
 
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id, patch.object(
         LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
     ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
@@ -302,7 +302,7 @@ async def test_run_task_not_found(client, tmp_path):
     }
 
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
         response = client.post(
@@ -332,7 +332,7 @@ async def test_run_task_no_input(client, tmp_path, mock_config):
     run_task_request = {"model_name": "gpt_4o", "provider": "openai"}
 
     with patch(
-        "libs.studio.kiln_studio.task_management.project_from_id"
+        "libs.studio.kiln_studio.task_api.project_from_id"
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
         response = client.post(
@@ -374,7 +374,7 @@ async def test_run_task_structured_input(client, tmp_path):
         }
 
         with patch(
-            "libs.studio.kiln_studio.task_management.project_from_id"
+            "libs.studio.kiln_studio.task_api.project_from_id"
         ) as mock_project_from_id, patch.object(
             LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
         ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
@@ -585,7 +585,7 @@ async def test_update_run(client, tmp_path):
 
     for case in test_cases:
         with patch(
-            "libs.studio.kiln_studio.task_management.project_from_id"
+            "libs.studio.kiln_studio.task_api.project_from_id"
         ) as mock_project_from_id:
             mock_project_from_id.return_value = project
 
@@ -638,7 +638,7 @@ async def test_update_run(client, tmp_path):
 
     for case in error_cases:
         with patch(
-            "libs.studio.kiln_studio.task_management.project_from_id"
+            "libs.studio.kiln_studio.task_api.project_from_id"
         ) as mock_project_from_id:
             mock_project_from_id.return_value = project
 

@@ -7,7 +7,7 @@ from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.datamodel import Task, TaskRun
 from pydantic import BaseModel
 
-from libs.studio.kiln_studio.project_management import project_from_id
+from libs.studio.kiln_studio.project_api import project_from_id
 
 # Add this at the module level
 update_run_lock = Lock()
@@ -42,7 +42,7 @@ def deep_update(
     return {k: v for k, v in source.items() if v is not None}
 
 
-def connect_task_management(app: FastAPI):
+def connect_task_api(app: FastAPI):
     @app.post("/api/projects/{project_id}/task")
     async def create_task(project_id: str, task_data: Dict[str, Any]):
         parent_project = project_from_id(project_id)

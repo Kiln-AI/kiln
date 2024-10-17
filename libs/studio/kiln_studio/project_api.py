@@ -36,7 +36,7 @@ def add_project_to_config(project_path: str):
         Config.shared().save_setting("projects", projects)
 
 
-def connect_project_management(app: FastAPI):
+def connect_project_api(app: FastAPI):
     @app.post("/api/project")
     async def create_project(project: Project):
         project_path = os.path.join(default_project_path(), project.name)

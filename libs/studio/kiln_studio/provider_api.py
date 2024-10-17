@@ -8,7 +8,7 @@ from kiln_ai.utils.config import Config
 from langchain_aws import ChatBedrockConverse
 
 
-def connect_provider_management(app: FastAPI):
+def connect_provider_api(app: FastAPI):
     @app.post("/api/provider/ollama/connect")
     async def connect_ollama():
         # Tags is a list of Ollama models. Proves Ollama is running, and models are available.

@@ -6,17 +6,17 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from kiln_ai.utils.config import Config
 
-from libs.studio.kiln_studio.provider_management import (
+from libs.studio.kiln_studio.provider_api import (
     connect_groq,
     connect_openrouter,
-    connect_provider_management,
+    connect_provider_api,
 )
 
 
 @pytest.fixture
 def app():
     app = FastAPI()
-    connect_provider_management(app)
+    connect_provider_api(app)
     return app
 
 
@@ -43,7 +43,7 @@ def test_connect_api_key_unsupported_provider(client):
     assert response.json() == {"message": "Provider unsupported not supported"}
 
 
-@patch("libs.studio.kiln_studio.provider_management.connect_openai")
+@patch("libs.studio.kiln_studio.provider_api.connect_openai")
 def test_connect_api_key_openai_success(mock_connect_openai, client):
     mock_connect_openai.return_value = {"message": "Connected to OpenAI"}
     response = client.post(
@@ -55,8 +55,8 @@ def test_connect_api_key_openai_success(mock_connect_openai, client):
     mock_connect_openai.assert_called_once_with("test_key")
 
 
-@patch("libs.studio.kiln_studio.provider_management.requests.get")
-@patch("libs.studio.kiln_studio.provider_management.Config.shared")
+@patch("libs.studio.kiln_studio.provider_api.requests.get")
+@patch("libs.studio.kiln_studio.provider_api.Config.shared")
 def test_connect_openai_success(mock_config_shared, mock_requests_get, client):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -75,7 +75,7 @@ def test_connect_openai_success(mock_config_shared, mock_requests_get, client):
     assert mock_config.open_ai_api_key == "test_key"
 
 
-@patch("libs.studio.kiln_studio.provider_management.requests.get")
+@patch("libs.studio.kiln_studio.provider_api.requests.get")
 def test_connect_openai_invalid_key(mock_requests_get, client):
     mock_response = MagicMock()
     mock_response.status_code = 401
@@ -92,7 +92,7 @@ def test_connect_openai_invalid_key(mock_requests_get, client):
     }
 
 
-@patch("libs.studio.kiln_studio.provider_management.requests.get")
+@patch("libs.studio.kiln_studio.provider_api.requests.get")
 def test_connect_openai_request_exception(mock_requests_get, client):
     mock_requests_get.side_effect = Exception("Test error")
 
@@ -107,19 +107,19 @@ def test_connect_openai_request_exception(mock_requests_get, client):
 
 @pytest.fixture
 def mock_requests_get():
-    with patch("libs.studio.kiln_studio.provider_management.requests.get") as mock_get:
+    with patch("libs.studio.kiln_studio.provider_api.requests.get") as mock_get:
         yield mock_get
 
 
 @pytest.fixture
 def mock_config():
-    with patch("libs.studio.kiln_studio.provider_management.Config") as mock_config:
+    with patch("libs.studio.kiln_studio.provider_api.Config") as mock_config:
         mock_config.shared.return_value = MagicMock()
         yield mock_config
 
 
-@patch("libs.studio.kiln_studio.provider_management.requests.get")
-@patch("libs.studio.kiln_studio.provider_management.Config.shared")
+@patch("libs.studio.kiln_studio.provider_api.requests.get")
+@patch("libs.studio.kiln_studio.provider_api.Config.shared")
 async def test_connect_groq_success(mock_config_shared, mock_requests_get):
     mock_response = MagicMock()
     mock_response.status_code = 200

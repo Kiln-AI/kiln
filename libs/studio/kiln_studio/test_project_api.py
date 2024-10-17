@@ -10,8 +10,8 @@ from kiln_ai.datamodel import Project
 from kiln_ai.utils.config import Config
 
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
-from libs.studio.kiln_studio.project_management import (
-    connect_project_management,
+from libs.studio.kiln_studio.project_api import (
+    connect_project_api,
     project_from_id,
 )
 
@@ -19,7 +19,7 @@ from libs.studio.kiln_studio.project_management import (
 @pytest.fixture
 def app():
     app = FastAPI()
-    connect_project_management(app)
+    connect_project_api(app)
     connect_custom_errors(app)
     return app
 
@@ -88,7 +88,7 @@ def test_create_and_load_project(client):
     with tempfile.TemporaryDirectory() as temp_dir:
         # Mock the default_project_path to use our temporary directory
         with patch(
-            "libs.studio.kiln_studio.project_management.default_project_path",
+            "libs.studio.kiln_studio.project_api.default_project_path",
             return_value=temp_dir,
         ):
             # Create a new project
@@ -179,9 +179,7 @@ def test_import_project_success(client):
     mock_project = Project(name="Imported Project", description="An imported project")
     with patch("os.path.exists", return_value=True), patch(
         "kiln_ai.datamodel.Project.load_from_file", return_value=mock_project
-    ), patch(
-        "libs.studio.kiln_studio.project_management.add_project_to_config"
-    ) as mock_add:
+    ), patch("libs.studio.kiln_studio.project_api.add_project_to_config") as mock_add:
         response = client.post("/api/import_project?project_path=/path/to/project.json")
 
     assert response.status_code == 200
@@ -229,7 +227,7 @@ def test_get_project_success(client):
         name="Test Project", description="A test project", id="test-id"
     )
     with patch(
-        "libs.studio.kiln_studio.project_management.project_from_id",
+        "libs.studio.kiln_studio.project_api.project_from_id",
         return_value=mock_project,
     ):
         response = client.get("/api/projects/test-id")
@@ -243,7 +241,7 @@ def test_get_project_success(client):
 
 def test_get_project_not_found(client):
     with patch(
-        "libs.studio.kiln_studio.project_management.project_from_id",
+        "libs.studio.kiln_studio.project_api.project_from_id",
         side_effect=HTTPException(status_code=404, detail="Project not found"),
     ):
         response = client.get("/api/projects/non-existent-id")
@@ -280,7 +278,7 @@ def mock_projects():
 @pytest.fixture
 def patched_config(mock_config):
     with patch(
-        "libs.studio.kiln_studio.project_management.Config.shared",
+        "libs.studio.kiln_studio.project_api.Config.shared",
         return_value=mock_config,
     ) as mock:
         yield mock
@@ -363,7 +361,7 @@ def test_get_projects_with_one_exception(client, mock_projects):
 def test_delete_project_success(client):
     mock_project = MagicMock(path="/path/to/project.json")
     with patch(
-        "libs.studio.kiln_studio.project_management.project_from_id",
+        "libs.studio.kiln_studio.project_api.project_from_id",
         return_value=mock_project,
     ), patch.object(Config, "shared") as mock_config:
         mock_config.return_value.projects = [
@@ -383,7 +381,7 @@ def test_delete_project_success(client):
 
 def test_delete_project_not_found(client):
     with patch(
-        "libs.studio.kiln_studio.project_management.project_from_id",
+        "libs.studio.kiln_studio.project_api.project_from_id",
         side_effect=HTTPException(status_code=404, detail="Project not found"),
     ):
         response = client.delete("/api/projects/non-existent-id")
