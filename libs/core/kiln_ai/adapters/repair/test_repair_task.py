@@ -188,20 +188,15 @@ async def test_live_run(sample_task, sample_task_run, sample_repair_data):
         repair_task, model_name="llama_3_1_8b", provider="groq"
     )
 
-    adapter_response = await adapter.invoke_returning_run(
-        repair_task_input.model_dump()
-    )
-    print("output", adapter_response.output)
-    assert adapter_response.run is not None
-    assert adapter_response.run.id is not None
-    assert (
-        "Please come up with a more original chicken-related joke."
-        in adapter_response.run.input
-    )
-    parsed_output = json.loads(adapter_response.run.output.output)
+    run = await adapter.invoke(repair_task_input.model_dump())
+    print("output", run.output)
+    assert run is not None
+    assert run.id is not None
+    assert "Please come up with a more original chicken-related joke." in run.input
+    parsed_output = json.loads(run.output.output)
     assert "setup" in parsed_output
     assert "punchline" in parsed_output
-    assert adapter_response.run.output.source.properties == {
+    assert run.output.source.properties == {
         "adapter_name": "kiln_langchain_adapter",
         "model_name": "llama_3_1_8b",
         "model_provider": "groq",
@@ -230,27 +225,23 @@ async def test_mocked_repair_task_run(sample_task, sample_task_run, sample_repai
             repair_task, model_name="llama_3_1_8b", provider="groq"
         )
 
-        adapter_response = await adapter.invoke_returning_run(
-            repair_task_input.model_dump()
-        )
+        run = await adapter.invoke(repair_task_input.model_dump())
 
-    assert adapter_response.run is not None
-    assert adapter_response.run.id is not None
-    assert (
-        "Please come up with a more original chicken-related joke."
-        in adapter_response.run.input
-    )
+    assert run is not None
+    # because it's mocked, the run is not saved to the disk, and returns no ID
+    assert run.id is None
+    assert "Please come up with a more original chicken-related joke." in run.input
 
-    parsed_output = json.loads(adapter_response.run.output.output)
+    parsed_output = json.loads(run.output.output)
     assert parsed_output == mocked_output
-    assert adapter_response.run.output.source.properties == {
+    assert run.output.source.properties == {
         "adapter_name": "kiln_langchain_adapter",
         "model_name": "llama_3_1_8b",
         "model_provider": "groq",
         "prompt_builder_name": "simple_prompt_builder",
     }
-    assert adapter_response.run.input_source.type == DataSourceType.human
-    assert "created_by" in adapter_response.run.input_source.properties
+    assert run.input_source.type == DataSourceType.human
+    assert "created_by" in run.input_source.properties
 
     # Verify that the mock was called
     mock_run.assert_called_once()

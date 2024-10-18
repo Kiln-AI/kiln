@@ -38,11 +38,6 @@ class RunTaskRequest(BaseModel):
     structured_input: Dict[str, Any] | None = None
 
 
-class RunTaskResponse(BaseModel):
-    run: TaskRun | None = None
-    raw_output: str | None = None
-
-
 def run_from_id(project_id: str, task_id: str, run_id: str) -> TaskRun:
     task = task_from_id(project_id, task_id)
     for run in task.runs():
@@ -63,7 +58,7 @@ def connect_run_api(app: FastAPI):
     @app.post("/api/projects/{project_id}/tasks/{task_id}/run")
     async def run_task(
         project_id: str, task_id: str, request: RunTaskRequest
-    ) -> RunTaskResponse:
+    ) -> TaskRun:
         parent_project = project_from_id(project_id)
         task = next(
             (task for task in parent_project.tasks() if task.id == task_id), None
@@ -88,14 +83,7 @@ def connect_run_api(app: FastAPI):
                 detail="No input provided. Ensure your provided the proper format (plaintext or structured).",
             )
 
-        adapter_run = await adapter.invoke_returning_run(input)
-        response_output = None
-        if isinstance(adapter_run.output, str):
-            response_output = adapter_run.output
-        else:
-            response_output = json.dumps(adapter_run.output)
-
-        return RunTaskResponse(raw_output=response_output, run=adapter_run.run)
+        return await adapter.invoke(input)
 
     @app.patch("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}")
     async def update_run_route(

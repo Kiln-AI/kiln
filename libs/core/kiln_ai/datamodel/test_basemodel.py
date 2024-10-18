@@ -98,6 +98,7 @@ class NamedParentedModel(KilnParentedModel):
 
 def test_parented_model_path_gen(tmp_path):
     parent = KilnBaseModel(path=tmp_path)
+    assert parent.id is not None
     child = NamedParentedModel(parent=parent)
     child_path = child.build_path()
     assert child_path.name == "named_parented_model.kiln"

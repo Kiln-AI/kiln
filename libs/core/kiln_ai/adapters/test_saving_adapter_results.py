@@ -129,10 +129,13 @@ async def test_autosave_false(test_task):
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
-        await adapter.invoke(input_data)
+        run = await adapter.invoke(input_data)
 
         # Check that no runs were saved
         assert len(test_task.runs()) == 0
+
+        # Check that the run ID is not set
+        assert run.id is None
 
 
 @pytest.mark.asyncio
@@ -145,7 +148,10 @@ async def test_autosave_true(test_task):
         adapter = TestAdapter(test_task)
         input_data = "Test input"
 
-        await adapter.invoke(input_data, None)
+        run = await adapter.invoke(input_data)
+
+        # Check that the run ID is set
+        assert run.id is not None
 
         # Check that an task input was saved
         task_runs = test_task.runs()

@@ -27,10 +27,12 @@ from pydantic import (
 )
 from pydantic_core import ErrorDetails
 
-# ID is a 12 digit random integer string. Should be unique per project.
+# ID is a 12 digit random integer string.
+# Should be unique per item, at least inside the context of a parent/child relationship.
 # Use integers to make it easier to type for a search function.
+# Allow none, even though we generate it, because we clear it in the REST API if the object is ephemeral (not persisted to disk)
 ID_FIELD = Field(default_factory=lambda: str(uuid.uuid4().int)[:12])
-ID_TYPE = str
+ID_TYPE = Optional[str]
 T = TypeVar("T", bound="KilnBaseModel")
 PT = TypeVar("PT", bound="KilnParentedModel")
 
@@ -175,6 +177,9 @@ class KilnParentedModel(KilnBaseModel, metaclass=ABCMeta):
     def build_child_dirname(self) -> Path:
         # Default implementation for readable folder names.
         # {id} - {name}/{type}.kiln
+        if self.id is None:
+            # consider generating an ID here. But if it's been cleared, we've already used this without one so raise for now.
+            raise ValueError("ID is not set - can not save or build path")
         path = self.id
         name = getattr(self, "name", None)
         if name is not None:

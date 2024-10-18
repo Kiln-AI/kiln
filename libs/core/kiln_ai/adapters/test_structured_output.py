@@ -72,7 +72,7 @@ async def test_mock_unstructred_response(tmp_path):
 
     # don't error on valid response
     adapter = MockAdapter(task, response={"setup": "asdf", "punchline": "asdf"})
-    answer = await adapter.invoke("You are a mock, send me the response!")
+    answer = await adapter.invoke_returning_raw("You are a mock, send me the response!")
     assert answer["setup"] == "asdf"
     assert answer["punchline"] == "asdf"
 
@@ -145,7 +145,7 @@ def build_structured_output_test_task(tmp_path: Path):
 async def run_structured_output_test(tmp_path: Path, model_name: str, provider: str):
     task = build_structured_output_test_task(tmp_path)
     a = LangChainPromptAdapter(task, model_name=model_name, provider=provider)
-    parsed = await a.invoke("Cows")  # a joke about cows
+    parsed = await a.invoke_returning_raw("Cows")  # a joke about cows
     if parsed is None or not isinstance(parsed, Dict):
         raise RuntimeError(f"structured response is not a dict: {parsed}")
     assert parsed["setup"] is not None
@@ -190,7 +190,7 @@ async def run_structured_input_test(tmp_path: Path, model_name: str, provider: s
         # invalid structured input
         await a.invoke({"a": 1, "b": 2, "d": 3})
 
-    response = await a.invoke({"a": 2, "b": 2, "c": 2})
+    response = await a.invoke_returning_raw({"a": 2, "b": 2, "c": 2})
     assert response is not None
     assert isinstance(response, str)
     assert "[[equilateral]]" in response

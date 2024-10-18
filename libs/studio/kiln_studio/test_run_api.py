@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
-from kiln_ai.adapters.base_adapter import AdapterRun
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.datamodel import (
     DataSource,
@@ -17,7 +16,6 @@ from kiln_ai.datamodel import (
 
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
 from libs.studio.kiln_studio.run_api import connect_run_api, deep_update, run_from_id
-from libs.studio.kiln_studio.task_api import task_from_id
 
 
 @pytest.fixture
@@ -42,13 +40,14 @@ def mock_config():
         yield mock_config_instance
 
 
-@pytest.mark.asyncio
-async def test_run_task_success(client, tmp_path):
+@pytest.fixture
+def task_run_setup(tmp_path):
     project_path = tmp_path / "test_project" / "project.json"
     project_path.parent.mkdir()
 
     project = Project(name="Test Project", path=str(project_path))
     project.save_to_file()
+
     task = Task(
         name="Test Task",
         instruction="This is a test instruction",
@@ -63,56 +62,79 @@ async def test_run_task_success(client, tmp_path):
         "plaintext_input": "Test input",
     }
 
+    task_run = TaskRun(
+        parent=task,
+        input="Test input",
+        input_source=DataSource(
+            type=DataSourceType.human, properties={"created_by": "Test User"}
+        ),
+        output=TaskOutput(
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.synthetic,
+                properties={
+                    "model_name": "gpt_4o",
+                    "model_provider": "openai",
+                    "adapter_name": "kiln_langchain_adapter",
+                    "prompt_builder_name": "simple_prompt_builder",
+                },
+            ),
+        ),
+    )
+    task_run.save_to_file()
+
+    return {
+        "project": project,
+        "task": task,
+        "run_task_request": run_task_request,
+        "task_run": task_run,
+    }
+
+
+@pytest.mark.asyncio
+async def test_run_task_success(client, task_run_setup):
+    project = task_run_setup["project"]
+    task = task_run_setup["task"]
+    run_task_request = task_run_setup["run_task_request"]
+
     with patch(
         "libs.studio.kiln_studio.run_api.project_from_id"
     ) as mock_project_from_id, patch.object(
-        LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
+        LangChainPromptAdapter, "invoke", new_callable=AsyncMock
     ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
         mock_project_from_id.return_value = project
-        mock_invoke.return_value = AdapterRun(run=None, output="Test output")
+        mock_invoke.return_value = task_run_setup["task_run"]
 
         # Mock the Config class
         mock_config_instance = MockConfig.return_value
         mock_config_instance.open_ai_api_key = "test_key"
 
         response = client.post(
-            f"/api/projects/project1-id/tasks/{task.id}/run", json=run_task_request
+            f"/api/projects/{project.id}/tasks/{task.id}/run", json=run_task_request
         )
 
     assert response.status_code == 200
     res = response.json()
-    assert res["raw_output"] == "Test output"
-    assert res["run"] is None
+    assert res["output"]["output"] == "Test output"
+    # Checking that the ID is not None because it's saved to the disk
+    assert res["id"] is not None
 
 
 @pytest.mark.asyncio
-async def test_run_task_structured_output(client, tmp_path):
-    project_path = tmp_path / "test_project" / "project.json"
-    project_path.parent.mkdir()
-
-    project = Project(name="Test Project", path=str(project_path))
-    project.save_to_file()
-    task = Task(
-        name="Test Task",
-        instruction="This is a test instruction",
-        description="This is a test task",
-        parent=project,
-    )
-    task.save_to_file()
-
-    run_task_request = {
-        "model_name": "gpt_4o",
-        "provider": "openai",
-        "plaintext_input": "Test input",
-    }
+async def test_run_task_structured_output(client, task_run_setup):
+    project = task_run_setup["project"]
+    task = task_run_setup["task"]
+    run_task_request = task_run_setup["run_task_request"]
 
     with patch(
         "libs.studio.kiln_studio.run_api.project_from_id"
     ) as mock_project_from_id, patch.object(
-        LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
+        LangChainPromptAdapter, "invoke", new_callable=AsyncMock
     ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
         mock_project_from_id.return_value = project
-        mock_invoke.return_value = AdapterRun(run=None, output={"key": "value"})
+        task_run = task_run_setup["task_run"]
+        task_run.output.output = '{"key": "value"}'
+        mock_invoke.return_value = task_run
 
         # Mock the Config class
         mock_config_instance = MockConfig.return_value
@@ -125,23 +147,15 @@ async def test_run_task_structured_output(client, tmp_path):
 
     res = response.json()
     assert response.status_code == 200
-    assert res["raw_output"] == '{"key": "value"}'
-    assert res["run"] is None
+    assert res["output"]["output"] == '{"key": "value"}'
+    # ID set because it's saved to the disk
+    assert res["id"] is not None
 
 
 @pytest.mark.asyncio
-async def test_run_task_not_found(client, tmp_path):
-    project_path = tmp_path / "test_project" / "project.json"
-    project_path.parent.mkdir()
-
-    project = Project(name="Test Project", path=str(project_path))
-    project.save_to_file()
-
-    run_task_request = {
-        "model_name": "gpt_4o",
-        "provider": "openai",
-        "plaintext_input": "Test input",
-    }
+async def test_run_task_not_found(client, task_run_setup):
+    project = task_run_setup["project"]
+    run_task_request = task_run_setup["run_task_request"]
 
     with patch(
         "libs.studio.kiln_studio.run_api.project_from_id"
@@ -157,20 +171,11 @@ async def test_run_task_not_found(client, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_run_task_no_input(client, tmp_path, mock_config):
-    project_path = tmp_path / "test_project" / "project.json"
-    project_path.parent.mkdir()
+async def test_run_task_no_input(client, task_run_setup, mock_config):
+    project = task_run_setup["project"]
+    task = task_run_setup["task"]
 
-    project = Project(name="Test Project", path=str(project_path))
-    project.save_to_file()
-    task = Task(
-        name="Test Task",
-        instruction="This is a test instruction",
-        description="This is a test task",
-        parent=project,
-    )
-    task.save_to_file()
-
+    # Misisng input
     run_task_request = {"model_name": "gpt_4o", "provider": "openai"}
 
     with patch(
@@ -181,23 +186,14 @@ async def test_run_task_no_input(client, tmp_path, mock_config):
             f"/api/projects/project1-id/tasks/{task.id}/run", json=run_task_request
         )
 
-    assert response.status_code == 422
-    assert "Input should be a valid string" in response.json()["message"]
+    assert response.status_code == 400
+    assert "No input provided" in response.json()["message"]
 
 
 @pytest.mark.asyncio
-async def test_run_task_structured_input(client, tmp_path):
-    project_path = tmp_path / "test_project" / "project.json"
-    project_path.parent.mkdir()
-
-    project = Project(name="Test Project", path=str(project_path))
-    project.save_to_file()
-    task = Task(
-        name="Test Task",
-        instruction="This is a test instruction",
-        description="This is a test task",
-        parent=project,
-    )
+async def test_run_task_structured_input(client, task_run_setup):
+    project = task_run_setup["project"]
+    task = task_run_setup["task"]
 
     with patch.object(
         Task,
@@ -207,8 +203,6 @@ async def test_run_task_structured_input(client, tmp_path):
             "properties": {"key": {"type": "string"}},
         },
     ):
-        task.save_to_file()
-
         run_task_request = {
             "model_name": "gpt_4o",
             "provider": "openai",
@@ -218,12 +212,10 @@ async def test_run_task_structured_input(client, tmp_path):
         with patch(
             "libs.studio.kiln_studio.run_api.project_from_id"
         ) as mock_project_from_id, patch.object(
-            LangChainPromptAdapter, "invoke_returning_run", new_callable=AsyncMock
+            LangChainPromptAdapter, "invoke", new_callable=AsyncMock
         ) as mock_invoke, patch("kiln_ai.utils.config.Config.shared") as MockConfig:
             mock_project_from_id.return_value = project
-            mock_invoke.return_value = AdapterRun(
-                run=None, output="Structured input processed"
-            )
+            mock_invoke.return_value = task_run_setup["task_run"]
 
             # Mock the Config class
             mock_config_instance = MockConfig.return_value
@@ -236,8 +228,8 @@ async def test_run_task_structured_input(client, tmp_path):
 
     assert response.status_code == 200
     res = response.json()
-    assert res["raw_output"] == "Structured input processed"
-    assert res["run"] is None
+    assert res["output"]["output"] == "Test output"
+    assert res["id"] is not None
 
 
 def test_deep_update_with_empty_source():

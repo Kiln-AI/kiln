@@ -24,30 +24,28 @@ class AdapterInfo:
     prompt_builder_name: str
 
 
-class AdapterRun(BaseModel):
-    run: TaskRun | None
-    output: Dict | str
-
-
 class BaseAdapter(metaclass=ABCMeta):
     def __init__(self, kiln_task: Task):
         self.kiln_task = kiln_task
         self.output_schema = self.kiln_task.output_json_schema
         self.input_schema = self.kiln_task.input_json_schema
 
-    async def invoke(
+    async def invoke_returning_raw(
         self,
         input: Dict | str,
         input_source: DataSource | None = None,
     ) -> Dict | str:
-        result = await self.invoke_returning_run(input, input_source)
-        return result.output
+        result = await self.invoke(input, input_source)
+        if self.kiln_task.output_json_schema is None:
+            return result.output.output
+        else:
+            return json.loads(result.output.output)
 
-    async def invoke_returning_run(
+    async def invoke(
         self,
         input: Dict | str,
         input_source: DataSource | None = None,
-    ) -> AdapterRun:
+    ) -> TaskRun:
         # validate input
         if self.input_schema is not None:
             if not isinstance(input, dict):
@@ -74,8 +72,11 @@ class BaseAdapter(metaclass=ABCMeta):
         # Save the run if configured to do so, and we have a path to save to
         if Config.shared().autosave_runs and self.kiln_task.path is not None:
             run.save_to_file()
+        else:
+            # Clear the ID to indicate it's not persisted
+            run.id = None
 
-        return AdapterRun(run=run, output=result)
+        return run
 
     def has_structured_output(self) -> bool:
         return self.output_schema is not None
