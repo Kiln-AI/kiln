@@ -175,6 +175,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Run */
+        get: operations["get_run_api_projects__project_id__tasks__task_id__runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Run Route */
+        patch: operations["update_run_route_api_projects__project_id__tasks__task_id__runs__run_id__patch"];
+        trace?: never;
+    };
     "/api/projects/{project_id}/tasks/{task_id}/run": {
         parameters: {
             query?: never;
@@ -190,23 +208,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Run Route */
-        patch: operations["update_run_route_api_projects__project_id__tasks__task_id__runs__run_id__patch"];
         trace?: never;
     };
     "/api/settings": {
@@ -279,7 +280,7 @@ export interface components {
              */
             v: number;
             /** Id */
-            id?: string;
+            id?: string | null;
             /** Path */
             path?: string | null;
             /**
@@ -308,12 +309,6 @@ export interface components {
             /** Structured Input */
             structured_input?: Record<string, never> | null;
         };
-        /** RunTaskResponse */
-        RunTaskResponse: {
-            run?: components["schemas"]["TaskRun"] | null;
-            /** Raw Output */
-            raw_output?: string | null;
-        };
         /**
          * TaskOutput
          * @description An output for a specific task run.
@@ -325,7 +320,7 @@ export interface components {
              */
             v: number;
             /** Id */
-            id?: string;
+            id?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -358,7 +353,7 @@ export interface components {
              */
             v: number;
             /** Id */
-            id?: string;
+            id?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -400,7 +395,7 @@ export interface components {
              */
             v: number;
             /** Id */
-            id?: string;
+            id?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -762,21 +757,18 @@ export interface operations {
             };
         };
     };
-    run_task_api_projects__project_id__tasks__task_id__run_post: {
+    get_run_api_projects__project_id__tasks__task_id__runs__run_id__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 project_id: string;
                 task_id: string;
+                run_id: string;
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RunTaskRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -784,7 +776,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RunTaskResponse"];
+                    "application/json": components["schemas"]["TaskRun"];
                 };
             };
             /** @description Validation Error */
@@ -812,6 +804,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_task_api_projects__project_id__tasks__task_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunTaskRequest"];
             };
         };
         responses: {

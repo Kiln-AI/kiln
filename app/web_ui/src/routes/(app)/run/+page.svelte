@@ -8,7 +8,6 @@
   import Run from "./run.svelte"
   import createClient from "openapi-fetch"
   import { type components, type paths } from "$lib/api_schema.d"
-  import Output from "./output.svelte"
 
   // TODO: implement checking input content
   let warn_before_unload = false
@@ -27,45 +26,42 @@
   $: provider = model.split("/")[0]
 
   // TODO: remove test data
-  let response: components["schemas"]["RunTaskResponse"] | null = {
-    run: {
-      v: 1,
-      id: "123",
-      input: "asdf",
-      model_type: "run",
-      input_source: {
-        type: "human",
-        properties: {
-          a: 1,
-          b: "asdf",
-        },
-      },
-      output: {
-        v: 1,
-        output: '{"a": 1, "b": "asdf"}',
-        source: {
-          type: "synthetic",
-          properties: {
-            model_type: "openai/gpt_4o_mini",
-          },
-        },
-        model_type: "output",
-        rating: {
-          v: 1,
-          id: "270303291267",
-          created_at: "2024-10-16T10:24:00.872146",
-          created_by: "scosman",
-          type: "five_star",
-          value: 4,
-          requirement_ratings: {
-            "570793306757": 3,
-          },
-          model_type: "task_output_rating",
-        },
+  let response: components["schemas"]["TaskRun"] | null = {
+    v: 1,
+    id: "123",
+    input: "asdf",
+    model_type: "run",
+    input_source: {
+      type: "human",
+      properties: {
+        a: 1,
+        b: "asdf",
       },
     },
-    raw_output:
-      '{"setup": "Why did the scarecrow win an award?", "punchline": "Because he was outstanding in his field!"}',
+    output: {
+      v: 1,
+      output:
+        '{"setup": "Why did the scarecrow win an award?", "punchline": "Because he was outstanding in his field!"}',
+      source: {
+        type: "synthetic",
+        properties: {
+          model_type: "openai/gpt_4o_mini",
+        },
+      },
+      model_type: "output",
+      rating: {
+        v: 1,
+        id: "270303291267",
+        created_at: "2024-10-16T10:24:00.872146",
+        created_by: "scosman",
+        type: "five_star",
+        value: 4,
+        requirement_ratings: {
+          "570793306757": 3,
+        },
+        model_type: "task_output_rating",
+      },
+    },
   }
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
@@ -187,22 +183,13 @@
       </div>
     </div>
     {#if $current_task && !submitting && response != null && $current_project}
-      {#if response.run != null}
-        <div class="mt-10 xl:mt-32">
-          <Run
-            initial_run={response?.run}
-            task={$current_task}
-            project_id={$current_project.id}
-          />
-        </div>
-      {:else if response?.raw_output}
-        <!-- The response.run object may be nil if the run isn't saved (env var option for this). We still want to show the output though. -->
-        <div class="text-xl font-bold mt-10 mb-4">Run Output</div>
-        <Output
-          structured={!!$current_task?.output_json_schema}
-          raw_output={response.raw_output}
+      <div class="mt-10 xl:mt-32">
+        <Run
+          initial_run={response}
+          task={$current_task}
+          project_id={$current_project.id}
         />
-      {/if}
+      </div>
     {/if}
   </div>
 </AppPage>
