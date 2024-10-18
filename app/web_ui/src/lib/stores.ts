@@ -140,7 +140,7 @@ export async function load_current_task(project: ProjectInfo | null) {
     }
     const projectId = encodeURIComponent(project.id)
     const response = await fetch(
-      `http://localhost:8757/api/projects/${projectId}/task/${task_id}`,
+      `http://localhost:8757/api/projects/${projectId}/tasks/${task_id}`,
     )
     const data = await response.json()
     api_error_handler(response, data)

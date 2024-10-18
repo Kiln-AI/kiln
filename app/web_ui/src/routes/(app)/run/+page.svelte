@@ -81,7 +81,7 @@
       const {
         data, // only present if 2XX response
         error: fetch_error, // only present if 4XX or 5XX response
-      } = await client.POST("/api/projects/{project_id}/task/{task_id}/run", {
+      } = await client.POST("/api/projects/{project_id}/tasks/{task_id}/run", {
         params: {
           path: {
             project_id: $current_project?.id || "",

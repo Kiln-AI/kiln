@@ -158,7 +158,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/projects/{project_id}/task/{task_id}": {
+    "/api/projects/{project_id}/tasks/{task_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -166,7 +166,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Task */
-        get: operations["get_task_api_projects__project_id__task__task_id__get"];
+        get: operations["get_task_api_projects__project_id__tasks__task_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -175,7 +175,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/projects/{project_id}/task/{task_id}/run": {
+    "/api/projects/{project_id}/tasks/{task_id}/run": {
         parameters: {
             query?: never;
             header?: never;
@@ -185,14 +185,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Run Task */
-        post: operations["run_task_api_projects__project_id__task__task_id__run_post"];
+        post: operations["run_task_api_projects__project_id__tasks__task_id__run_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/projects/{project_id}/task/{task_id}/run/{run_id}": {
+    "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -206,7 +206,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Update Run Route */
-        patch: operations["update_run_route_api_projects__project_id__task__task_id__run__run_id__patch"];
+        patch: operations["update_run_route_api_projects__project_id__tasks__task_id__runs__run_id__patch"];
         trace?: never;
     };
     "/api/settings": {
@@ -730,7 +730,7 @@ export interface operations {
             };
         };
     };
-    get_task_api_projects__project_id__task__task_id__get: {
+    get_task_api_projects__project_id__tasks__task_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -762,7 +762,7 @@ export interface operations {
             };
         };
     };
-    run_task_api_projects__project_id__task__task_id__run_post: {
+    run_task_api_projects__project_id__tasks__task_id__run_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -798,7 +798,7 @@ export interface operations {
             };
         };
     };
-    update_run_route_api_projects__project_id__task__task_id__run__run_id__patch: {
+    update_run_route_api_projects__project_id__tasks__task_id__runs__run_id__patch: {
         parameters: {
             query?: never;
             header?: never;

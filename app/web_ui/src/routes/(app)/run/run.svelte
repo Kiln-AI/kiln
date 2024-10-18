@@ -66,7 +66,7 @@
         data, // only present if 2XX response
         error: fetch_error, // only present if 4XX or 5XX response
       } = await client.PATCH(
-        "/api/projects/{project_id}/task/{task_id}/run/{run_id}",
+        "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}",
         {
           params: {
             path: {
@@ -116,6 +116,19 @@
   function areArraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
     if (arr1.length !== arr2.length) return false
     return arr1.every((value, index) => value === arr2[index])
+  }
+
+  function toggle_raw_data() {
+    show_raw_data = !show_raw_data
+    if (show_raw_data) {
+      // Scroll to the raw data section when it's shown
+      setTimeout(() => {
+        const rawDataElement = document.getElementById("raw_data")
+        if (rawDataElement) {
+          rawDataElement.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+      }, 100)
+    }
   }
 </script>
 
@@ -201,17 +214,16 @@
   {/if}
 
   <div class="mt-16">
-    <button
-      class="btn btn-wide"
-      on:click={() => (show_raw_data = !show_raw_data)}
+    <button class="btn btn-wide" on:click={toggle_raw_data}
       >{show_raw_data ? "Hide" : "Show"} Raw Data</button
     >
   </div>
 
   <div class={show_raw_data ? "" : "hidden"}>
-    <h1 class="text-xl font-bold mt-10 mb-4">Raw Data</h1>
+    <h1 class="text-xl font-bold mt-10 mb-4" id="raw_data">Raw Data</h1>
     <div class="text-sm">
-      <pre class="bg-base-200 p-4 rounded-lg">{JSON.stringify(
+      <pre
+        class="bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{JSON.stringify(
           run,
           null,
           2,

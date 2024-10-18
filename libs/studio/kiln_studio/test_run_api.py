@@ -16,7 +16,8 @@ from kiln_ai.datamodel import (
 )
 
 from libs.studio.kiln_studio.custom_errors import connect_custom_errors
-from libs.studio.kiln_studio.run_api import connect_run_api, deep_update
+from libs.studio.kiln_studio.run_api import connect_run_api, deep_update, run_from_id
+from libs.studio.kiln_studio.task_api import task_from_id
 
 
 @pytest.fixture
@@ -75,7 +76,7 @@ async def test_run_task_success(client, tmp_path):
         mock_config_instance.open_ai_api_key = "test_key"
 
         response = client.post(
-            f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+            f"/api/projects/project1-id/tasks/{task.id}/run", json=run_task_request
         )
 
     assert response.status_code == 200
@@ -119,7 +120,7 @@ async def test_run_task_structured_output(client, tmp_path):
         mock_config_instance.user_id = "test_user"
 
         response = client.post(
-            f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+            f"/api/projects/project1-id/tasks/{task.id}/run", json=run_task_request
         )
 
     res = response.json()
@@ -147,7 +148,7 @@ async def test_run_task_not_found(client, tmp_path):
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
         response = client.post(
-            "/api/projects/project1-id/task/non_existent_task_id/run",
+            "/api/projects/project1-id/tasks/non_existent_task_id/run",
             json=run_task_request,
         )
 
@@ -177,7 +178,7 @@ async def test_run_task_no_input(client, tmp_path, mock_config):
     ) as mock_project_from_id:
         mock_project_from_id.return_value = project
         response = client.post(
-            f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+            f"/api/projects/project1-id/tasks/{task.id}/run", json=run_task_request
         )
 
     assert response.status_code == 422
@@ -230,7 +231,7 @@ async def test_run_task_structured_input(client, tmp_path):
             mock_config_instance.user_id = "test_user"
 
             response = client.post(
-                f"/api/projects/project1-id/task/{task.id}/run", json=run_task_request
+                f"/api/projects/project1-id/tasks/{task.id}/run", json=run_task_request
             )
 
     assert response.status_code == 200
@@ -431,7 +432,7 @@ async def test_update_run(client, tmp_path):
             mock_project_from_id.return_value = project
 
             response = client.patch(
-                f"/api/projects/project1-id/task/{task.id}/run/{run.id}",
+                f"/api/projects/project1-id/tasks/{task.id}/runs/{run.id}",
                 json=case["patch"],
             )
 
@@ -484,7 +485,7 @@ async def test_update_run(client, tmp_path):
             mock_project_from_id.return_value = project
 
             response = client.patch(
-                f"/api/projects/project1-id/task/{case['task_id']}/run/{case['run_id']}",
+                f"/api/projects/project1-id/tasks/{case['task_id']}/runs/{case['run_id']}",
                 json=case["updates"],
             )
 
@@ -494,3 +495,80 @@ async def test_update_run(client, tmp_path):
             assert (
                 response.json()["message"] == case["expected_detail"]
             ), f"Failed on case: {case['name']}"
+
+
+@pytest.fixture
+def test_run(tmp_path) -> TaskRun:
+    project_path = tmp_path / "test_project" / "project.json"
+    project_path.parent.mkdir()
+    project = Project(name="Test Project", path=str(project_path))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="This is a test instruction",
+        description="This is a test task",
+        parent=project,
+    )
+    task.save_to_file()
+    run = TaskRun(
+        parent=task,
+        input="Test input",
+        input_source=DataSource(
+            type=DataSourceType.human, properties={"created_by": "Jane Doe"}
+        ),
+        output=TaskOutput(
+            output="Test output",
+            source=DataSource(
+                type=DataSourceType.human, properties={"created_by": "Jane Doe"}
+            ),
+        ),
+    )
+    run.save_to_file()
+    return run
+
+
+def test_run_from_id_success(test_run):
+    with patch("libs.studio.kiln_studio.run_api.task_from_id") as mock_task_from_id:
+        mock_task_from_id.return_value = test_run.parent
+        result = run_from_id(test_run.parent.parent.id, test_run.parent.id, test_run.id)
+        assert result.id == test_run.id
+        assert result.input == "Test input"
+        assert result.output.output == "Test output"
+
+
+def test_run_from_id_not_found(test_run):
+    with patch("libs.studio.kiln_studio.run_api.task_from_id") as mock_task_from_id:
+        mock_task_from_id.return_value = test_run.parent
+        with pytest.raises(HTTPException) as exc_info:
+            run_from_id(
+                test_run.parent.parent.id, test_run.parent.id, "non_existent_run_id"
+            )
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail == "Run not found. ID: non_existent_run_id"
+
+
+async def test_get_run_success(client, test_run):
+    with patch("libs.studio.kiln_studio.run_api.run_from_id") as mock_run_from_id:
+        mock_run_from_id.return_value = test_run
+        response = client.get(
+            f"/api/projects/{test_run.parent.parent.id}/tasks/{test_run.parent.id}/runs/{test_run.id}"
+        )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["id"] == test_run.id
+    assert result["input"] == "Test input"
+    assert result["output"]["output"] == "Test output"
+
+
+async def test_get_run_not_found(client):
+    with patch("libs.studio.kiln_studio.run_api.run_from_id") as mock_run_from_id:
+        mock_run_from_id.side_effect = HTTPException(
+            status_code=404, detail="Run not found"
+        )
+        response = client.get(
+            "/api/projects/project1-id/tasks/task1-id/runs/non_existent_run_id"
+        )
+
+    assert response.status_code == 404
+    assert response.json()["message"] == "Run not found"

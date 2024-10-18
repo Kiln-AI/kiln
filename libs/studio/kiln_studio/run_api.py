@@ -8,6 +8,7 @@ from kiln_ai.datamodel import TaskRun
 from pydantic import BaseModel
 
 from libs.studio.kiln_studio.project_api import project_from_id
+from libs.studio.kiln_studio.task_api import task_from_id
 
 # Lock to prevent overwriting via concurrent updates. We use a load/update/write pattern that is not atomic.
 update_run_lock = Lock()
@@ -42,8 +43,24 @@ class RunTaskResponse(BaseModel):
     raw_output: str | None = None
 
 
+def run_from_id(project_id: str, task_id: str, run_id: str) -> TaskRun:
+    task = task_from_id(project_id, task_id)
+    for run in task.runs():
+        if run.id == run_id:
+            return run
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"Run not found. ID: {run_id}",
+    )
+
+
 def connect_run_api(app: FastAPI):
-    @app.post("/api/projects/{project_id}/task/{task_id}/run")
+    @app.get("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}")
+    async def get_run(project_id: str, task_id: str, run_id: str) -> TaskRun:
+        return run_from_id(project_id, task_id, run_id)
+
+    @app.post("/api/projects/{project_id}/tasks/{task_id}/run")
     async def run_task(
         project_id: str, task_id: str, request: RunTaskRequest
     ) -> RunTaskResponse:
@@ -80,7 +97,7 @@ def connect_run_api(app: FastAPI):
 
         return RunTaskResponse(raw_output=response_output, run=adapter_run.run)
 
-    @app.patch("/api/projects/{project_id}/task/{task_id}/run/{run_id}")
+    @app.patch("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}")
     async def update_run_route(
         project_id: str, task_id: str, run_id: str, run_data: Dict[str, Any]
     ) -> TaskRun:
