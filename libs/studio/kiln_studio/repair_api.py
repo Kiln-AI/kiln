@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from libs.core.kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from libs.core.kiln_ai.adapters.repair.repair_task import RepairTaskRun
@@ -18,6 +18,9 @@ class RepairTaskApiInput(BaseModel):
         description="The provider of the model to use for the repair task. Optional, if not specified, the provider of the original task will be used.",
         default=None,
     )
+
+    # Allows use of the model_name field (usually pydantic will reserve model_*)
+    model_config = ConfigDict(protected_namespaces=())
 
 
 def connect_repair_api(app: FastAPI):

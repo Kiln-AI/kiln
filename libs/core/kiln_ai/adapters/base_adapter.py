@@ -13,7 +13,6 @@ from kiln_ai.datamodel import (
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
 from kiln_ai.utils.formatting import snake_case
-from pydantic import BaseModel
 
 
 @dataclass

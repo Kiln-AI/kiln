@@ -4,7 +4,7 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.datamodel import Task, TaskRun
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from libs.studio.kiln_studio.project_api import project_from_id
 from libs.studio.kiln_studio.task_api import task_from_id
@@ -35,6 +35,9 @@ class RunTaskRequest(BaseModel):
     provider: str
     plaintext_input: str | None = None
     structured_input: Dict[str, Any] | None = None
+
+    # Allows use of the model_name field (usually pydantic will reserve model_*)
+    model_config = ConfigDict(protected_namespaces=())
 
 
 def run_from_id(project_id: str, task_id: str, run_id: str) -> TaskRun:
