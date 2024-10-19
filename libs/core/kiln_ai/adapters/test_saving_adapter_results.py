@@ -11,7 +11,7 @@ from kiln_ai.datamodel import (
 from kiln_ai.utils.config import Config
 
 
-class TestAdapter(BaseAdapter):
+class MockAdapter(BaseAdapter):
     async def _run(self, input: dict | str) -> dict | str:
         return "Test output"
 
@@ -38,7 +38,7 @@ def test_task(tmp_path):
 
 
 def test_save_run_isolation(test_task):
-    adapter = TestAdapter(test_task)
+    adapter = MockAdapter(test_task)
     input_data = "Test input"
     output_data = "Test output"
 
@@ -126,7 +126,7 @@ async def test_autosave_false(test_task):
         mock_config.autosave_runs = False
         mock_config.user_id = "test_user"
 
-        adapter = TestAdapter(test_task)
+        adapter = MockAdapter(test_task)
         input_data = "Test input"
 
         run = await adapter.invoke(input_data)
@@ -145,7 +145,7 @@ async def test_autosave_true(test_task):
         mock_config.autosave_runs = True
         mock_config.user_id = "test_user"
 
-        adapter = TestAdapter(test_task)
+        adapter = MockAdapter(test_task)
         input_data = "Test input"
 
         run = await adapter.invoke(input_data)
