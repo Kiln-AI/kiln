@@ -19,6 +19,7 @@ from kiln_ai.datamodel import (
     TaskRequirement,
     TaskRun,
 )
+from pydantic import ValidationError
 
 json_joke_schema = """{
   "type": "object",
@@ -156,17 +157,20 @@ def test_build_repair_task_input_with_empty_values(sample_task, sample_task_run)
     sample_task_run.input = ""
     sample_task_run.output.output = ""
 
-    # Act
-    result = RepairTaskRun.build_repair_task_input(
-        original_task=sample_task, task_run=sample_task_run, evaluator_feedback=""
-    )
+    # Act & Assert
+    with pytest.raises(ValidationError, match="evaluator_feedback"):
+        RepairTaskRun.build_repair_task_input(
+            original_task=sample_task, task_run=sample_task_run, evaluator_feedback=""
+        )
 
-    # Assert
+    # Test that it works with non-empty feedback
+    result = RepairTaskRun.build_repair_task_input(
+        original_task=sample_task,
+        task_run=sample_task_run,
+        evaluator_feedback="Some feedback",
+    )
     assert isinstance(result, RepairTaskInput)
-    assert "Create a joke with a setup and punchline" in result.original_prompt
-    assert result.original_input == ""
-    assert result.original_output == ""
-    assert result.evaluator_feedback == ""
+    assert result.evaluator_feedback == "Some feedback"
 
 
 @pytest.mark.parametrize("invalid_input", [{}])

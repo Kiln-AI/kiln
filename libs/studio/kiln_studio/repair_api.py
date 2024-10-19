@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from kiln_ai.datamodel import TaskRun
 from pydantic import BaseModel, ConfigDict, Field
 
 from libs.core.kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
@@ -27,10 +28,8 @@ def connect_repair_api(app: FastAPI):
     @app.post("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair")
     async def repair_run(
         project_id: str, task_id: str, run_id: str, input: RepairTaskApiInput
-    ):
+    ) -> TaskRun:
         task, run = task_and_run_from_id(project_id, task_id, run_id)
-        print(f"task: {task}")
-        print(f"run: {run}")
         repair_task = RepairTaskRun(task)
         repair_task_input = RepairTaskRun.build_repair_task_input(
             original_task=task,

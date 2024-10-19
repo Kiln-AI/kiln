@@ -3,7 +3,7 @@ from typing import Type
 
 from kiln_ai.adapters.prompt_builders import BasePromptBuilder, prompt_builder_registry
 from kiln_ai.datamodel import Priority, Project, Task, TaskRequirement, TaskRun
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # TODO add evaluator rating
@@ -11,7 +11,10 @@ class RepairTaskInput(BaseModel):
     original_prompt: str
     original_input: str
     original_output: str
-    evaluator_feedback: str
+    evaluator_feedback: str = Field(
+        min_length=1,
+        description="Feedback from an evaluator on how to repair the task run.",
+    )
 
 
 class RepairTaskRun(Task, parent_of={}):

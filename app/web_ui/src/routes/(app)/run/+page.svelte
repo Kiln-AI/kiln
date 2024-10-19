@@ -25,44 +25,7 @@
   $: model_name = model.split("/")[1]
   $: provider = model.split("/")[0]
 
-  // TODO: remove test data
-  let response: components["schemas"]["TaskRun"] | null = {
-    v: 1,
-    id: "123",
-    input: "asdf",
-    model_type: "run",
-    input_source: {
-      type: "human",
-      properties: {
-        a: 1,
-        b: "asdf",
-      },
-    },
-    output: {
-      v: 1,
-      output:
-        '{"setup": "Why did the scarecrow win an award?", "punchline": "Because he was outstanding in his field!"}',
-      source: {
-        type: "synthetic",
-        properties: {
-          model_type: "openai/gpt_4o_mini",
-        },
-      },
-      model_type: "output",
-      rating: {
-        v: 1,
-        id: "270303291267",
-        created_at: "2024-10-16T10:24:00.872146",
-        created_by: "scosman",
-        type: "five_star",
-        value: 4,
-        requirement_ratings: {
-          "570793306757": 3,
-        },
-        model_type: "task_output_rating",
-      },
-    },
-  }
+  let response: components["schemas"]["TaskRun"] | null = null
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
@@ -91,8 +54,7 @@
         },
       })
       if (fetch_error) {
-        // TODO: check error message extraction
-        throw new Error("Failed to run task: " + fetch_error)
+        throw fetch_error
       }
       response = data
     } catch (e) {
@@ -124,7 +86,7 @@
           />
         </FormContainer>
       </div>
-      <div class="w-72 2xl:w-96 flex flex-col gap-4">
+      <div class="w-72 2xl:w-96 flex-none flex flex-col gap-4">
         <div class="text-xl font-bold">Options</div>
         <FormElement
           label="Prompt Method"
@@ -188,6 +150,8 @@
           initial_run={response}
           task={$current_task}
           project_id={$current_project.id}
+          bind:model_name
+          bind:provider
         />
       </div>
     {/if}

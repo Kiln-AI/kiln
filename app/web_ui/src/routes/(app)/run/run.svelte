@@ -7,16 +7,19 @@
   import createClient from "openapi-fetch"
   import { type components, type paths } from "$lib/api_schema.d"
   import Output from "./output.svelte"
+  import { KilnError, createKilnError } from "$lib/utils/error_handlers"
 
   export let project_id: string
   export let task: Task
   export let initial_run: components["schemas"]["TaskRun"]
   let updated_run: components["schemas"]["TaskRun"] | null = null
   $: run = updated_run || initial_run
+  export let model_name: string | null = null
+  export let provider: string | null = null
 
   let show_raw_data = false
 
-  let save_rating_error: string | null = null
+  let save_rating_error: KilnError | null = null
 
   // TODO warn_before_unload
 
@@ -85,17 +88,64 @@
       }
       updated_run = data
       load_server_ratings(updated_run)
+      save_rating_error = null
     } catch (err) {
-      save_rating_error =
-        "Failed to save ratings. Error: " +
-        ((err as Error).message ||
-          (err as { detail?: string }).detail ||
-          "unknown")
+      save_rating_error = createKilnError(err)
     }
   }
 
-  function attempt_repair() {
-    console.log("Attempting repair")
+  let repair_submitting = false
+  let repair_error: KilnError | null = null
+  async function attempt_repair() {
+    try {
+      repair_submitting = true
+      if (!repair_instructions) {
+        throw new KilnError("Repair instructions are required", [])
+      }
+      if (!task.id || !run?.id) {
+        throw new KilnError(
+          "This task run isn't saved. Enable Auto-save. You can't repair unsaved runs.",
+          [],
+        )
+      }
+      const client = createClient<paths>({
+        baseUrl: "http://localhost:8757",
+      })
+      const {
+        data: repair_data, // only present if 2XX response
+        error: fetch_error, // only present if 4XX or 5XX response
+      } = await client.POST(
+        "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair",
+        {
+          params: {
+            path: {
+              project_id: project_id,
+              task_id: task.id,
+              run_id: run?.id,
+            },
+          },
+          body:
+            model_name && provider
+              ? {
+                  evaluator_feedback: repair_instructions,
+                  model_name: model_name,
+                  provider: provider,
+                }
+              : {
+                  evaluator_feedback: repair_instructions,
+                },
+        },
+      )
+      if (fetch_error) {
+        throw fetch_error
+      }
+      updated_run = repair_data
+      repair_error = null
+    } catch (err) {
+      repair_error = createKilnError(err)
+    } finally {
+      repair_submitting = false
+    }
   }
 
   // Watch for changes to ratings and save them if they change
@@ -156,11 +206,11 @@
       />
     </div>
 
-    <div class="w-72 2xl:w-96">
+    <div class="w-72 2xl:w-96 flex-none">
       <div class="text-xl font-bold mt-10 lg:mt-0 mb-6">
         Output Rating
         {#if save_rating_error}
-          <button class="tooltip" data-tip={save_rating_error}>
+          <button class="tooltip" data-tip={save_rating_error.getMessage()}>
             <svg
               class="w-5 h-5 ml-1 text-error inline"
               viewBox="0 0 1024 1024"
@@ -194,24 +244,42 @@
     </div>
   </div>
 
-  <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
-  {#if overall_rating === 5}
-    <p>Repair not needed for a 5-star output.</p>
-    <p class="pt-1 text-sm">
-      If the response can be improved, reduce the overall rating.
-    </p>
-  {:else if overall_rating == null}
-    <p>You must set an overall rating before repairing.</p>
-  {:else}
-    <FormContainer submit_label="Attempt Repair" on:submit={attempt_repair}>
-      <FormElement
-        id="repair_instructions"
-        label="Repair Instructions"
-        inputType="textarea"
-        bind:value={repair_instructions}
-      />
-    </FormContainer>
-  {/if}
+  <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-10 xl:mt-16">
+    {#if run?.repaired_output?.output}
+      <div class="grow">
+        <div class="text-xl font-bold mt-10 mb-4">Repair Result</div>
+        <Output
+          structured={!!task.output_json_schema}
+          raw_output={run.repaired_output.output}
+        />
+      </div>
+    {/if}
+    <div class="w-72 2xl:w-96 flex-none">
+      <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
+      {#if overall_rating === 5}
+        <p>Repair not needed for a 5-star output.</p>
+        <p class="pt-1 text-sm">
+          If the response can be improved, reduce the overall rating.
+        </p>
+      {:else if overall_rating == null}
+        <p>You must set an overall rating before repairing.</p>
+      {:else}
+        <FormContainer
+          submit_label="Attempt Repair"
+          on:submit={attempt_repair}
+          bind:submitting={repair_submitting}
+          bind:error={repair_error}
+        >
+          <FormElement
+            id="repair_instructions"
+            label="Repair Instructions"
+            inputType="textarea"
+            bind:value={repair_instructions}
+          />
+        </FormContainer>
+      {/if}
+    </div>
+  </div>
 
   <div class="mt-16">
     <button class="btn btn-wide" on:click={toggle_raw_data}

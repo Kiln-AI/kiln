@@ -210,6 +210,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Repair Run */
+        post: operations["repair_run_api_projects__project_id__tasks__task_id__runs__run_id__repair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings": {
         parameters: {
             query?: never;
@@ -297,6 +314,24 @@ export interface components {
              * @default
              */
             description: string;
+        };
+        /** RepairTaskApiInput */
+        RepairTaskApiInput: {
+            /**
+             * Evaluator Feedback
+             * @description Feedback from an evaluator on how to repair the task run.
+             */
+            evaluator_feedback: string;
+            /**
+             * Model Name
+             * @description The name of the model to use for the repair task. Optional, if not specified, the model of the original task will be used.
+             */
+            model_name?: string | null;
+            /**
+             * Provider
+             * @description The provider of the model to use for the repair task. Optional, if not specified, the provider of the original task will be used.
+             */
+            provider?: string | null;
         };
         /** RunTaskRequest */
         RunTaskRequest: {
@@ -840,6 +875,43 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RunTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    repair_run_api_projects__project_id__tasks__task_id__runs__run_id__repair_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                task_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepairTaskApiInput"];
             };
         };
         responses: {
