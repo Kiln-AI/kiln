@@ -11,3 +11,4 @@ pyright==1.1.376
 uvicorn==0.30.3
 requests==2.32.3
 pytest-cov==5.0.0
+coverage==7.6.1

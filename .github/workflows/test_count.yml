@@ -55,3 +55,19 @@ jobs:
           label: Test Count
           message: ${{ env.TOTAL_TEST_COUNT }}
           color: brightgreen
+
+      - name: Run library coverage
+        run: |
+          coverage run -m pytest -q ./libs/
+          TOTAL_LIB_COVERAGE=$(coverage report | grep TOTAL | awk {'print $4'})
+          echo "TOTAL_LIB_COVERAGE=$TOTAL_LIB_COVERAGE" >> $GITHUB_ENV
+
+      - name: Create coverage badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 57742c1b1b60d597a6aba5d5148d728e
+          filename: library_coverage_kiln.json
+          label: Coverage
+          message: ${{ env.TOTAL_LIB_COVERAGE }}
+          color: brightgreen
