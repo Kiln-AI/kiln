@@ -6,12 +6,6 @@ from kiln_ai.datamodel import Priority, Project, Task, TaskRequirement, TaskRun
 from pydantic import BaseModel
 
 
-class RepairData(BaseModel):
-    original_task: Task
-    task_run: TaskRun
-    evaluator_feedback: str
-
-
 # TODO add evaluator rating
 class RepairTaskInput(BaseModel):
     original_prompt: str
@@ -62,13 +56,13 @@ feedback describing what should be improved. Your job is to understand the evalu
         return prompt_builder.build_prompt()
 
     @classmethod
-    def build_repair_task_input(cls, repair_data: RepairData) -> RepairTaskInput:
-        original_prompt = cls._original_prompt(
-            repair_data.task_run, repair_data.original_task
-        )
+    def build_repair_task_input(
+        cls, original_task: Task, task_run: TaskRun, evaluator_feedback: str
+    ) -> RepairTaskInput:
+        original_prompt = cls._original_prompt(task_run, original_task)
         return RepairTaskInput(
             original_prompt=original_prompt,
-            original_input=repair_data.task_run.input,
-            original_output=repair_data.task_run.output.output,
-            evaluator_feedback=repair_data.evaluator_feedback,
+            original_input=task_run.input,
+            original_output=task_run.output.output,
+            evaluator_feedback=evaluator_feedback,
         )

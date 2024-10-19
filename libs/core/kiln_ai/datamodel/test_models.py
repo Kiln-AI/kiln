@@ -172,8 +172,6 @@ def test_task_output_schema(tmp_path):
         path=path,
     )
     task.save_to_file()
-    print("asdf", task.output_json_schema)
-    print(task.output_schema())
     schemas = [task.output_schema(), task.input_schema()]
     for schema in schemas:
         assert schema is not None

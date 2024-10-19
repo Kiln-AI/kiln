@@ -256,7 +256,6 @@ def test_lazy_load_parent(tmp_path):
         name="Parent", path=(tmp_path / BaseParentExample.base_filename())
     )
     parent.save_to_file()
-    print("PARENT", parent.path)
 
     # Create a child
     child = DefaultParentedModel(parent=parent, name="Child")

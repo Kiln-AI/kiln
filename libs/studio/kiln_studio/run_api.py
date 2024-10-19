@@ -1,10 +1,9 @@
-import json
 from asyncio import Lock
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
-from kiln_ai.datamodel import TaskRun
+from kiln_ai.datamodel import Task, TaskRun
 from pydantic import BaseModel
 
 from libs.studio.kiln_studio.project_api import project_from_id
@@ -39,10 +38,17 @@ class RunTaskRequest(BaseModel):
 
 
 def run_from_id(project_id: str, task_id: str, run_id: str) -> TaskRun:
+    task, run = task_and_run_from_id(project_id, task_id, run_id)
+    return run
+
+
+def task_and_run_from_id(
+    project_id: str, task_id: str, run_id: str
+) -> tuple[Task, TaskRun]:
     task = task_from_id(project_id, task_id)
     for run in task.runs():
         if run.id == run_id:
-            return run
+            return task, run
 
     raise HTTPException(
         status_code=404,

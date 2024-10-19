@@ -213,7 +213,6 @@ async def connect_bedrock(access_key: str, secret_key: str):
         llm.invoke("Hello, how are you?")
     except Exception as e:
         # Check for specific error messages indicating invalid credentials
-        print(e)
         if "UnrecognizedClientException" in str(
             e
         ) or "InvalidSignatureException" in str(e):

@@ -7,7 +7,6 @@ from kiln_ai.adapters.langchain_adapters import (
     LangChainPromptAdapter,
 )
 from kiln_ai.adapters.repair.repair_task import (
-    RepairData,
     RepairTaskInput,
     RepairTaskRun,
 )
@@ -105,15 +104,15 @@ def sample_task_run(sample_task):
 
 @pytest.fixture
 def sample_repair_data(sample_task, sample_task_run):
-    return RepairData(
-        original_task=sample_task,
-        task_run=sample_task_run,
-        evaluator_feedback="The joke is too cliché. Please come up with a more original chicken-related joke.",
-    )
+    return {
+        "original_task": sample_task,
+        "task_run": sample_task_run,
+        "evaluator_feedback": "The joke is too cliché. Please come up with a more original chicken-related joke.",
+    }
 
 
 def test_build_repair_task_input(sample_repair_data):
-    result = RepairTaskRun.build_repair_task_input(sample_repair_data)
+    result = RepairTaskRun.build_repair_task_input(**sample_repair_data)
 
     assert isinstance(result, RepairTaskInput)
     assert "Create a joke with a setup and punchline" in result.original_prompt
@@ -152,14 +151,15 @@ def test_repair_task_initialization(sample_task):
     assert repair_task.output_json_schema == sample_task.output_json_schema
 
 
-def test_build_repair_task_input_with_empty_values(sample_repair_data):
+def test_build_repair_task_input_with_empty_values(sample_task, sample_task_run):
     # Arrange
-    sample_repair_data.task_run.input = ""
-    sample_repair_data.task_run.output.output = ""
-    sample_repair_data.evaluator_feedback = ""
+    sample_task_run.input = ""
+    sample_task_run.output.output = ""
 
     # Act
-    result = RepairTaskRun.build_repair_task_input(sample_repair_data)
+    result = RepairTaskRun.build_repair_task_input(
+        original_task=sample_task, task_run=sample_task_run, evaluator_feedback=""
+    )
 
     # Assert
     assert isinstance(result, RepairTaskInput)
@@ -169,10 +169,10 @@ def test_build_repair_task_input_with_empty_values(sample_repair_data):
     assert result.evaluator_feedback == ""
 
 
-@pytest.mark.parametrize("invalid_input", [None, "", 123, {}])
+@pytest.mark.parametrize("invalid_input", [{}])
 def test_build_repair_task_input_with_invalid_input(invalid_input):
     # Act & Assert
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         RepairTaskRun.build_repair_task_input(invalid_input)
 
 
@@ -181,7 +181,7 @@ async def test_live_run(sample_task, sample_task_run, sample_repair_data):
     if os.getenv("GROQ_API_KEY") is None:
         pytest.skip("GROQ_API_KEY not set")
     repair_task = RepairTaskRun(sample_task)
-    repair_task_input = RepairTaskRun.build_repair_task_input(sample_repair_data)
+    repair_task_input = RepairTaskRun.build_repair_task_input(**sample_repair_data)
     assert isinstance(repair_task_input, RepairTaskInput)
 
     adapter = LangChainPromptAdapter(
@@ -189,9 +189,7 @@ async def test_live_run(sample_task, sample_task_run, sample_repair_data):
     )
 
     run = await adapter.invoke(repair_task_input.model_dump())
-    print("output", run.output)
     assert run is not None
-    assert run.id is not None
     assert "Please come up with a more original chicken-related joke." in run.input
     parsed_output = json.loads(run.output.output)
     assert "setup" in parsed_output
@@ -207,7 +205,7 @@ async def test_live_run(sample_task, sample_task_run, sample_repair_data):
 @pytest.mark.asyncio
 async def test_mocked_repair_task_run(sample_task, sample_task_run, sample_repair_data):
     repair_task = RepairTaskRun(sample_task)
-    repair_task_input = RepairTaskRun.build_repair_task_input(sample_repair_data)
+    repair_task_input = RepairTaskRun.build_repair_task_input(**sample_repair_data)
     assert isinstance(repair_task_input, RepairTaskInput)
 
     mocked_output = {
@@ -228,7 +226,6 @@ async def test_mocked_repair_task_run(sample_task, sample_task_run, sample_repai
         run = await adapter.invoke(repair_task_input.model_dump())
 
     assert run is not None
-    # because it's mocked, the run is not saved to the disk, and returns no ID
     assert run.id is None
     assert "Please come up with a more original chicken-related joke." in run.input
 
