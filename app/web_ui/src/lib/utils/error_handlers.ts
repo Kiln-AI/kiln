@@ -34,6 +34,14 @@ export function createKilnError(e: unknown): KilnError {
   ) {
     return new KilnError("Unexpected error: " + e.message, null)
   }
+  if (
+    e &&
+    typeof e === "object" &&
+    "details" in e &&
+    typeof e.details === "string"
+  ) {
+    return new KilnError("Unexpected error: " + e.details, null)
+  }
   return new KilnError("Unknown error", null)
 }
 

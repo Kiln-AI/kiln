@@ -96,12 +96,12 @@
     try {
       repair_submitting = true
       if (!repair_instructions) {
-        throw new KilnError("Repair instructions are required", [])
+        throw new KilnError("Repair instructions are required", null)
       }
       if (!task.id || !run?.id) {
         throw new KilnError(
           "This task run isn't saved. Enable Auto-save. You can't repair unsaved runs.",
-          [],
+          null,
         )
       }
       const {
