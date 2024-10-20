@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 from kiln_ai.datamodel import Project
@@ -56,6 +57,17 @@ def connect_project_api(app: FastAPI):
 
         # Add path, which is usually excluded
         return project
+
+    @app.patch("/api/project/{project_id}")
+    async def update_project(
+        project_id: str, project_updates: Dict[str, Any]
+    ) -> Project:
+        original_project = project_from_id(project_id)
+        updated_project = original_project.model_copy(update=project_updates)
+        # Force validation using model_validate()
+        Project.model_validate(updated_project.model_dump())
+        updated_project.save_to_file()
+        return updated_project
 
     @app.get("/api/projects")
     async def get_projects() -> list[Project]:

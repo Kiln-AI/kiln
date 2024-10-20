@@ -1,12 +1,16 @@
 <script lang="ts">
   import EditProject from "./edit_project.svelte"
+  import { type Project } from "$lib/types"
 
-  let project_name = ""
-  let project_description = ""
+  let project: Project = {
+    v: 1,
+    name: "",
+    description: "",
+  }
 
   function example_project() {
-    project_name = "Example Project"
-    project_description = "This is an example project just to try things out."
+    project.name = "Example Project"
+    project.description = "This is an example project just to try things out."
   }
 </script>
 
@@ -30,11 +34,7 @@
 <div
   class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18 mx-auto w-full max-w-[500px]"
 >
-  <EditProject
-    redirect_on_created="/setup/create_task"
-    bind:project_name
-    bind:project_description
-  />
+  <EditProject redirect_on_created="/setup/create_task" bind:project />
 </div>
 
 <div class="grow-[1.5]"></div>

@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/project/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Project */
+        patch: operations["update_project_api_project__project_id__patch"];
+        trace?: never;
+    };
     "/api/projects": {
         parameters: {
             query?: never;
@@ -316,9 +333,9 @@ export interface components {
             name: string;
             /**
              * Description
-             * @default
+             * @description A description of the project for you and your team. Will not be used in prompts/training/validation.
              */
-            description: string;
+            description?: string | null;
         };
         /** Project */
         "Project-Output": {
@@ -342,9 +359,9 @@ export interface components {
             name: string;
             /**
              * Description
-             * @default
+             * @description A description of the project for you and your team. Will not be used in prompts/training/validation.
              */
-            description: string;
+            description?: string | null;
             /** Model Type */
             readonly model_type: string;
         };
@@ -605,6 +622,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Project-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_project_api_project__project_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
             };
         };
         responses: {

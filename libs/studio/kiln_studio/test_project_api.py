@@ -388,3 +388,96 @@ def test_delete_project_not_found(client):
 
     assert response.status_code == 404
     assert response.json() == {"message": "Project not found"}
+
+
+def test_update_project_success(client, tmp_path):
+    project_path = tmp_path / "update_test" / "project.json"
+    original_project = Project(
+        name="Original Name",
+        description="Original Description",
+        path=project_path,
+    )
+    original_project.save_to_file()
+    updated_data = {"name": "Updated Name", "description": "Updated Description"}
+
+    with patch(
+        "libs.studio.kiln_studio.project_api.project_from_id",
+        return_value=original_project,
+    ) as mock_project_from_id:
+        response = client.patch(
+            f"/api/project/{original_project.id}", json=updated_data
+        )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["name"] == "Updated Name"
+    assert result["description"] == "Updated Description"
+    assert result["id"] == original_project.id
+
+    mock_project_from_id.assert_called_once_with(original_project.id)
+
+    loaded_project = Project.load_from_file(project_path)
+    assert loaded_project.name == "Updated Name"
+    assert loaded_project.description == "Updated Description"
+    assert loaded_project.id == original_project.id
+
+
+def test_update_project_partial(client, tmp_path):
+    project_path = tmp_path / "update_test" / "project.json"
+    original_project = Project(
+        name="Original Name",
+        description="Original Description",
+        path=project_path,
+    )
+    original_project.save_to_file()
+    updated_data = {"name": "Updated Name"}
+
+    with patch(
+        "libs.studio.kiln_studio.project_api.project_from_id",
+        return_value=original_project,
+    ) as mock_project_from_id:
+        response = client.patch(
+            f"/api/project/{original_project.id}", json=updated_data
+        )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["name"] == "Updated Name"
+    assert result["description"] == original_project.description
+    assert result["id"] == original_project.id
+
+    mock_project_from_id.assert_called_once_with(original_project.id)
+
+    loaded_project = Project.load_from_file(project_path)
+    assert loaded_project.name == "Updated Name"
+    assert loaded_project.description == original_project.description
+    assert loaded_project.id == original_project.id
+
+
+def test_update_project_not_found(client):
+    response = client.patch("/api/project/non-existent-id", json={})
+
+    assert response.status_code == 404
+    assert response.json() == {"message": "Project not found. ID: non-existent-id"}
+
+
+def test_update_project_invalid_data(client, tmp_path):
+    project_path = tmp_path / "update_test" / "project.json"
+    original_project = Project(
+        name="Original Name",
+        description="Original Description",
+        path=project_path,
+    )
+    original_project.save_to_file()
+
+    with patch(
+        "libs.studio.kiln_studio.project_api.project_from_id",
+        return_value=original_project,
+    ) as mock_project_from_id:
+        response = client.patch(
+            f"/api/project/{original_project.id}", json={"name": 123}
+        )
+
+    assert response.status_code == 422
+    assert "Input should be a valid string" in response.text
+    mock_project_from_id.assert_called_once_with(original_project.id)

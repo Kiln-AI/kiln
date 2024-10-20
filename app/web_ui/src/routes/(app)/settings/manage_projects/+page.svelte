@@ -1,6 +1,6 @@
 <script lang="ts">
   import AppPage from "../../app_page.svelte"
-  import { projects, load_projects } from "$lib/stores"
+  import { projects, load_projects, current_project } from "$lib/stores"
   import type { Project } from "$lib/types"
   import { client } from "$lib/api_client"
 
@@ -49,26 +49,42 @@
   {:else if $projects.projects.length == 0}
     <div class="p-16">No projects found</div>
   {:else}
-    <div class="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
       {#each $projects.projects as project}
         <div
-          class="card card-bordered border-gray-500 shadow-md py-4 px-6 h-48"
+          class="card card-bordered border-gray-500 shadow-md py-4 px-6 min-h-60"
         >
           <div class="flex flex-col h-full">
             <div class="grow">
-              <div class="font-medium">{project.name}</div>
-              <div class="text-xs text-gray-500">
+              <div class="font-medium flex flex-row gap-2">
+                <div class="grow">{project.name}</div>
+                {#if project.id == $current_project?.id}
+                  <span class="badge badge-primary">Current</span>
+                {/if}
+              </div>
+              {#if project.description && project.description.length > 0}
+                <div class="text-sm">
+                  {project.description}
+                </div>
+              {/if}
+              <div class="text-xs text-gray-500 mt-1">
                 {project.path}
               </div>
             </div>
             <div
-              class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 w-full"
+              class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 w-full mt-6"
             >
               <a
                 href={`/settings/create_task/${project.id}`}
                 class="btn btn-xs w-full"
               >
                 Add Task
+              </a>
+              <a
+                href={`/settings/edit_project/${project.id}`}
+                class="btn btn-xs w-full"
+              >
+                Edit Project
               </a>
               <button
                 on:click={() => remove_project(project)}

@@ -5,16 +5,22 @@
   import FormElement from "$lib/utils/form_element.svelte"
   import { KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { client } from "$lib/api_client"
+  import type { Project } from "$lib/types"
 
   export let created = false
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = null
-  export let project_name = ""
-  export let project_description = ""
+
+  // New project if no project is provided
+  export let project: Project = {
+    v: 1,
+    name: "",
+    description: "",
+  }
   let error: KilnError | null = null
   let submitting = false
 
-  $: warn_before_unload = [project_name, project_description].some(
+  $: warn_before_unload = [project?.name, project?.description].some(
     (value) => !!value,
   )
 
@@ -22,17 +28,47 @@
     goto(redirect_on_created + "/" + project_id)
   }
 
-  const create_project = async () => {
+  const save_project = async () => {
     try {
-      const { data, error: post_error } = await client.POST("/api/project", {
-        body: {
-          v: 1,
-          name: project_name,
-          description: project_description,
-        },
-      })
-      if (post_error) {
-        throw post_error
+      if (!project?.name) {
+        throw new Error("Project name is required")
+      }
+      let data: Project | undefined = undefined
+      let error: unknown | undefined = undefined
+      // only send the fields that are being updated in the UI
+      let body = {
+        name: project.name,
+        description: project.description,
+      }
+      let create = !project.id
+      if (!project.id /* create, but ts wants this check */) {
+        const { data: post_data, error: post_error } = await client.POST(
+          "/api/project",
+          {
+            // @ts-expect-error we're missing fields like v1, which have default values
+            body,
+          },
+        )
+        data = post_data
+        error = post_error
+      } else {
+        const { data: put_data, error: put_error } = await client.PATCH(
+          "/api/project/{project_id}",
+          {
+            params: {
+              path: {
+                project_id: project.id,
+              },
+            },
+            // @ts-expect-error Patching only takes some fields
+            body,
+          },
+        )
+        data = put_data
+        error = put_error
+      }
+      if (error) {
+        throw error
       }
 
       // now reload the projects, which should fetch the new project as current_project
@@ -42,7 +78,9 @@
         redirect_to_project(data.id)
         return
       }
-      created = true
+      if (create) {
+        created = true
+      }
     } catch (e) {
       error = createKilnError(e)
     } finally {
@@ -88,8 +126,8 @@
   {#if !created}
     {#if !importing}
       <FormContainer
-        submit_label="Create Project"
-        on:submit={create_project}
+        submit_label={project.id ? "Update Project" : "Create Project"}
+        on:submit={save_project}
         bind:warn_before_unload
         bind:submitting
         bind:error
@@ -98,7 +136,7 @@
           label="Project Name"
           id="project_name"
           inputType="input"
-          bind:value={project_name}
+          bind:value={project.name}
           max_length={120}
         />
         <FormElement
@@ -106,15 +144,17 @@
           id="project_description"
           inputType="textarea"
           optional={true}
-          bind:value={project_description}
+          bind:value={project.description}
         />
       </FormContainer>
-      <p class="mt-4 text-center">
-        Or
-        <button class="link font-bold" on:click={() => (importing = true)}>
-          import an existing project
-        </button>
-      </p>
+      {#if !project.id}
+        <p class="mt-4 text-center">
+          Or
+          <button class="link font-bold" on:click={() => (importing = true)}>
+            import an existing project
+          </button>
+        </p>
+      {/if}
     {:else}
       <FormContainer
         submit_label="Import Project"
@@ -147,7 +187,7 @@
     {:else}
       <h2 class="text-xl font-medium text-center">Project Created!</h2>
       <p class="text-sm text-center">
-        Your new project "{project_name}" has been created.
+        Your new project "{project.name}" has been created.
       </p>
     {/if}
   {/if}

@@ -9,6 +9,7 @@
     SettingsMain,
     SettingsProviders,
     SettingsManageProjects,
+    SettingsEditProject,
     Run,
     None,
   }
@@ -17,6 +18,7 @@
     Section.SettingsMain,
     Section.SettingsProviders,
     Section.SettingsManageProjects,
+    Section.SettingsEditProject,
   ]
 
   function path_start(root: string, pathname: string): boolean {
@@ -36,6 +38,8 @@
       section = Section.SettingsProviders
     } else if (path_start("/settings/manage_projects", $page.url.pathname)) {
       section = Section.SettingsManageProjects
+    } else if (path_start("/settings/edit_project", $page.url.pathname)) {
+      section = Section.SettingsEditProject
     } else if (path_start("/settings", $page.url.pathname)) {
       section = Section.SettingsMain
     } else if (path_start("/run", $page.url.pathname)) {
@@ -229,6 +233,14 @@
                 href="/settings/manage_projects"
               >
                 Manage Projects
+              </a>
+            </li>
+            <li class="menu-nested-sm {$current_project?.id ? '' : 'hidden'}">
+              <a
+                class={section == Section.SettingsEditProject ? "active" : ""}
+                href="/settings/edit_project/{$current_project?.id}"
+              >
+                Edit Project
               </a>
             </li>
           </ul>

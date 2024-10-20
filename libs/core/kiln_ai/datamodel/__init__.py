@@ -352,7 +352,10 @@ class Task(
 
 class Project(KilnParentModel, parent_of={"tasks": Task}):
     name: str = NAME_FIELD
-    description: str = Field(default="")
+    description: str | None = Field(
+        default=None,
+        description="A description of the project for you and your team. Will not be used in prompts/training/validation.",
+    )
 
     # Needed for typechecking. TODO P2: fix this in KilnParentModel
     def tasks(self) -> list[Task]:
