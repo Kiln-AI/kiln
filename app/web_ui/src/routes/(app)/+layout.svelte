@@ -187,7 +187,7 @@
       </li>
       <li class="menu-lg">
         <a
-          href="/settings/providers"
+          href="/settings"
           class={section == Section.SettingsMain ? "active" : ""}
         >
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524954/settings -->
@@ -232,7 +232,7 @@
                   : ""}
                 href="/settings/manage_projects"
               >
-                Manage Projects
+                All Projects
               </a>
             </li>
             <li class="menu-nested-sm {$current_project?.id ? '' : 'hidden'}">
@@ -240,7 +240,7 @@
                 class={section == Section.SettingsEditProject ? "active" : ""}
                 href="/settings/edit_project/{$current_project?.id}"
               >
-                Edit Project
+                Current Project
               </a>
             </li>
           </ul>
