@@ -1,26 +1,30 @@
 <script lang="ts">
   import AppPage from "../../app_page.svelte"
   import { projects, load_projects } from "$lib/stores"
-  import { api_error_handler } from "$lib/utils/error_handlers"
   import type { Project } from "$lib/types"
+  import { client } from "$lib/api_client"
 
   async function remove_project(project: Project) {
     try {
+      if (!project.id) {
+        throw new Error("Project ID is required")
+      }
       if (
         confirm(
           `Are you sure you want to remove the project "${project.name}"?\n\nThis will remove it from the UI, but won't delete files from your disk.`,
         )
       ) {
-        const response = await fetch(
-          `http://localhost:8757/api/projects/${project.id}`,
-          {
-            method: "DELETE",
+        const {
+          error, // only present if 4XX or 5XX response
+        } = await client.DELETE("/api/projects/{project_id}", {
+          params: {
+            path: {
+              project_id: project.id,
+            },
           },
-        )
-        const data = await response.json()
-        api_error_handler(response, data)
-        if (!response.ok) {
-          throw new Error(data.message)
+        })
+        if (error) {
+          throw error
         }
         await load_projects()
       }

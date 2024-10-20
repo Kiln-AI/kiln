@@ -11,14 +11,11 @@
   import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
   import { current_project } from "$lib/stores"
   import { goto } from "$app/navigation"
-  import {
-    KilnError,
-    api_error_handler,
-    createKilnError,
-  } from "$lib/utils/error_handlers"
+  import { KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { ui_state, projects } from "$lib/stores"
   import { get } from "svelte/store"
   import { page } from "$app/stores"
+  import { client } from "$lib/api_client"
 
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = "/"
@@ -89,19 +86,22 @@
       if (!project_id) {
         throw new KilnError("Current project not found", null)
       }
-      const encodedProjectId = encodeURIComponent(project_id)
-      const response = await fetch(
-        `http://localhost:8757/api/projects/${encodedProjectId}/task`,
+      const { data, error: post_error } = await client.POST(
+        "/api/projects/{project_id}/task",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+          params: {
+            path: {
+              project_id,
+            },
           },
-          body: JSON.stringify(body),
+          // @ts-expect-error This API is not typed
+          body: body,
         },
       )
-      const data = await response.json()
-      api_error_handler(response, data)
+      if (post_error) {
+        throw post_error
+      }
+
       error = null
       // Make this the current task
       ui_state.set({

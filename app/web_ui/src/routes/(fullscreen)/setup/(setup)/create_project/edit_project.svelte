@@ -3,11 +3,8 @@
   import { load_projects } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
-  import {
-    KilnError,
-    api_error_handler,
-    createKilnError,
-  } from "$lib/utils/error_handlers"
+  import { KilnError, createKilnError } from "$lib/utils/error_handlers"
+  import { client } from "$lib/api_client"
 
   export let created = false
   // Prevents flash of complete UI if we're going to redirect
@@ -27,24 +24,21 @@
 
   const create_project = async () => {
     try {
-      error = null
-      const response = await fetch("http://localhost:8757/api/project", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { data, error: post_error } = await client.POST("/api/project", {
+        body: {
+          v: 1,
           name: project_name,
           description: project_description,
-        }),
+        },
       })
-      const data = await response.json()
-      api_error_handler(response, data)
+      if (post_error) {
+        throw post_error
+      }
 
       // now reload the projects, which should fetch the new project as current_project
       await load_projects()
       error = null
-      if (redirect_on_created) {
+      if (redirect_on_created && data?.id) {
         redirect_to_project(data.id)
         return
       }
@@ -62,16 +56,22 @@
   const import_project = async () => {
     try {
       submitting = true
-      const response = await fetch(
-        `http://localhost:8757/api/import_project?project_path=${encodeURIComponent(import_project_path)}`,
+      const { data, error: post_error } = await client.POST(
+        "/api/import_project",
         {
-          method: "POST",
+          params: {
+            query: {
+              project_path: import_project_path,
+            },
+          },
         },
       )
-      const data = await response.json()
-      api_error_handler(response, data)
+      if (post_error) {
+        throw post_error
+      }
+
       await load_projects()
-      if (redirect_on_created) {
+      if (redirect_on_created && data?.id) {
         redirect_to_project(data.id)
         return
       }

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { current_project, projects } from "$lib/stores"
   import type { Project, Task } from "$lib/types"
-  import { api_error_handler } from "$lib/utils/error_handlers"
   import { ui_state } from "$lib/stores"
   import { goto } from "$app/navigation"
+  import { client } from "$lib/api_client"
 
   let id = "select-tasks-menu-" + Math.random().toString(36)
 
@@ -35,7 +35,7 @@
   $: load_tasks(selected_project)
 
   async function load_tasks(project: Project | null) {
-    if (project == null) {
+    if (project == null || !project.id) {
       tasks_loading = false
       tasks_loading_error = "No project selected"
       return
@@ -43,13 +43,20 @@
     try {
       tasks_loading = true
       tasks_loading_error = null
-      let projectId = encodeURIComponent(project?.id || "")
-      const response = await fetch(
-        `http://localhost:8757/api/projects/${projectId}/tasks`,
-      )
-      const data = await response.json()
-      api_error_handler(response, data)
-      selected_project_tasks = data
+      const {
+        data: tasks_data, // only present if 2XX response
+        error: fetch_error, // only present if 4XX or 5XX response
+      } = await client.GET("/api/projects/{project_id}/tasks", {
+        params: {
+          path: {
+            project_id: project.id,
+          },
+        },
+      })
+      if (fetch_error) {
+        throw fetch_error
+      }
+      selected_project_tasks = tasks_data
     } catch (error) {
       tasks_loading_error = "Tasks failed to load: " + error
       selected_project_tasks = []

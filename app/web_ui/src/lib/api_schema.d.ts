@@ -329,6 +329,8 @@ export interface components {
             v: number;
             /** Id */
             id?: string | null;
+            /** Path */
+            path?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -384,6 +386,8 @@ export interface components {
             v: number;
             /** Id */
             id?: string | null;
+            /** Path */
+            path?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -433,6 +437,8 @@ export interface components {
             v: number;
             /** Id */
             id?: string | null;
+            /** Path */
+            path?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -466,6 +472,8 @@ export interface components {
             v: number;
             /** Id */
             id?: string | null;
+            /** Path */
+            path?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -521,6 +529,8 @@ export interface components {
             v: number;
             /** Id */
             id?: string | null;
+            /** Path */
+            path?: string | null;
             /**
              * Created At
              * Format: date-time

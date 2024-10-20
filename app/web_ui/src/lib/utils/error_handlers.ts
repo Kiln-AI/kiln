@@ -44,32 +44,3 @@ export function createKilnError(e: unknown): KilnError {
   }
   return new KilnError("Unknown error", null)
 }
-
-/**
- * Handles errors from POST requests.
- * @param response The Response object from the fetch request.
- * @throws {KilnError} Throws a KilnError with appropriate error messages.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function api_error_handler(response: Response, json: any) {
-  if (response.status == 200) {
-    return
-  }
-
-  if (json instanceof Object) {
-    if (json["message"] == "The string did not match the expected pattern.") {
-      throw new KilnError(json.message, [
-        "Unexpected response from server: format invalid",
-      ])
-    }
-
-    if (
-      json["message"] ||
-      (json["error_messages"] && json["error_messages"].length > 0)
-    ) {
-      throw new KilnError(json["message"], json["error_messages"])
-    }
-  }
-
-  throw new KilnError("Unknown error. Status: " + response.status, null)
-}

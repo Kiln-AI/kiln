@@ -125,6 +125,7 @@ class BaseAdapter(metaclass=ABCMeta):
             "id": True,
             "created_at": True,
             "updated_at": True,
+            "path": True,
             "output": {"id": True, "created_at": True, "updated_at": True},
         }
         new_run_dump = new_task_run.model_dump(exclude=exclude_fields)

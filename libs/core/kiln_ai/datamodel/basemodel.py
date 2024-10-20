@@ -40,9 +40,9 @@ PT = TypeVar("PT", bound="KilnParentedModel")
 class KilnBaseModel(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
-    v: int = 1  # schema_version
+    v: int = Field(default=1)  # schema_version
     id: ID_TYPE = ID_FIELD
-    path: Optional[Path] = Field(default=None, exclude=True)
+    path: Optional[Path] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.now)
     created_by: str = Field(default_factory=lambda: Config.shared().user_id)
 
@@ -99,7 +99,7 @@ class KilnBaseModel(BaseModel):
                 f"id: {getattr(self, 'id', None)}, path: {path}"
             )
         path.parent.mkdir(parents=True, exist_ok=True)
-        json_data = self.model_dump_json(indent=2)
+        json_data = self.model_dump_json(indent=2, exclude={"path"})
         with open(path, "w") as file:
             file.write(json_data)
         # save the path so even if something like name changes, the file doesn't move
