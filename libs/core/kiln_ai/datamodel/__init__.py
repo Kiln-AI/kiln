@@ -309,7 +309,7 @@ class TaskRun(KilnParentedModel):
 class TaskRequirement(BaseModel):
     id: ID_TYPE = ID_FIELD
     name: str = NAME_FIELD
-    description: str = Field(default="")
+    description: str | None = Field(default=None)
     instruction: str = Field(min_length=1)
     priority: Priority = Field(default=Priority.p2)
 

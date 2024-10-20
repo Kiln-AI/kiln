@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException
 from kiln_ai.datamodel import Task
@@ -21,7 +21,7 @@ def task_from_id(project_id: str, task_id: str) -> Task:
 
 def connect_task_api(app: FastAPI):
     @app.post("/api/projects/{project_id}/task")
-    async def create_task(project_id: str, task_data: Dict[str, Any]):
+    async def create_task(project_id: str, task_data: Dict[str, Any]) -> Task:
         parent_project = project_from_id(project_id)
 
         task = Task.validate_and_save_with_subrelations(
@@ -32,14 +32,19 @@ def connect_task_api(app: FastAPI):
                 status_code=400,
                 detail="Failed to create task.",
             )
+        if not isinstance(task, Task):
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create task.",
+            )
 
         return task
 
     @app.get("/api/projects/{project_id}/tasks")
-    async def get_tasks(project_id: str):
+    async def get_tasks(project_id: str) -> List[Task]:
         parent_project = project_from_id(project_id)
         return parent_project.tasks()
 
     @app.get("/api/projects/{project_id}/tasks/{task_id}")
-    async def get_task(project_id: str, task_id: str):
+    async def get_task(project_id: str, task_id: str) -> Task:
         return task_from_id(project_id, task_id)

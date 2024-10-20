@@ -3,11 +3,12 @@ import { projects, current_project, ui_state, default_ui_state } from "./stores"
 import { describe, it, expect, beforeEach } from "vitest"
 
 const testProject = {
+  v: 1,
   id: "test-project-id",
   name: "Test Project",
   path: "/test/path",
   description: "Test Description",
-  created_at: new Date(),
+  created_at: new Date().toISOString(),
   created_by: "Test User",
 }
 

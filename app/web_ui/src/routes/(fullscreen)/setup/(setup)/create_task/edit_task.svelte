@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type TaskRequirement } from "./task_types"
+  import { type TaskRequirement } from "$lib/types"
   import FormElement from "$lib/utils/form_element.svelte"
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"

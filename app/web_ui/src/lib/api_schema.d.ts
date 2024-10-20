@@ -289,8 +289,13 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * Priority
+         * @enum {integer}
+         */
+        Priority: 0 | 1 | 2 | 3;
         /** Project */
-        Project: {
+        "Project-Input": {
             /**
              * V
              * @default 1
@@ -314,6 +319,32 @@ export interface components {
              * @default
              */
             description: string;
+        };
+        /** Project */
+        "Project-Output": {
+            /**
+             * V
+             * @default 1
+             */
+            v: number;
+            /** Id */
+            id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Created By */
+            created_by?: string;
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Model Type */
+            readonly model_type: string;
         };
         /** RepairTaskApiInput */
         RepairTaskApiInput: {
@@ -344,6 +375,52 @@ export interface components {
             /** Structured Input */
             structured_input?: Record<string, never> | null;
         };
+        /** Task */
+        Task: {
+            /**
+             * V
+             * @default 1
+             */
+            v: number;
+            /** Id */
+            id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Created By */
+            created_by?: string;
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** @default 2 */
+            priority: components["schemas"]["Priority"];
+            /** @default flexible */
+            determinism: components["schemas"]["TaskDeterminism"];
+            /** Instruction */
+            instruction: string;
+            /**
+             * Requirements
+             * @default []
+             */
+            requirements: components["schemas"]["TaskRequirement"][];
+            /** Output Json Schema */
+            output_json_schema?: string | null;
+            /** Input Json Schema */
+            input_json_schema?: string | null;
+            /** Model Type */
+            readonly model_type: string;
+        };
+        /**
+         * TaskDeterminism
+         * @enum {string}
+         */
+        TaskDeterminism: "deterministic" | "semantic_match" | "flexible";
         /**
          * TaskOutput
          * @description An output for a specific task run.
@@ -419,6 +496,19 @@ export interface components {
          * @enum {string}
          */
         TaskOutputRatingType: "five_star" | "custom";
+        /** TaskRequirement */
+        TaskRequirement: {
+            /** Id */
+            id?: string | null;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Instruction */
+            instruction: string;
+            /** @default 2 */
+            priority: components["schemas"]["Priority"];
+        };
         /**
          * TaskRun
          * @description An run of a specific Task, including the input and output.
@@ -504,7 +594,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Project"];
+                "application/json": components["schemas"]["Project-Input"];
             };
         };
         responses: {
@@ -514,7 +604,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Project-Output"];
                 };
             };
             /** @description Validation Error */
@@ -543,7 +633,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Project-Output"][];
                 };
             };
         };
@@ -565,7 +655,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Project-Output"];
                 };
             };
             /** @description Validation Error */
@@ -596,7 +686,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Validation Error */
@@ -627,7 +717,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Project-Output"];
                 };
             };
             /** @description Validation Error */
@@ -715,7 +805,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Task"];
                 };
             };
             /** @description Validation Error */
@@ -746,7 +836,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Task"][];
                 };
             };
             /** @description Validation Error */
@@ -778,7 +868,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Task"];
                 };
             };
             /** @description Validation Error */

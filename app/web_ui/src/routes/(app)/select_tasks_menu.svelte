@@ -1,6 +1,6 @@
 <script lang="ts">
   import { current_project, projects } from "$lib/stores"
-  import type { ProjectInfo, Task } from "$lib/stores"
+  import type { Project, Task } from "$lib/types"
   import { api_error_handler } from "$lib/utils/error_handlers"
   import { ui_state } from "$lib/stores"
   import { goto } from "$app/navigation"
@@ -12,7 +12,7 @@
 
   $: project_list = $projects?.projects || []
   // Undefined should fallback. Null is manually selected none
-  let manually_selected_project: ProjectInfo | null | undefined = undefined
+  let manually_selected_project: Project | null | undefined = undefined
   let tasks_loading = false
   let tasks_loading_error: string | null = null
   let selected_project_tasks: Task[] = []
@@ -22,7 +22,7 @@
       ? null
       : manually_selected_project || $current_project
 
-  function select_project(project: ProjectInfo) {
+  function select_project(project: Project) {
     if (project?.id == selected_project?.id) {
       // Actually deselect it
       manually_selected_project = null
@@ -34,7 +34,7 @@
 
   $: load_tasks(selected_project)
 
-  async function load_tasks(project: ProjectInfo | null) {
+  async function load_tasks(project: Project | null) {
     if (project == null) {
       tasks_loading = false
       tasks_loading_error = "No project selected"
@@ -162,7 +162,7 @@
             <a
               href={new_task_url +
                 "?project_id=" +
-                encodeURIComponent(project.id)}
+                encodeURIComponent(project?.id || "")}
             >
               <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. https://www.svgrepo.com/svg/491465/plus-circle -->
               <svg

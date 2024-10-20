@@ -1,18 +1,17 @@
 <script lang="ts">
-  import type { Task } from "$lib/stores"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
   import Rating from "./rating.svelte"
   let repair_instructions: string | null = null
-  import createClient from "openapi-fetch"
-  import { type components, type paths } from "$lib/api_schema.d"
+  import type { TaskRun, Task } from "$lib/types"
+  import { client } from "$lib/api_client"
   import Output from "./output.svelte"
   import { KilnError, createKilnError } from "$lib/utils/error_handlers"
 
   export let project_id: string
   export let task: Task
-  export let initial_run: components["schemas"]["TaskRun"]
-  let updated_run: components["schemas"]["TaskRun"] | null = null
+  export let initial_run: TaskRun
+  let updated_run: TaskRun | null = null
   $: run = updated_run || initial_run
   export let model_name: string | null = null
   export let provider: string | null = null
@@ -27,9 +26,7 @@
   let overall_rating: FiveStarRating = null
   let requirement_ratings: FiveStarRating[] = []
 
-  function load_server_ratings(
-    new_run: components["schemas"]["TaskRun"] | null,
-  ) {
+  function load_server_ratings(new_run: TaskRun | null) {
     // Fill ratings with nulls
     requirement_ratings = Array(task.requirements.length).fill(null)
     if (!new_run) {
@@ -51,7 +48,9 @@
     try {
       let requirement_ratings_obj: Record<string, FiveStarRating> = {}
       task.requirements.forEach((req, index) => {
-        requirement_ratings_obj[req.id] = requirement_ratings[index]
+        if (req.id) {
+          requirement_ratings_obj[req.id] = requirement_ratings[index]
+        }
       })
       let patch_body = {
         output: {
@@ -62,9 +61,6 @@
           },
         },
       }
-      const client = createClient<paths>({
-        baseUrl: "http://localhost:8757",
-      })
       const {
         data, // only present if 2XX response
         error: fetch_error, // only present if 4XX or 5XX response
@@ -108,9 +104,6 @@
           [],
         )
       }
-      const client = createClient<paths>({
-        baseUrl: "http://localhost:8757",
-      })
       const {
         data: repair_data, // only present if 2XX response
         error: fetch_error, // only present if 4XX or 5XX response

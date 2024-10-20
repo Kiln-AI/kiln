@@ -2,9 +2,9 @@
   import AppPage from "../../app_page.svelte"
   import { projects, load_projects } from "$lib/stores"
   import { api_error_handler } from "$lib/utils/error_handlers"
-  import type { ProjectInfo } from "$lib/stores"
+  import type { Project } from "$lib/types"
 
-  async function remove_project(project: ProjectInfo) {
+  async function remove_project(project: Project) {
     try {
       if (
         confirm(

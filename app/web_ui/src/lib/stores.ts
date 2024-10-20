@@ -1,37 +1,12 @@
 import { writable, get } from "svelte/store"
-import { api_error_handler, createKilnError } from "./utils/error_handlers"
 import { dev } from "$app/environment"
-
-export type ProjectInfo = {
-  id: string
-  name: string
-  description: string
-  created_at: Date
-  created_by: string
-  path: string
-}
+import type { Project, Task } from "./types"
+import { client } from "./api_client"
+import { createKilnError } from "$lib/utils/error_handlers"
 
 export type AllProjects = {
-  projects: ProjectInfo[]
+  projects: Project[]
   error: string | null
-}
-
-export type TaskRequirement = {
-  id: string
-  name: string
-  instruction: string
-}
-
-export type Task = {
-  id: string
-  name: string
-  description: string
-  path: string
-  created_at: Date
-  created_by: string
-  output_json_schema: string | null
-  input_json_schema: string | null
-  requirements: TaskRequirement[]
 }
 
 // UI State stored in the browser. For more client centric state
@@ -50,7 +25,7 @@ export const ui_state = localStorageStore("ui_state", default_ui_state)
 
 // These stores store nice structured data. They are auto-updating based on the ui_state and server calls to load data
 export const projects = writable<AllProjects | null>(null)
-export const current_project = writable<ProjectInfo | null>(null)
+export const current_project = writable<Project | null>(null)
 export const current_task = writable<Task | null>(null)
 
 let previous_ui_state: UIState = default_ui_state
@@ -73,7 +48,7 @@ projects.subscribe((all_projects) => {
   }
 })
 
-function get_current_project(): ProjectInfo | null {
+function get_current_project(): Project | null {
   const all_projects = get(projects)
 
   if (!all_projects) {
@@ -94,12 +69,16 @@ function get_current_project(): ProjectInfo | null {
 
 export async function load_projects() {
   try {
-    const response = await fetch("http://localhost:8757/api/projects")
-    const data = await response.json()
-    api_error_handler(response, data)
+    const {
+      data: project_list, // only present if 2XX response
+      error, // only present if 4XX or 5XX response
+    } = await client.GET("/api/projects")
+    if (error) {
+      throw error
+    }
 
     const all_projects: AllProjects = {
-      projects: data,
+      projects: project_list,
       error: null,
     }
     projects.set(all_projects)
@@ -131,24 +110,35 @@ function localStorageStore<T>(key: string, initialValue: T) {
   return store
 }
 
-export async function load_current_task(project: ProjectInfo | null) {
+export async function load_current_task(project: Project | null) {
   let task: Task | null = null
   try {
     const task_id = get(ui_state).current_task_id
-    if (!project || !task_id) {
+    if (!project || !project?.id || !task_id) {
       return
     }
-    const projectId = encodeURIComponent(project.id)
-    const response = await fetch(
-      `http://localhost:8757/api/projects/${projectId}/tasks/${task_id}`,
-    )
-    const data = await response.json()
-    api_error_handler(response, data)
+    const {
+      data, // only present if 2XX response
+      error, // only present if 4XX or 5XX response
+    } = await client.GET("/api/projects/{project_id}/tasks/{task_id}", {
+      params: {
+        path: {
+          project_id: project.id,
+          task_id: task_id,
+        },
+      },
+    })
+    if (error) {
+      throw error
+    }
     task = data
   } catch (error: unknown) {
     // Can't load this task, likely deleted. Clear the ID, which will force the user to select a new task
     if (dev) {
-      alert("Removing current_task_id from UI state")
+      alert(
+        "Removing current_task_id from UI state: " +
+          createKilnError(error).getMessage(),
+      )
     }
     task = null
     ui_state.set({

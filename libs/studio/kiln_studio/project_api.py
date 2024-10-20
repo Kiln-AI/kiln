@@ -10,7 +10,7 @@ def default_project_path():
     return os.path.join(Path.home(), "Kiln Projects")
 
 
-def project_from_id(project_id: str):
+def project_from_id(project_id: str) -> Project:
     project_paths = Config.shared().projects
     if project_paths is not None:
         for project_path in project_paths:
@@ -38,7 +38,7 @@ def add_project_to_config(project_path: str):
 
 def connect_project_api(app: FastAPI):
     @app.post("/api/project")
-    async def create_project(project: Project):
+    async def create_project(project: Project) -> Project:
         project_path = os.path.join(default_project_path(), project.name)
         if os.path.exists(project_path):
             raise HTTPException(
@@ -58,7 +58,7 @@ def connect_project_api(app: FastAPI):
         return project
 
     @app.get("/api/projects")
-    async def get_projects():
+    async def get_projects() -> list[Project]:
         project_paths = Config.shared().projects
         projects = []
         for project_path in project_paths if project_paths is not None else []:
@@ -73,12 +73,12 @@ def connect_project_api(app: FastAPI):
         return projects
 
     @app.get("/api/projects/{project_id}")
-    async def get_project(project_id: str):
+    async def get_project(project_id: str) -> Project:
         return project_from_id(project_id)
 
     # Removes the project, but does not delete the files from disk
     @app.delete("/api/projects/{project_id}")
-    async def delete_project(project_id: str):
+    async def delete_project(project_id: str) -> dict:
         project = project_from_id(project_id)
 
         # Remove from config
@@ -89,7 +89,7 @@ def connect_project_api(app: FastAPI):
         return {"message": f"Project removed. ID: {project_id}"}
 
     @app.post("/api/import_project")
-    async def import_project(project_path: str):
+    async def import_project(project_path: str) -> Project:
         if project_path is None or not os.path.exists(project_path):
             raise HTTPException(
                 status_code=400,

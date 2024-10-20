@@ -6,8 +6,8 @@
   import FormElement from "$lib/utils/form_element.svelte"
   import { KilnError } from "$lib/utils/error_handlers"
   import Run from "./run.svelte"
-  import createClient from "openapi-fetch"
-  import { type components, type paths } from "$lib/api_schema.d"
+  import { client } from "$lib/api_client"
+  import type { TaskRun } from "$lib/types"
 
   // TODO: implement checking input content
   let warn_before_unload = false
@@ -25,7 +25,7 @@
   $: model_name = model.split("/")[1]
   $: provider = model.split("/")[0]
 
-  let response: components["schemas"]["TaskRun"] | null = null
+  let response: TaskRun | null = null
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
@@ -34,9 +34,6 @@
       submitting = true
       error = null
       response = null
-      const client = createClient<paths>({
-        baseUrl: "http://localhost:8757",
-      })
       const {
         data, // only present if 2XX response
         error: fetch_error, // only present if 4XX or 5XX response
@@ -144,7 +141,7 @@
         />
       </div>
     </div>
-    {#if $current_task && !submitting && response != null && $current_project}
+    {#if $current_task && !submitting && response != null && $current_project?.id}
       <div class="mt-10 xl:mt-32">
         <Run
           initial_run={response}
