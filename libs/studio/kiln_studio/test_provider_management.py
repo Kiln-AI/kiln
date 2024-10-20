@@ -1,12 +1,16 @@
 import json
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from kiln_ai.utils.config import Config
 
 from libs.studio.kiln_studio.provider_api import (
+    ChatBedrockConverse,
+    connect_bedrock,
     connect_groq,
     connect_openrouter,
     connect_provider_api,
@@ -220,3 +224,82 @@ async def test_connect_openrouter():
             b"Failed to connect to OpenRouter. Error: Unexpected error" in result.body
         )
         assert Config.shared().open_router_api_key != "api_key"
+
+
+@pytest.fixture
+def mock_environ():
+    with patch("libs.studio.kiln_studio.provider_api.os.environ", {}) as mock_env:
+        yield mock_env
+
+
+@pytest.mark.asyncio
+@patch("libs.studio.kiln_studio.provider_api.ChatBedrockConverse")
+async def test_connect_bedrock_success(mock_chat_bedrock, mock_environ):
+    mock_llm = MagicMock()
+    mock_chat_bedrock.return_value = mock_llm
+    mock_llm.invoke.side_effect = Exception("Some non-credential error")
+
+    result = await connect_bedrock("test_access_key", "test_secret_key")
+
+    assert isinstance(result, JSONResponse)
+    assert result.status_code == 200
+    assert result.body == b'{"message":"Connected to Bedrock"}'
+    assert Config.shared().bedrock_access_key == "test_access_key"
+    assert Config.shared().bedrock_secret_key == "test_secret_key"
+
+    mock_chat_bedrock.assert_called_once_with(
+        model="fake_model",
+        region_name="us-west-2",
+    )
+    mock_llm.invoke.assert_called_once_with("Hello, how are you?")
+
+
+@pytest.mark.asyncio
+@patch("libs.studio.kiln_studio.provider_api.ChatBedrockConverse")
+async def test_connect_bedrock_invalid_credentials(mock_chat_bedrock, mock_environ):
+    mock_llm = MagicMock()
+    mock_chat_bedrock.return_value = mock_llm
+    mock_llm.invoke.side_effect = Exception("UnrecognizedClientException")
+
+    result = await connect_bedrock("invalid_access_key", "invalid_secret_key")
+
+    assert isinstance(result, JSONResponse)
+    assert result.status_code == 401
+    assert (
+        result.body
+        == b'{"message":"Failed to connect to Bedrock. Invalid credentials."}'
+    )
+
+    assert "AWS_ACCESS_KEY_ID" not in mock_environ
+    assert "AWS_SECRET_ACCESS_KEY" not in mock_environ
+
+
+@pytest.mark.asyncio
+@patch("libs.studio.kiln_studio.provider_api.ChatBedrockConverse")
+async def test_connect_bedrock_unknown_error(mock_chat_bedrock, mock_environ):
+    mock_llm = MagicMock()
+    mock_chat_bedrock.return_value = mock_llm
+    mock_llm.invoke.side_effect = Exception("Some unexpected error")
+
+    result = await connect_bedrock("test_access_key", "test_secret_key")
+
+    assert isinstance(result, JSONResponse)
+    assert result.status_code == 200
+    assert result.body == b'{"message":"Connected to Bedrock"}'
+    assert Config.shared().bedrock_access_key == "test_access_key"
+    assert Config.shared().bedrock_secret_key == "test_secret_key"
+
+
+@pytest.mark.asyncio
+@patch("libs.studio.kiln_studio.provider_api.ChatBedrockConverse")
+async def test_connect_bedrock_environment_variables(mock_chat_bedrock, mock_environ):
+    mock_llm = MagicMock()
+    mock_chat_bedrock.return_value = mock_llm
+    mock_llm.invoke.side_effect = Exception("Some non-credential error")
+
+    await connect_bedrock("test_access_key", "test_secret_key")
+
+    assert "AWS_ACCESS_KEY_ID" not in mock_environ
+    assert "AWS_SECRET_ACCESS_KEY" not in mock_environ
+
+    mock_chat_bedrock.assert_called_once()
