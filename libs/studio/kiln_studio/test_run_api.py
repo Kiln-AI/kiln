@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
@@ -564,3 +564,57 @@ async def test_get_run_not_found(client):
 
     assert response.status_code == 404
     assert response.json()["message"] == "Run not found"
+
+
+@pytest.mark.asyncio
+async def test_get_runs_success(client, task_run_setup):
+    project = task_run_setup["project"]
+    task = task_run_setup["task"]
+    task_run = task_run_setup["task_run"]
+
+    with patch("libs.studio.kiln_studio.run_api.task_from_id") as mock_task_from_id:
+        mock_task = MagicMock()
+        mock_task.runs.return_value = [task_run]
+        mock_task_from_id.return_value = mock_task
+
+        response = client.get(f"/api/projects/{project.id}/tasks/{task.id}/runs")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0]["id"] == task_run.id
+    assert result[0]["input"] == "Test input"
+    assert result[0]["output"]["output"] == "Test output"
+
+
+@pytest.mark.asyncio
+async def test_get_runs_empty(client, task_run_setup):
+    project = task_run_setup["project"]
+    task = task_run_setup["task"]
+
+    with patch("libs.studio.kiln_studio.run_api.task_from_id") as mock_task_from_id:
+        mock_task = MagicMock()
+        mock_task.runs.return_value = []
+        mock_task_from_id.return_value = mock_task
+
+        response = client.get(f"/api/projects/{project.id}/tasks/{task.id}/runs")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert isinstance(result, list)
+    assert len(result) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_runs_task_not_found(client):
+    with patch("libs.studio.kiln_studio.run_api.task_from_id") as mock_task_from_id:
+        mock_task_from_id.side_effect = HTTPException(
+            status_code=404, detail="Task not found"
+        )
+        response = client.get(
+            "/api/projects/project1-id/tasks/non_existent_task_id/runs"
+        )
+
+    assert response.status_code == 404
+    assert response.json()["message"] == "Task not found"

@@ -64,6 +64,11 @@ def connect_run_api(app: FastAPI):
     async def get_run(project_id: str, task_id: str, run_id: str) -> TaskRun:
         return run_from_id(project_id, task_id, run_id)
 
+    @app.get("/api/projects/{project_id}/tasks/{task_id}/runs")
+    async def get_runs(project_id: str, task_id: str) -> list[TaskRun]:
+        task = task_from_id(project_id, task_id)
+        return list(task.runs())
+
     @app.post("/api/projects/{project_id}/tasks/{task_id}/run")
     async def run_task(
         project_id: str, task_id: str, request: RunTaskRequest
