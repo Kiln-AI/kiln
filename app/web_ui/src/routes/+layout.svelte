@@ -46,10 +46,7 @@
       // we have a current project, but no current task. Go to setup to create one
       await load_current_task($current_project)
       if (!$current_task) {
-        goto(
-          "/setup/create_task?project_id=" +
-            encodeURIComponent($current_project?.id ?? ""),
-        )
+        goto("/setup/create_task/" + ($current_project?.id ?? ""))
         return
       }
     } catch (e: unknown) {

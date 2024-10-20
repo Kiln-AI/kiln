@@ -166,11 +166,7 @@
             {/each}
           {/if}
           <li class="">
-            <a
-              href={new_task_url +
-                "?project_id=" +
-                encodeURIComponent(project?.id || "")}
-            >
+            <a href={new_task_url + "/" + (project?.id || "")}>
               <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. https://www.svgrepo.com/svg/491465/plus-circle -->
               <svg
                 class="w-4 h-4"

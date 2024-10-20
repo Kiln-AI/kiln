@@ -19,7 +19,7 @@
   )
 
   function redirect_to_project(project_id: string) {
-    goto(redirect_on_created + `?project_id=${encodeURIComponent(project_id)}`)
+    goto(redirect_on_created + "/" + project_id)
   }
 
   const create_project = async () => {

@@ -65,7 +65,7 @@
               class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 w-full"
             >
               <a
-                href={`/settings/create_task?project_id=${project.id}`}
+                href={`/settings/create_task/${project.id}`}
                 class="btn btn-xs w-full"
               >
                 Add Task

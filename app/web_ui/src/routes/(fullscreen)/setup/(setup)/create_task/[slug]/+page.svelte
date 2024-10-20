@@ -1,5 +1,8 @@
 <script lang="ts">
-  import EditTask from "./edit_task.svelte"
+  import { page } from "$app/stores"
+  import EditTask from "../edit_task.svelte"
+
+  $: project_id = $page.params.slug
 </script>
 
 <div class="grow"></div>
@@ -16,7 +19,7 @@
 <div
   class="flex-none min-h-[50vh] py-8 px-4 h-full flex flex-col py-18 w-full max-w-[600px] mx-auto"
 >
-  <EditTask redirect_on_created="/" />
+  <EditTask redirect_on_created="/" target_project_id={project_id} />
 </div>
 
 <div class="grow-[1.5]"></div>

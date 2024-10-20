@@ -14,7 +14,6 @@
   import { KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { ui_state, projects } from "$lib/stores"
   import { get } from "svelte/store"
-  import { page } from "$app/stores"
   import { client } from "$lib/api_client"
 
   // Prevents flash of complete UI if we're going to redirect
@@ -38,12 +37,8 @@
     task_requirements.some((req) => !!req.name || !!req.instruction)
 
   export let target_project_id: string | null = null
-
-  $: {
-    target_project_id =
-      new URLSearchParams($page.url.searchParams).get("project_id") ||
-      $current_project?.id ||
-      null
+  if (!target_project_id) {
+    target_project_id = $current_project?.id || null
   }
 
   export let project_target_name: string | null = null
