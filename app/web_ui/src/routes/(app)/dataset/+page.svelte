@@ -9,13 +9,18 @@
   let runs: TaskRun[] | null = null
   let error: KilnError | null = null
   let loading = true
-  let sortColumn: keyof TaskRun | "rating" | "inputPreview" | "outputPreview" =
-    "created_at"
-  let sortDirection: "asc" | "desc" = "desc"
+  let sortColumn:
+    | keyof TaskRun
+    | "rating"
+    | "inputPreview"
+    | "outputPreview"
+    | "repairState" = "created_at"
+  let sortDirection: "asc" | "desc" = "asc"
 
   const columns = [
     { key: "id", label: "ID" },
     { key: "rating", label: "Rating" },
+    { key: "repairState", label: "Repair State" },
     { key: "created_at", label: "Created At" },
     { key: "inputPreview", label: "Input Preview" },
     { key: "outputPreview", label: "Output Preview" },
@@ -46,10 +51,28 @@
         throw get_error
       }
       runs = runs_response
+      sortRuns()
     } catch (e) {
       error = createKilnError(e)
     } finally {
       loading = false
+    }
+  }
+
+  function formatRepairState(run: TaskRun): string {
+    if (run.repair_instructions) {
+      return "Repaired"
+    } else if (run.output && !run.output.rating) {
+      return "Rating needed"
+    } else if (
+      run.output?.rating?.value === 5.0 &&
+      run.output?.rating?.type === "five_star"
+    ) {
+      return "No repair needed"
+    } else if (run.output?.output) {
+      return "Repair needed"
+    } else {
+      return "No output"
     }
   }
 
@@ -107,6 +130,10 @@
         aValue = (a.output?.output ?? "").toLowerCase()
         bValue = (b.output?.output ?? "").toLowerCase()
         break
+      case "repairState":
+        aValue = formatRepairState(a)
+        bValue = formatRepairState(b)
+        break
       default:
         return 0
     }
@@ -127,6 +154,10 @@
       sortColumn = column
       sortDirection = "desc"
     }
+    sortRuns()
+  }
+
+  function sortRuns() {
     runs = runs ? [...runs].sort(sortFunction) : null
   }
 </script>
@@ -145,7 +176,10 @@
         <thead>
           <tr>
             {#each columns as { key, label }}
-              <th on:click={() => handleSort(key)} class="cursor-pointer">
+              <th
+                on:click={() => handleSort(key)}
+                class="hover:bg-base-200 cursor-pointer"
+              >
                 {label}
                 {sortColumn === key
                   ? sortDirection === "asc"
@@ -167,6 +201,7 @@
                     : run.output.rating.value + "(custom score)"
                   : "Unrated"}
               </td>
+              <td>{formatRepairState(run)}</td>
               <td>{formatDate(run.created_at)}</td>
               <td>{previewText(run.input) || "No input"}</td>
               <td>{previewText(run.output?.output) || "No output"}</td>
