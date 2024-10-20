@@ -9,6 +9,17 @@
   let runs: TaskRun[] | null = null
   let error: KilnError | null = null
   let loading = true
+  let sortColumn: keyof TaskRun | "rating" | "inputPreview" | "outputPreview" =
+    "created_at"
+  let sortDirection: "asc" | "desc" = "desc"
+
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "rating", label: "Rating" },
+    { key: "created_at", label: "Created At" },
+    { key: "inputPreview", label: "Input Preview" },
+    { key: "outputPreview", label: "Output Preview" },
+  ]
 
   onMount(async () => {
     get_runs()
@@ -70,6 +81,54 @@
     if (text.length <= maxLength) return text
     return text.slice(0, maxLength) + "..."
   }
+
+  function sortFunction(a: TaskRun, b: TaskRun) {
+    let aValue: string | number | Date | null | undefined
+    let bValue: string | number | Date | null | undefined
+
+    switch (sortColumn) {
+      case "id":
+        aValue = a.id
+        bValue = b.id
+        break
+      case "created_at":
+        aValue = a[sortColumn]
+        bValue = b[sortColumn]
+        break
+      case "rating":
+        aValue = a.output.rating?.value ?? -1
+        bValue = b.output.rating?.value ?? -1
+        break
+      case "inputPreview":
+        aValue = (a.input ?? "").toLowerCase()
+        bValue = (b.input ?? "").toLowerCase()
+        break
+      case "outputPreview":
+        aValue = (a.output?.output ?? "").toLowerCase()
+        bValue = (b.output?.output ?? "").toLowerCase()
+        break
+      default:
+        return 0
+    }
+
+    if (!aValue) return sortDirection === "asc" ? 1 : -1
+    if (!bValue) return sortDirection === "asc" ? -1 : 1
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+    return 0
+  }
+
+  function handleSort(columnString: string) {
+    const column = columnString as typeof sortColumn
+    if (sortColumn === column) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc"
+    } else {
+      sortColumn = column
+      sortDirection = "desc"
+    }
+    runs = runs ? [...runs].sort(sortFunction) : null
+  }
 </script>
 
 <AppPage
@@ -83,20 +142,24 @@
   {:else if runs}
     <div class="overflow-x-auto">
       <table class="table">
-        <!-- head -->
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Rating</th>
-            <th>Created At</th>
-            <th>Input Preview</th>
-            <th>Output Preview</th>
+            {#each columns as { key, label }}
+              <th on:click={() => handleSort(key)} class="cursor-pointer">
+                {label}
+                {sortColumn === key
+                  ? sortDirection === "asc"
+                    ? "▲"
+                    : "▼"
+                  : ""}
+              </th>
+            {/each}
           </tr>
         </thead>
         <tbody>
           {#each runs as run}
             <tr class="hover cursor-pointer">
-              <th>{run.id}</th>
+              <td>{run.id}</td>
               <td>
                 {run.output.rating && run.output.rating.value
                   ? run.output.rating.type === "five_star"
