@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { current_project, projects } from "$lib/stores"
+  import { current_project, projects, current_task } from "$lib/stores"
   import type { Project, Task } from "$lib/types"
   import { ui_state } from "$lib/stores"
   import { goto } from "$app/navigation"
@@ -33,6 +33,11 @@
   }
 
   $: load_tasks(selected_project)
+
+  // Reload when the current task changes. Sometimes the task is deleted or a new one is created.
+  current_task.subscribe(() => {
+    load_tasks(selected_project)
+  })
 
   async function load_tasks(project: Project | null) {
     if (project == null || !project.id) {
