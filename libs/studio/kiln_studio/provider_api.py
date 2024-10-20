@@ -1,61 +1,103 @@
 import os
+from typing import Dict, List
 
 import requests
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from kiln_ai.adapters.ml_model_list import ModelProviderName, built_in_models
+from kiln_ai.adapters.ml_model_list import (
+    ModelProviderName,
+    built_in_models,
+    provider_warnings,
+)
 from kiln_ai.utils.config import Config
 from langchain_aws import ChatBedrockConverse
+from pydantic import BaseModel
+
+
+class OllamaConnection(BaseModel):
+    message: str
+    models: List[str]
+
+
+async def connect_ollama() -> OllamaConnection:
+    # Tags is a list of Ollama models. Proves Ollama is running, and models are available.
+    try:
+        tags = requests.get("http://localhost:11434/api/tags", timeout=5).json()
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(
+            status_code=417,
+            detail="Failed to connect. Ensure Ollama app is running.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to connect to Ollama: {e}",
+        )
+
+    # Build a list of models we support for Ollama from the built-in model list
+    supported_ollama_models = [
+        provider.provider_options["model"]
+        for model in built_in_models
+        for provider in model.providers
+        if provider.name == ModelProviderName.ollama
+    ]
+
+    if "models" in tags:
+        models = tags["models"]
+        if isinstance(models, list):
+            model_names = [model["model"] for model in models]
+            available_supported_models = [
+                model
+                for model in model_names
+                if model in supported_ollama_models
+                or model in [f"{m}:latest" for m in supported_ollama_models]
+            ]
+            if available_supported_models:
+                Config.shared().ollama_base_url = "http://localhost:11434"
+                return OllamaConnection(
+                    message="Ollama connected",
+                    models=available_supported_models,
+                )
+
+    raise HTTPException(
+        status_code=417,
+        detail="Ollama is running, but no supported models are installed. Install one or more supported model, like 'ollama pull phi3.5'.",
+    )
 
 
 def connect_provider_api(app: FastAPI):
-    @app.post("/api/provider/ollama/connect")
-    async def connect_ollama():
-        # Tags is a list of Ollama models. Proves Ollama is running, and models are available.
+    # returns map, of provider name to list of model names
+    @app.get("/api/available_models")
+    async def get_available_models() -> Dict[str, List[str]]:
+        # Providers with just keys can return all their models if keys are set
+        key_providers: List[str] = []
+        for provider, provider_warning in provider_warnings.items():
+            has_keys = True
+            for required_key in provider_warning.required_config_keys:
+                if Config.shared().get_value(required_key) is None:
+                    has_keys = False
+                    break
+            if has_keys:
+                key_providers.append(provider)
+        models: Dict[str, List[str]] = {provider: [] for provider in key_providers}
+        for model in built_in_models:
+            for provider in model.providers:
+                if provider.name in key_providers:
+                    models[provider.name].append(model.name)
+
+        # Try to connect to Ollama, and add its models if successful
         try:
-            tags = requests.get("http://localhost:11434/api/tags", timeout=5).json()
-        except requests.exceptions.ConnectionError:
-            return JSONResponse(
-                status_code=417,
-                content={"message": "Failed to connect. Ensure Ollama app is running."},
-            )
-        except Exception as e:
-            return JSONResponse(
-                status_code=500,
-                content={"message": f"Failed to connect to Ollama: {e}"},
-            )
+            ollama_connection = await connect_ollama()
+            models[ModelProviderName.ollama] = ollama_connection.models
+        except HTTPException:
+            # skip ollama if it's not available
+            pass
 
-        # Build a list of models we support for Ollama from the built-in model list
-        supported_ollama_models = [
-            provider.provider_options["model"]
-            for model in built_in_models
-            for provider in model.providers
-            if provider.name == ModelProviderName.ollama
-        ]
+        return models
 
-        if "models" in tags:
-            models = tags["models"]
-            if isinstance(models, list):
-                model_names = [model["model"] for model in models]
-                available_supported_models = [
-                    model
-                    for model in model_names
-                    if model in supported_ollama_models
-                    or model in [f"{m}:latest" for m in supported_ollama_models]
-                ]
-                if available_supported_models:
-                    Config.shared().ollama_base_url = "http://localhost:11434"
-                    return {
-                        "message": "Ollama connected",
-                        "models": available_supported_models,
-                    }
-
-        return JSONResponse(
-            status_code=417,
-            content={
-                "message": "Ollama is running, but no supported models are installed. Install one or more supported model, like 'ollama pull phi3.5'."
-            },
-        )
+    @app.post("/api/provider/ollama/connect")
+    async def connect_ollama_api() -> OllamaConnection:
+        return await connect_ollama()
 
     @app.post("/api/provider/connect_api_key")
     async def connect_api_key(payload: dict):

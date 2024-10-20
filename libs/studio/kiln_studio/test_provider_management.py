@@ -3,13 +3,19 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
+from kiln_ai.adapters.ml_model_list import (
+    KilnModel,
+    KilnModelProvider,
+    ModelProviderName,
+)
 from kiln_ai.utils.config import Config
 
 from libs.studio.kiln_studio.provider_api import (
     ChatBedrockConverse,
+    OllamaConnection,
     connect_bedrock,
     connect_groq,
     connect_openrouter,
@@ -303,3 +309,92 @@ async def test_connect_bedrock_environment_variables(mock_chat_bedrock, mock_env
     assert "AWS_SECRET_ACCESS_KEY" not in mock_environ
 
     mock_chat_bedrock.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_available_models(app, client):
+    # Mock Config.shared()
+    mock_config = MagicMock()
+    mock_config.get_value.return_value = "mock_key"
+
+    # Mock provider_warnings
+    mock_provider_warnings = {
+        ModelProviderName.openai: MagicMock(required_config_keys=["key1"]),
+        ModelProviderName.amazon_bedrock: MagicMock(required_config_keys=["key2"]),
+    }
+
+    # Mock built_in_models
+    mock_built_in_models = [
+        KilnModel(
+            name="model1",
+            family="",
+            providers=[KilnModelProvider(name=ModelProviderName.openai)],
+        ),
+        KilnModel(
+            name="model2",
+            family="",
+            providers=[KilnModelProvider(name=ModelProviderName.amazon_bedrock)],
+        ),
+    ]
+
+    # Mock connect_ollama
+    mock_ollama_connection = OllamaConnection(
+        message="Connected", models=["ollama_model1", "ollama_model2"]
+    )
+
+    with patch(
+        "libs.studio.kiln_studio.provider_api.Config.shared", return_value=mock_config
+    ), patch(
+        "libs.studio.kiln_studio.provider_api.provider_warnings", mock_provider_warnings
+    ), patch(
+        "libs.studio.kiln_studio.provider_api.built_in_models", mock_built_in_models
+    ), patch(
+        "libs.studio.kiln_studio.provider_api.connect_ollama",
+        return_value=mock_ollama_connection,
+    ):
+        response = client.get("/api/available_models")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "openai": ["model1"],
+        "amazon_bedrock": ["model2"],
+        "ollama": ["ollama_model1", "ollama_model2"],
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_available_models_ollama_exception(app, client):
+    # Mock Config.shared()
+    mock_config = MagicMock()
+    mock_config.get_value.return_value = "mock_key"
+
+    # Mock provider_warnings
+    mock_provider_warnings = {
+        ModelProviderName.openai: MagicMock(required_config_keys=["key1"]),
+    }
+
+    # Mock built_in_models
+    mock_built_in_models = [
+        KilnModel(
+            name="model1",
+            family="",
+            providers=[KilnModelProvider(name=ModelProviderName.openai)],
+        ),
+    ]
+
+    # Mock connect_ollama to raise an HTTPException
+    with patch(
+        "libs.studio.kiln_studio.provider_api.Config.shared", return_value=mock_config
+    ), patch(
+        "libs.studio.kiln_studio.provider_api.provider_warnings", mock_provider_warnings
+    ), patch(
+        "libs.studio.kiln_studio.provider_api.built_in_models", mock_built_in_models
+    ), patch(
+        "libs.studio.kiln_studio.provider_api.connect_ollama",
+        side_effect=HTTPException(status_code=500),
+    ):
+        response = client.get("/api/available_models")
+
+    assert response.status_code == 200
+    assert response.json() == {"openai": ["model1"]}
+    assert "ollama" not in response.json()

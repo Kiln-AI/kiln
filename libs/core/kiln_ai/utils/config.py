@@ -80,6 +80,13 @@ class Config:
             cls._shared_instance = cls()
         return cls._shared_instance
 
+    # Get a value, mockable for testing
+    def get_value(self, name: str) -> Any:
+        try:
+            return self.__getattr__(name)
+        except AttributeError:
+            return None
+
     def __getattr__(self, name: str) -> Any:
         if name == "_properties":
             return super().__getattribute__("_properties")
