@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from enum import Enum
 from os import getenv
 from typing import Dict, List
@@ -278,6 +279,48 @@ built_in_models: List[KilnModel] = [
 ]
 
 
+@dataclass
+class ModelProviderWarning:
+    required_config_keys: List[str]
+    message: str
+
+
+provider_warnings: Dict[ModelProviderName, ModelProviderWarning] = {
+    ModelProviderName.amazon_bedrock: ModelProviderWarning(
+        required_config_keys=["bedrock_access_key", "bedrock_secret_key"],
+        message="Attempted to use Amazon Bedrock without an access key and secret set. \nGet your keys from https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/overview",
+    ),
+    ModelProviderName.openrouter: ModelProviderWarning(
+        required_config_keys=["open_router_api_key"],
+        message="Attempted to use OpenRouter without an API key set. \nGet your API key from https://openrouter.ai/settings/keys",
+    ),
+    ModelProviderName.groq: ModelProviderWarning(
+        required_config_keys=["groq_api_key"],
+        message="Attempted to use Groq without an API key set. \nGet your API key from https://console.groq.com/keys",
+    ),
+    ModelProviderName.openai: ModelProviderWarning(
+        required_config_keys=["open_ai_api_key"],
+        message="Attempted to use OpenAI without an API key set. \nGet your API key from https://platform.openai.com/account/api-keys",
+    ),
+}
+
+
+def get_config_value(key: str):
+    try:
+        return Config.shared().__getattr__(key)
+    except AttributeError:
+        return None
+
+
+def check_provider_warnings(provider_name: ModelProviderName):
+    warning_check = provider_warnings.get(provider_name)
+    if warning_check is None:
+        return
+    for key in warning_check.required_config_keys:
+        if get_config_value(key) is None:
+            raise ValueError(warning_check.message)
+
+
 def langchain_model_from(name: str, provider_name: str | None = None) -> BaseChatModel:
     if name not in ModelName.__members__:
         raise ValueError(f"Invalid name: {name}")
@@ -301,13 +344,10 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
     if provider is None:
         raise ValueError(f"Provider {provider_name} not found for model {name}")
 
+    check_provider_warnings(provider.name)
+
     if provider.name == ModelProviderName.openai:
         api_key = Config.shared().open_ai_api_key
-        if api_key is None:
-            raise ValueError(
-                "Attempted to use OpenAI without an API key set. "
-                "Get your API key from https://platform.openai.com/account/api-keys"
-            )
         return ChatOpenAI(**provider.provider_options, openai_api_key=api_key)  # type: ignore[arg-type]
     elif provider.name == ModelProviderName.groq:
         api_key = Config.shared().groq_api_key
@@ -320,11 +360,6 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
     elif provider.name == ModelProviderName.amazon_bedrock:
         api_key = Config.shared().bedrock_access_key
         secret_key = Config.shared().bedrock_secret_key
-        if api_key is None or secret_key is None:
-            raise ValueError(
-                "Attempted to use Amazon Bedrock without an access key and secret set. "
-                "Get your keys from https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/overview"
-            )
         # langchain doesn't allow passing these, so ugly hack to set env vars
         os.environ["AWS_ACCESS_KEY_ID"] = api_key
         os.environ["AWS_SECRET_ACCESS_KEY"] = secret_key
@@ -335,11 +370,6 @@ def langchain_model_from(name: str, provider_name: str | None = None) -> BaseCha
         return ChatOllama(**provider.provider_options, base_url=ollama_base_url())
     elif provider.name == ModelProviderName.openrouter:
         api_key = Config.shared().open_router_api_key
-        if api_key is None:
-            raise ValueError(
-                "Attempted to use OpenRouter without an API key set. "
-                "Get your API key from https://openrouter.ai/settings/keys"
-            )
         base_url = getenv("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1"
         return ChatOpenAI(
             **provider.provider_options,
