@@ -36,6 +36,9 @@ class ModelName(str, Enum):
     llama_3_1_8b = "llama_3_1_8b"
     llama_3_1_70b = "llama_3_1_70b"
     llama_3_1_405b = "llama_3_1_405b"
+    llama_3_2_3b = "llama_3_2_3b"
+    llama_3_2_11b = "llama_3_2_11b"
+    llama_3_2_90b = "llama_3_2_90b"
     gpt_4o_mini = "gpt_4o_mini"
     gpt_4o = "gpt_4o"
     phi_3_5 = "phi_3_5"
@@ -44,6 +47,7 @@ class ModelName(str, Enum):
     gemma_2_2b = "gemma_2_2b"
     gemma_2_9b = "gemma_2_9b"
     gemma_2_27b = "gemma_2_27b"
+    nemotron_3_1_70b = "nemotron_3_1_70b"
 
 
 class KilnModelProvider(BaseModel):
@@ -62,6 +66,22 @@ class KilnModel(BaseModel):
 
 
 built_in_models: List[KilnModel] = [
+    # nemotron_3_1_70b
+    KilnModel(
+        family=ModelFamily.llama,
+        name=ModelName.nemotron_3_1_70b,
+        friendly_name="Nemotron 3.1 70B",
+        providers=[
+            KilnModelProvider(
+                name=ModelProviderName.ollama,
+                provider_options={"model": "nemotron"},
+            ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "nvidia/llama-3.1-nemotron-70b-instruct"},
+            ),
+        ],
+    ),
     # GPT 4o Mini
     KilnModel(
         family=ModelFamily.gpt,
@@ -177,6 +197,95 @@ built_in_models: List[KilnModel] = [
             KilnModelProvider(
                 name=ModelProviderName.openrouter,
                 provider_options={"model": "meta-llama/llama-3.1-405b-instruct"},
+            ),
+        ],
+    ),
+    # Llama 3.2-3b
+    KilnModel(
+        family=ModelFamily.llama,
+        name=ModelName.llama_3_2_3b,
+        friendly_name="Llama 3.2 3B",
+        providers=[
+            KilnModelProvider(
+                name=ModelProviderName.groq,
+                supports_structured_output=False,
+                provider_options={"model": "llama-3.2-3b-preview"},
+            ),
+            # Not supported on demand yet
+            # KilnModelProvider(
+            #    name=ModelProviderName.amazon_bedrock,
+            #    provider_options={
+            #        "model": "meta.llama3-2-3b-instruct-v1:0",
+            #        "region_name": "us-west-2",  # Llama 3.2 only in west-2
+            #    },
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.ollama,
+                provider_options={"model": "llama3.2"},  # 8b is default
+            ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "meta-llama/llama-3.2-3b-instruct"},
+            ),
+        ],
+    ),
+    # Llama 3.2 11b
+    KilnModel(
+        family=ModelFamily.llama,
+        name=ModelName.llama_3_2_11b,
+        friendly_name="Llama 3.2 11B",
+        providers=[
+            KilnModelProvider(
+                name=ModelProviderName.groq,
+                provider_options={"model": "llama-3.2-11b-vision-preview"},
+            ),
+            # Not supported on demand yet
+            # KilnModelProvider(
+            #    name=ModelProviderName.amazon_bedrock,
+            #    supports_structured_output=False,
+            #    provider_options={
+            #        "model": "meta.llama3-2-11b-instruct-v1:0",
+            #        "region_name": "us-west-2",  # Llama 3.1 only in west-2
+            #    },
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "meta-llama/llama-3.2-11b-vision-instruct"},
+            ),
+            # TODO: enable once tests update to check if model is available
+            # KilnModelProvider(
+            #     provider=ModelProviders.ollama,
+            #     provider_options={"model": "llama3.2:11b"},
+            # ),
+        ],
+    ),
+    # Llama 3.2 90b
+    KilnModel(
+        family=ModelFamily.llama,
+        name=ModelName.llama_3_2_90b,
+        friendly_name="Llama 3.2 90B",
+        providers=[
+            KilnModelProvider(
+                name=ModelProviderName.groq,
+                provider_options={"model": "llama-3.2-90b-vision-preview"},
+            ),
+            # Not supported on demand yet
+            # KilnModelProvider(
+            #    name=ModelProviderName.amazon_bedrock,
+            #    supports_structured_output=False,
+            #    provider_options={
+            #        "model": "meta.llama3-2-90b-instruct-v1:0",
+            #         "region_name": "us-west-2",  # Llama 3.1 only in west-2
+            #     },
+            # ),
+            # TODO: enable once tests update to check if model is available
+            # KilnModelProvider(
+            #     name=ModelProviderName.ollama,
+            #     provider_options={"model": "llama3.2:90b"},
+            # ),
+            KilnModelProvider(
+                name=ModelProviderName.openrouter,
+                provider_options={"model": "meta-llama/llama-3.2-90b-vision-instruct"},
             ),
         ],
     ),
