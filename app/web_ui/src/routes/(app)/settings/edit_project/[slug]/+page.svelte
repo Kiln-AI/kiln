@@ -9,7 +9,7 @@
   $: project = $projects?.projects.find((p) => p.id == project_id)
 </script>
 
-<div class="max-w-[600px]">
+<div class="max-w-[800px]">
   <AppPage title="Edit Project" subtitle={project?.name}>
     <EditProject {project} />
   </AppPage>

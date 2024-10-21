@@ -19,6 +19,7 @@
   }
   let error: KilnError | null = null
   let submitting = false
+  let saved = false
 
   $: warn_before_unload = [project?.name, project?.description].some(
     (value) => !!value,
@@ -30,6 +31,8 @@
 
   const save_project = async () => {
     try {
+      saved = false
+      submitting = true
       if (!project?.name) {
         throw new Error("Project name is required")
       }
@@ -81,6 +84,10 @@
       if (create) {
         created = true
       }
+      saved = true
+      setTimeout(() => {
+        saved = false
+      }, 3000)
     } catch (e) {
       error = createKilnError(e)
     } finally {
@@ -94,6 +101,7 @@
   const import_project = async () => {
     try {
       submitting = true
+      saved = false
       const { data, error: post_error } = await client.POST(
         "/api/import_project",
         {
@@ -114,6 +122,10 @@
         return
       }
       created = true
+      saved = true
+      setTimeout(() => {
+        saved = false
+      }, 3000)
     } catch (e) {
       error = createKilnError(e)
     } finally {
@@ -131,6 +143,7 @@
         bind:warn_before_unload
         bind:submitting
         bind:error
+        bind:saved
       >
         <FormElement
           label="Project Name"
@@ -162,6 +175,7 @@
         bind:warn_before_unload
         bind:submitting
         bind:error
+        bind:saved
       >
         <FormElement
           label="Existing Project Path"
