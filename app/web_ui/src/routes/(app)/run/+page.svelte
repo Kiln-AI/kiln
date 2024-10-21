@@ -1,6 +1,6 @@
 <script lang="ts">
   import AppPage from "../app_page.svelte"
-  import { current_task, current_project } from "$lib/stores"
+  import { current_task, current_project, ui_state } from "$lib/stores"
   import { createKilnError } from "$lib/utils/error_handlers"
   import FormContainer from "$lib/utils/form_container.svelte"
   import FormElement from "$lib/utils/form_element.svelte"
@@ -20,7 +20,7 @@
 
   // TODO: real values for adapters and models
   let prompt_method = "basic"
-  let model = "openai/gpt_4o_mini"
+  let model: string = $ui_state.selected_model
 
   $: model_name = model.split("/")[1]
   $: provider = model.split("/")[0]
