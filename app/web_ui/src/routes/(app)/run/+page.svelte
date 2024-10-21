@@ -119,7 +119,7 @@
       </div>
     </div>
     {#if $current_task && !submitting && response != null && $current_project?.id}
-      <div class="mt-10 xl:mt-32">
+      <div class="mt-10 xl:mt-24">
         <Run
           initial_run={response}
           task={$current_task}

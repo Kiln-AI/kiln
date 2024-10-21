@@ -33,7 +33,13 @@
   let overall_rating: FiveStarRating = null
   let requirement_ratings: FiveStarRating[] = []
 
-  $: repair_available = run && overall_rating !== null && overall_rating !== 5
+  // Repair is available if the run has an overall rating but it's not 5 stars, and it doesn't yet have a repaired output
+  $: repair_available =
+    run &&
+    overall_rating !== null &&
+    overall_rating !== 5 &&
+    !run?.repaired_output?.output
+  $: repair_review_available = run?.repaired_output?.output
 
   // Use for some animations on first mount
   let mounted = false
@@ -276,6 +282,23 @@
           {#each task.requirements as requirement, index}
             <div class="flex items-center">
               {requirement.name}:
+              <button
+                class="tooltip"
+                data-tip={`Requirement #${index + 1} - ${requirement.instruction || "No instruction provided"}`}
+              >
+                <svg
+                  fill="currentColor"
+                  class="w-6 h-6 inline"
+                  viewBox="0 0 1024 1024"
+                  version="1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  ><path
+                    d="M512 717a205 205 0 1 0 0-410 205 205 0 0 0 0 410zm0 51a256 256 0 1 1 0-512 256 256 0 0 1 0 512z"
+                  /><path
+                    d="M485 364c7-7 16-11 27-11s20 4 27 11c8 8 11 17 11 28 0 10-3 19-11 27-7 7-16 11-27 11s-20-4-27-11c-8-8-11-17-11-27 0-11 3-20 11-28zM479 469h66v192h-66z"
+                  /></svg
+                >
+              </button>
             </div>
             <div class="flex items-center">
               <Rating bind:rating={requirement_ratings[index]} size={6} />
@@ -292,27 +315,15 @@
     </div>
   </div>
 
-  {#if repair_available}
-    <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-10 xl:mt-16">
-      {#if run?.repaired_output?.output}
-        <div class="grow">
-          <div class="text-xl font-bold mt-10 mb-4">Repair Result</div>
-          <Output
-            structured={!!task.output_json_schema}
-            raw_output={run.repaired_output.output}
-          />
-        </div>
-      {/if}
-      <div class="w-72 2xl:w-96 flex-none">
-        <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
-        {#if overall_rating === 5}
-          <p>Repair not needed for a 5-star output.</p>
-          <p class="pt-1 text-sm">
-            If the response can be improved, reduce the overall rating.
+  {#if repair_available || repair_review_available}
+    <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-24">
+      <div class="grow">
+        <div class="text-xl font-bold mb-2">Repair</div>
+        {#if repair_available}
+          <p class="text-sm text-gray-500 mb-4">
+            Since the output isn't 5-star, provide instructions for the model on
+            how to fix it.
           </p>
-        {:else if overall_rating == null}
-          <p>You must set an overall rating before repairing.</p>
-        {:else}
           <FormContainer
             submit_label="Attempt Repair"
             on:submit={attempt_repair}
@@ -326,6 +337,50 @@
               bind:value={repair_instructions}
             />
           </FormContainer>
+        {:else if repair_review_available}
+          <p class="text-sm text-gray-500 mb-4">
+            The model has attempted to fix the output given your instructions.
+            Review the result.
+          </p>
+          <Output
+            structured={!!task.output_json_schema}
+            raw_output={run.repaired_output?.output || ""}
+          />
+          <div>
+            <div class="mt-2 text-sm text-gray-500">
+              Based on the repair instructions: &quot;{repair_instructions ||
+                "No instruction provided"}&quot;
+            </div>
+          </div>
+        {/if}
+      </div>
+      <div class="w-72 2xl:w-96 flex-none">
+        {#if repair_review_available}
+          <div class="text-xl font-bold mb-2">Evaluate Repair</div>
+          <div class="flex flex-col gap-4 mt-12">
+            <button class="btn btn-primary">Accept (5 Stars)</button>
+            <button class="btn">Retry Repair</button>
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
+  {#if repair_available && false}
+    <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-10 xl:mt-16">
+      {#if run?.repaired_output?.output}
+        <div class="grow">
+          <div class="text-xl font-bold mt-10 mb-4">Repair Result</div>
+        </div>
+      {/if}
+      <div class="w-72 2xl:w-96 flex-none">
+        <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
+        {#if overall_rating === 5}
+          <p>Repair not needed for a 5-star output.</p>
+          <p class="pt-1 text-sm">
+            If the response can be improved, reduce the overall rating.
+          </p>
+        {:else if overall_rating == null}
+          <p>You must set an overall rating before repairing.</p>
         {/if}
       </div>
     </div>

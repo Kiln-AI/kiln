@@ -37,6 +37,6 @@
   {/if}
 </div>
 
-<div class="mt-8">
+<div class="mt-8 mb-12">
   <slot />
 </div>
