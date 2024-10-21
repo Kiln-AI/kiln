@@ -84,7 +84,7 @@
   <div class="max-w-[1400px]">
     <div class="flex flex-col xl:flex-row gap-8 xl:gap-16">
       <div class="grow">
-        <div class="text-xl font-bold">Input</div>
+        <div class="text-xl font-bold mb-4">Input</div>
         <FormContainer
           submit_label="Run"
           on:submit={run_task}
@@ -93,7 +93,6 @@
           bind:submitting
           bind:primary={run_focus}
         >
-          <div class="flex flex-row gap-2 items-center"></div>
           <FormElement
             label="Plaintext Input"
             inputType="textarea"

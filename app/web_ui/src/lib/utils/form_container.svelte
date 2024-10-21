@@ -102,7 +102,7 @@
 <form class="flex flex-col gap-6 w-full" {id}>
   <slot />
 
-  <div class="flex flex-col gap-2 mt-4">
+  <div class="flex flex-col gap-2">
     {#if has_validation_errors}
       <div class="text-sm text-center text-error">
         <button class="link" on:click={() => focus_first_error()}
