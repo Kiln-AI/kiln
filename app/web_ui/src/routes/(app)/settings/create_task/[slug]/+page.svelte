@@ -7,7 +7,7 @@
   $: project_id = $page.params.slug
 </script>
 
-<div class="max-w-[700px]">
+<div class="max-w-[900px]">
   <AppPage
     title="New Task"
     subtitle="A 'task' is a single goal for a model to accomplish."
