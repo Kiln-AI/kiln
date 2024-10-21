@@ -14,6 +14,7 @@
   // TODO UI for errors
   let error: KilnError | null = null
   let submitting = false
+  let run_complete = false
 
   // TODO: also structured input
   let plaintext_input = ""
@@ -26,8 +27,7 @@
   $: provider = model.split("/")[0]
 
   let response: TaskRun | null = null
-  let focus: "run" | "rate" | "repair" = "run"
-  $: run_focus = focus === "run"
+  $: run_focus = !response
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
@@ -56,7 +56,6 @@
         throw fetch_error
       }
       response = data
-      focus = "rate"
     } catch (e) {
       error = createKilnError(e)
     } finally {
@@ -67,6 +66,12 @@
   function clear_all() {
     plaintext_input = ""
     response = null
+  }
+
+  function next_task_run() {
+    // Keep the input, but clear the response
+    response = null
+    run_complete = false
   }
 </script>
 
@@ -121,8 +126,20 @@
           project_id={$current_project.id}
           bind:model_name
           bind:provider
+          bind:run_complete
         />
       </div>
     {/if}
   </div>
+  {#if run_complete}
+    <div class="flex flex-col md:flex-row gap-6 place-content-center mt-10">
+      <p class="text-lg text-gray-500 mt-5">🎉 Ready for your next task?</p>
+      <button
+        class="btn btn-primary mt-2 min-w-48"
+        on:click={() => next_task_run()}
+      >
+        Next Run
+      </button>
+    </div>
+  {/if}
 </AppPage>

@@ -7,6 +7,9 @@
   import { client } from "$lib/api_client"
   import Output from "./output.svelte"
   import { KilnError, createKilnError } from "$lib/utils/error_handlers"
+  import { bounceOut } from "svelte/easing"
+  import { fly } from "svelte/transition"
+  import { onMount } from "svelte"
 
   export let project_id: string
   export let task: Task
@@ -15,6 +18,10 @@
   $: run = updated_run || initial_run
   export let model_name: string | null = null
   export let provider: string | null = null
+  export let run_complete: boolean = false
+
+  $: rate_focus = run && overall_rating === null
+  $: run_complete = overall_rating === 5 // TODO+ || Repair done
 
   let show_raw_data = false
 
@@ -25,6 +32,16 @@
   type FiveStarRating = 1 | 2 | 3 | 4 | 5 | null
   let overall_rating: FiveStarRating = null
   let requirement_ratings: FiveStarRating[] = []
+
+  $: repair_available = run && overall_rating !== null && overall_rating !== 5
+
+  // Use for some animations on first mount
+  let mounted = false
+  onMount(() => {
+    setTimeout(() => {
+      mounted = true
+    }, 50) // Short delay to ensure component is fully mounted
+  })
 
   function load_server_ratings(new_run: TaskRun | null) {
     // Fill ratings with nulls
@@ -197,6 +214,25 @@
         structured={!!task.output_json_schema}
         raw_output={run.output.output}
       />
+      <div>
+        <div class="mt-2">
+          <button class="text-xs link" on:click={toggle_raw_data}
+            >{show_raw_data ? "Hide" : "Show"} Raw Data</button
+          >
+        </div>
+
+        <div class={show_raw_data ? "" : "hidden"}>
+          <h1 class="text-xl font-bold mt-2 mb-2" id="raw_data">Raw Data</h1>
+          <div class="text-sm">
+            <pre
+              class="bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{JSON.stringify(
+                run,
+                null,
+                2,
+              )}</pre>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="w-72 2xl:w-96 flex-none">
@@ -214,15 +250,28 @@
               /></svg
             >
           </button>
+        {:else if rate_focus && mounted}
+          <div class="w-7 h-7 ml-3 inline text-primary">
+            <svg
+              in:fly={{
+                delay: 50,
+                duration: 1000,
+                easing: bounceOut,
+                y: "-20px",
+                opacity: 1,
+              }}
+              fill="currentColor"
+              class="w-7 h-7 inline"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+              ><path
+                d="M256,464c114.87,0,208-93.13,208-208S370.87,48,256,48,48,141.13,48,256,141.13,464,256,464ZM164.64,251.35a16,16,0,0,1,22.63-.09L240,303.58V170a16,16,0,0,1,32,0V303.58l52.73-52.32A16,16,0,1,1,347.27,274l-80,79.39a16,16,0,0,1-22.54,0l-80-79.39A16,16,0,0,1,164.64,251.35Z"
+              /></svg
+            >
+          </div>
         {/if}
       </div>
       <div class="grid grid-cols-[auto,1fr] gap-4 text-sm 2xl:text-base">
-        <div class="font-medium flex items-center text-nowrap 2xl:min-w-32">
-          Overall Rating:
-        </div>
-        <div class="flex items-center">
-          <Rating bind:rating={overall_rating} size={7} />
-        </div>
         {#if task.requirements}
           {#each task.requirements as requirement, index}
             <div class="flex items-center">
@@ -233,62 +282,52 @@
             </div>
           {/each}
         {/if}
+        <div class="font-medium flex items-center text-nowrap 2xl:min-w-32">
+          Overall Rating:
+        </div>
+        <div class="flex items-center">
+          <Rating bind:rating={overall_rating} size={7} />
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-10 xl:mt-16">
-    {#if run?.repaired_output?.output}
-      <div class="grow">
-        <div class="text-xl font-bold mt-10 mb-4">Repair Result</div>
-        <Output
-          structured={!!task.output_json_schema}
-          raw_output={run.repaired_output.output}
-        />
-      </div>
-    {/if}
-    <div class="w-72 2xl:w-96 flex-none">
-      <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
-      {#if overall_rating === 5}
-        <p>Repair not needed for a 5-star output.</p>
-        <p class="pt-1 text-sm">
-          If the response can be improved, reduce the overall rating.
-        </p>
-      {:else if overall_rating == null}
-        <p>You must set an overall rating before repairing.</p>
-      {:else}
-        <FormContainer
-          submit_label="Attempt Repair"
-          on:submit={attempt_repair}
-          bind:submitting={repair_submitting}
-          bind:error={repair_error}
-        >
-          <FormElement
-            id="repair_instructions"
-            label="Repair Instructions"
-            inputType="textarea"
-            bind:value={repair_instructions}
+  {#if repair_available}
+    <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-10 xl:mt-16">
+      {#if run?.repaired_output?.output}
+        <div class="grow">
+          <div class="text-xl font-bold mt-10 mb-4">Repair Result</div>
+          <Output
+            structured={!!task.output_json_schema}
+            raw_output={run.repaired_output.output}
           />
-        </FormContainer>
+        </div>
       {/if}
+      <div class="w-72 2xl:w-96 flex-none">
+        <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
+        {#if overall_rating === 5}
+          <p>Repair not needed for a 5-star output.</p>
+          <p class="pt-1 text-sm">
+            If the response can be improved, reduce the overall rating.
+          </p>
+        {:else if overall_rating == null}
+          <p>You must set an overall rating before repairing.</p>
+        {:else}
+          <FormContainer
+            submit_label="Attempt Repair"
+            on:submit={attempt_repair}
+            bind:submitting={repair_submitting}
+            bind:error={repair_error}
+          >
+            <FormElement
+              id="repair_instructions"
+              label="Repair Instructions"
+              inputType="textarea"
+              bind:value={repair_instructions}
+            />
+          </FormContainer>
+        {/if}
+      </div>
     </div>
-  </div>
-
-  <div class="mt-16">
-    <button class="btn btn-wide" on:click={toggle_raw_data}
-      >{show_raw_data ? "Hide" : "Show"} Raw Data</button
-    >
-  </div>
-
-  <div class={show_raw_data ? "" : "hidden"}>
-    <h1 class="text-xl font-bold mt-10 mb-4" id="raw_data">Raw Data</h1>
-    <div class="text-sm">
-      <pre
-        class="bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words">{JSON.stringify(
-          run,
-          null,
-          2,
-        )}</pre>
-    </div>
-  </div>
+  {/if}
 </div>
