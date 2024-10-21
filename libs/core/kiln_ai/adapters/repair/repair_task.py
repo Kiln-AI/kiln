@@ -30,7 +30,7 @@ the input it was given, and the output it generated. An evaluator has determined
 feedback describing what should be improved. Your job is to understand the evaluator's feedback and improve the response.",
             requirements=[
                 TaskRequirement(
-                    name="Follow Evaluator Feedback",
+                    name="Follow Eval Feedback",
                     instruction="The evaluator's feedback is the most important thing to consider. If it conflicts with the original task instruction or prompt, prioritize the evaluator's feedback.",
                     priority=Priority.p0,
                 )

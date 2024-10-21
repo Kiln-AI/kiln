@@ -145,7 +145,7 @@ def test_repair_task_initialization(sample_task):
     assert "Repair a task run" in repair_task.description
     assert "You are an assistant which helps improve output" in repair_task.instruction
     assert len(repair_task.requirements) == 1
-    assert repair_task.requirements[0].name == "Follow Evaluator Feedback"
+    assert repair_task.requirements[0].name == "Follow Eval Feedback"
     assert repair_task.input_json_schema == json.dumps(
         RepairTaskInput.model_json_schema()
     )

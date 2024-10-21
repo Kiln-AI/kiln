@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 # Filename compatible names
 NAME_REGEX = r"^[A-Za-z0-9 _-]+$"
 NAME_FIELD = Field(min_length=1, max_length=120, pattern=NAME_REGEX)
+SHORT_NAME_FIELD = Field(min_length=1, max_length=20, pattern=NAME_REGEX)
 
 
 class Priority(IntEnum):
@@ -308,7 +309,7 @@ class TaskRun(KilnParentedModel):
 
 class TaskRequirement(BaseModel):
     id: ID_TYPE = ID_FIELD
-    name: str = NAME_FIELD
+    name: str = SHORT_NAME_FIELD
     description: str | None = Field(default=None)
     instruction: str = Field(min_length=1)
     priority: Priority = Field(default=Priority.p2)
