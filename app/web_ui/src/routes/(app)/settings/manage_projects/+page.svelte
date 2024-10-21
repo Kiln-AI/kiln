@@ -37,7 +37,7 @@
 <AppPage
   title="Manage Projects"
   subtitle="Add or remove projects"
-  action_button="Add Project"
+  action_button="Create Project"
   action_button_href="/settings/create_project"
 >
   {#if $projects == null}

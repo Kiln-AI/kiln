@@ -5,6 +5,7 @@
 
   const id = "form_container_" + Math.random().toString(36)
 
+  export let primary: boolean = true
   export let submit_label: string = "Submit"
   export let warn_before_unload: boolean = false
   export let error: KilnError | null = null
@@ -118,7 +119,7 @@
     {/if}
     <button
       type="submit"
-      class="btn btn-primary {saved ? 'btn-success' : ''}"
+      class="btn {primary ? 'btn-primary' : ''} {saved ? 'btn-success' : ''}"
       on:click={validate_and_submit}
       disabled={submitting}
     >

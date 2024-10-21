@@ -26,6 +26,8 @@
   $: provider = model.split("/")[0]
 
   let response: TaskRun | null = null
+  let focus: "run" | "rate" | "repair" = "run"
+  $: run_focus = focus === "run"
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
 
@@ -54,15 +56,26 @@
         throw fetch_error
       }
       response = data
+      focus = "rate"
     } catch (e) {
       error = createKilnError(e)
     } finally {
       submitting = false
     }
   }
+
+  function clear_all() {
+    plaintext_input = ""
+    response = null
+  }
 </script>
 
-<AppPage title="Run" bind:subtitle>
+<AppPage
+  title="Run"
+  bind:subtitle
+  action_button="Clear All"
+  action_button_action={clear_all}
+>
   <div class="max-w-[1400px]">
     <div class="flex flex-col xl:flex-row gap-8 xl:gap-16">
       <div class="grow">
@@ -73,6 +86,7 @@
           bind:warn_before_unload
           bind:error
           bind:submitting
+          bind:primary={run_focus}
         >
           <div class="flex flex-row gap-2 items-center"></div>
           <FormElement

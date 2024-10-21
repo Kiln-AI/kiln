@@ -10,6 +10,7 @@
   export let light_label: boolean = false // styling
   export let select_options: [unknown, string][] = []
   export let select_options_grouped: [string, [unknown, string][]][] = []
+  export let disabled: boolean = false
 
   function is_empty(value: unknown): boolean {
     if (value === null || value === undefined) {
@@ -92,6 +93,7 @@
         bind:value
         on:input={run_validator}
         autocomplete="off"
+        {disabled}
       />
     {:else if inputType === "input"}
       <input
@@ -104,9 +106,10 @@
         bind:value
         on:input={run_validator}
         autocomplete="off"
+        {disabled}
       />
     {:else if inputType === "select"}
-      <select {id} class="select select-bordered w-full" bind:value>
+      <select {id} class="select select-bordered w-full" bind:value {disabled}>
         {#if select_options_grouped.length > 0}
           {#each select_options_grouped as group}
             <optgroup label={group[0]}>

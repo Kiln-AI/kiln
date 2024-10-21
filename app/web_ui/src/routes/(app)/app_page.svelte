@@ -1,10 +1,21 @@
 <script lang="ts">
+  import { goto } from "$app/navigation"
+
   export let title: string = ""
   export let subtitle: string = ""
   export let sub_subtitle: string = ""
 
   export let action_button: string | null = null
   export let action_button_href: string | null = null
+  export let action_button_action: (() => void) | null = null
+
+  function run_action_button() {
+    if (action_button_action) {
+      action_button_action()
+    } else if (action_button_href) {
+      goto(action_button_href)
+    }
+  }
 </script>
 
 <div class="flex flex-row">
@@ -17,11 +28,11 @@
       <p class="text-sm text-gray-500 mt-1">{sub_subtitle}</p>
     {/if}
   </div>
-  {#if action_button && action_button_href}
+  {#if action_button}
     <div>
-      <a href={action_button_href} class="btn px-6">
+      <button on:click={run_action_button} class="btn px-6">
         {action_button}
-      </a>
+      </button>
     </div>
   {/if}
 </div>
