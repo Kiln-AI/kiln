@@ -107,6 +107,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/available_models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Available Models */
+        get: operations["get_available_models_api_available_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/provider/ollama/connect": {
         parameters: {
             query?: never;
@@ -116,8 +133,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Connect Ollama */
-        post: operations["connect_ollama_api_provider_ollama_connect_post"];
+        /** Connect Ollama Api */
+        post: operations["connect_ollama_api_api_provider_ollama_connect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -300,6 +317,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AvailableModels */
+        AvailableModels: {
+            /** Provider Name */
+            provider_name: string;
+            /** Provider Id */
+            provider_id: string;
+            /** Models */
+            models: components["schemas"]["ModelDetails"][];
+        };
         /** DataSource */
         DataSource: {
             type: components["schemas"]["DataSourceType"];
@@ -322,6 +348,20 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ModelDetails */
+        ModelDetails: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** OllamaConnection */
+        OllamaConnection: {
+            /** Message */
+            message: string;
+            /** Models */
+            models: string[];
         };
         /**
          * Priority
@@ -810,7 +850,7 @@ export interface operations {
             };
         };
     };
-    connect_ollama_api_provider_ollama_connect_post: {
+    get_available_models_api_available_models_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -825,7 +865,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AvailableModels"][];
+                };
+            };
+        };
+    };
+    connect_ollama_api_api_provider_ollama_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OllamaConnection"];
                 };
             };
         };

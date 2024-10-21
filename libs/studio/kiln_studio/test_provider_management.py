@@ -327,13 +327,18 @@ async def test_get_available_models(app, client):
     mock_built_in_models = [
         KilnModel(
             name="model1",
+            friendly_name="Model 1",
             family="",
             providers=[KilnModelProvider(name=ModelProviderName.openai)],
         ),
         KilnModel(
             name="model2",
+            friendly_name="Model 2",
             family="",
-            providers=[KilnModelProvider(name=ModelProviderName.amazon_bedrock)],
+            providers=[
+                KilnModelProvider(name=ModelProviderName.amazon_bedrock),
+                KilnModelProvider(name=ModelProviderName.ollama),
+            ],
         ),
     ]
 
@@ -355,11 +360,26 @@ async def test_get_available_models(app, client):
         response = client.get("/api/available_models")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "openai": ["model1"],
-        "amazon_bedrock": ["model2"],
-        "ollama": ["ollama_model1", "ollama_model2"],
-    }
+    r = response.json()
+    assert response.json() == [
+        {
+            "provider_id": "ollama",
+            "provider_name": "Ollama",
+            "models": [
+                {"id": "model2", "name": "Model 2"},
+            ],
+        },
+        {
+            "provider_id": "openai",
+            "provider_name": "OpenAI",
+            "models": [{"id": "model1", "name": "Model 1"}],
+        },
+        {
+            "provider_id": "amazon_bedrock",
+            "provider_name": "Amazon Bedrock",
+            "models": [{"id": "model2", "name": "Model 2"}],
+        },
+    ]
 
 
 @pytest.mark.asyncio
@@ -378,6 +398,7 @@ async def test_get_available_models_ollama_exception(app, client):
         KilnModel(
             name="model1",
             family="",
+            friendly_name="Model 1",
             providers=[KilnModelProvider(name=ModelProviderName.openai)],
         ),
     ]
@@ -396,5 +417,10 @@ async def test_get_available_models_ollama_exception(app, client):
         response = client.get("/api/available_models")
 
     assert response.status_code == 200
-    assert response.json() == {"openai": ["model1"]}
-    assert "ollama" not in response.json()
+    assert response.json() == [
+        {
+            "provider_id": "openai",
+            "provider_name": "OpenAI",
+            "models": [{"id": "model1", "name": "Model 1"}],
+        },
+    ]

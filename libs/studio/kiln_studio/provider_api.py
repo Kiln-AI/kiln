@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from kiln_ai.adapters.ml_model_list import (
     ModelProviderName,
     built_in_models,
+    provider_name_from_id,
     provider_warnings,
 )
 from kiln_ai.utils.config import Config
@@ -65,12 +66,33 @@ async def connect_ollama() -> OllamaConnection:
     )
 
 
+class ModelDetails(BaseModel):
+    id: str
+    name: str
+
+
+class AvailableModels(BaseModel):
+    provider_name: str
+    provider_id: str
+    models: List[ModelDetails]
+
+
 def connect_provider_api(app: FastAPI):
     # returns map, of provider name to list of model names
     @app.get("/api/available_models")
-    async def get_available_models() -> Dict[str, List[str]]:
+    async def get_available_models() -> List[AvailableModels]:
         # Providers with just keys can return all their models if keys are set
         key_providers: List[str] = []
+
+        # Try to connect to Ollama
+        try:
+            ollama_connection = await connect_ollama()
+            if len(ollama_connection.models) > 0:
+                key_providers.append(ModelProviderName.ollama)
+        except HTTPException:
+            # skip ollama if it's not available
+            pass
+
         for provider, provider_warning in provider_warnings.items():
             has_keys = True
             for required_key in provider_warning.required_config_keys:
@@ -79,19 +101,25 @@ def connect_provider_api(app: FastAPI):
                     break
             if has_keys:
                 key_providers.append(provider)
-        models: Dict[str, List[str]] = {provider: [] for provider in key_providers}
+        models: List[AvailableModels] = [
+            AvailableModels(
+                provider_name=provider_name_from_id(provider),
+                provider_id=provider,
+                models=[],
+            )
+            for provider in key_providers
+        ]
+
         for model in built_in_models:
             for provider in model.providers:
                 if provider.name in key_providers:
-                    models[provider.name].append(model.name)
-
-        # Try to connect to Ollama, and add its models if successful
-        try:
-            ollama_connection = await connect_ollama()
-            models[ModelProviderName.ollama] = ollama_connection.models
-        except HTTPException:
-            # skip ollama if it's not available
-            pass
+                    available_models = next(
+                        (m for m in models if m.provider_id == provider.name), None
+                    )
+                    if available_models:
+                        available_models.models.append(
+                            ModelDetails(id=model.name, name=model.friendly_name)
+                        )
 
         return models
 

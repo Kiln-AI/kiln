@@ -35,7 +35,7 @@ async def test_ollama_gemma(tmp_path):
     if not await ollama_online():
         pytest.skip("Ollama API not running. Expect it running on localhost:11434")
 
-    await run_simple_test(tmp_path, "gemma_2_3b", "ollama")
+    await run_simple_test(tmp_path, "gemma_2_2b", "ollama")
 
 
 @pytest.mark.ollama

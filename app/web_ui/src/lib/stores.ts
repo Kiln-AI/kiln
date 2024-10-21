@@ -1,6 +1,6 @@
 import { writable, get } from "svelte/store"
 import { dev } from "$app/environment"
-import type { Project, Task } from "./types"
+import type { Project, Task, AvailableModels } from "./types"
 import { client } from "./api_client"
 import { createKilnError } from "$lib/utils/error_handlers"
 
@@ -13,11 +13,13 @@ export type AllProjects = {
 export type UIState = {
   current_project_id: string | null
   current_task_id: string | null
+  selected_model: string | null
 }
 
 export const default_ui_state: UIState = {
   current_project_id: null,
   current_task_id: null,
+  selected_model: null,
 }
 
 // Private, used to store the current project, and task ID
@@ -147,5 +149,21 @@ export async function load_current_task(project: Project | null) {
     })
   } finally {
     current_task.set(task)
+  }
+}
+
+// Available models for each provider
+export const available_models = writable<AvailableModels[]>([])
+
+export async function load_available_models() {
+  try {
+    const { data, error } = await client.GET("/api/available_models")
+    if (error) {
+      throw error
+    }
+    available_models.set(data)
+  } catch (error: unknown) {
+    console.error(createKilnError(error).getMessage())
+    available_models.set([])
   }
 }

@@ -5,6 +5,7 @@ import pytest
 from libs.core.kiln_ai.adapters.ml_model_list import (
     ModelProviderName,
     check_provider_warnings,
+    provider_name_from_id,
     provider_warnings,
 )
 
@@ -68,3 +69,31 @@ def test_check_provider_warnings_partial_keys_set(mock_config):
     assert provider_warnings[ModelProviderName.amazon_bedrock].message in str(
         exc_info.value
     )
+
+
+def test_provider_name_from_id_unknown_provider():
+    assert (
+        provider_name_from_id("unknown_provider")
+        == "Unknown provider: unknown_provider"
+    )
+
+
+def test_provider_name_from_id_case_sensitivity():
+    assert (
+        provider_name_from_id(ModelProviderName.amazon_bedrock.upper())
+        == "Unknown provider: AMAZON_BEDROCK"
+    )
+
+
+@pytest.mark.parametrize(
+    "provider_id, expected_name",
+    [
+        (ModelProviderName.amazon_bedrock, "Amazon Bedrock"),
+        (ModelProviderName.openrouter, "OpenRouter"),
+        (ModelProviderName.groq, "Groq"),
+        (ModelProviderName.ollama, "Ollama"),
+        (ModelProviderName.openai, "OpenAI"),
+    ],
+)
+def test_provider_name_from_id_parametrized(provider_id, expected_name):
+    assert provider_name_from_id(provider_id) == expected_name

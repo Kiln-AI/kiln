@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from os import getenv
-from typing import Dict, List
+from typing import Dict, List, NoReturn
 
 import httpx
 from langchain_aws import ChatBedrockConverse
@@ -41,7 +41,7 @@ class ModelName(str, Enum):
     phi_3_5 = "phi_3_5"
     mistral_large = "mistral_large"
     mistral_nemo = "mistral_nemo"
-    gemma_2_3b = "gemma_2_3b"
+    gemma_2_2b = "gemma_2_2b"
     gemma_2_9b = "gemma_2_9b"
     gemma_2_27b = "gemma_2_27b"
 
@@ -56,6 +56,7 @@ class KilnModelProvider(BaseModel):
 class KilnModel(BaseModel):
     family: str
     name: str
+    friendly_name: str
     providers: List[KilnModelProvider]
     supports_structured_output: bool = True
 
@@ -65,6 +66,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.gpt,
         name=ModelName.gpt_4o_mini,
+        friendly_name="GPT 4o Mini",
         providers=[
             KilnModelProvider(
                 name=ModelProviderName.openai,
@@ -80,6 +82,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.gpt,
         name=ModelName.gpt_4o,
+        friendly_name="GPT 4o",
         providers=[
             KilnModelProvider(
                 name=ModelProviderName.openai,
@@ -95,6 +98,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.llama,
         name=ModelName.llama_3_1_8b,
+        friendly_name="Llama 3.1 8B",
         providers=[
             KilnModelProvider(
                 name=ModelProviderName.groq,
@@ -121,6 +125,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.llama,
         name=ModelName.llama_3_1_70b,
+        friendly_name="Llama 3.1 70B",
         providers=[
             KilnModelProvider(
                 name=ModelProviderName.groq,
@@ -150,6 +155,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.llama,
         name=ModelName.llama_3_1_405b,
+        friendly_name="Llama 3.1 405B",
         providers=[
             # TODO: bring back when groq does: https://console.groq.com/docs/models
             # KilnModelProvider(
@@ -178,6 +184,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.mistral,
         name=ModelName.mistral_nemo,
+        friendly_name="Mistral Nemo",
         providers=[
             KilnModelProvider(
                 name=ModelProviderName.openrouter,
@@ -189,6 +196,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.mistral,
         name=ModelName.mistral_large,
+        friendly_name="Mistral Large",
         providers=[
             KilnModelProvider(
                 name=ModelProviderName.amazon_bedrock,
@@ -212,6 +220,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.phi,
         name=ModelName.phi_3_5,
+        friendly_name="Phi 3.5",
         supports_structured_output=False,
         providers=[
             KilnModelProvider(
@@ -224,10 +233,11 @@ built_in_models: List[KilnModel] = [
             ),
         ],
     ),
-    # Gemma 2 1.6b
+    # Gemma 2 2.6b
     KilnModel(
         family=ModelFamily.gemma,
-        name=ModelName.gemma_2_3b,
+        name=ModelName.gemma_2_2b,
+        friendly_name="Gemma 2 2B",
         supports_structured_output=False,
         providers=[
             KilnModelProvider(
@@ -242,6 +252,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.gemma,
         name=ModelName.gemma_2_9b,
+        friendly_name="Gemma 2 9B",
         supports_structured_output=False,
         providers=[
             # TODO: enable once tests update to check if model is available
@@ -261,6 +272,7 @@ built_in_models: List[KilnModel] = [
     KilnModel(
         family=ModelFamily.gemma,
         name=ModelName.gemma_2_27b,
+        friendly_name="Gemma 2 27B",
         supports_structured_output=False,
         providers=[
             # TODO: enable once tests update to check if model is available
@@ -277,6 +289,31 @@ built_in_models: List[KilnModel] = [
         ],
     ),
 ]
+
+
+def provider_name_from_id(id: str) -> str:
+    if id in ModelProviderName.__members__:
+        enum_id = ModelProviderName(id)
+        match enum_id:
+            case ModelProviderName.amazon_bedrock:
+                return "Amazon Bedrock"
+            case ModelProviderName.openrouter:
+                return "OpenRouter"
+            case ModelProviderName.groq:
+                return "Groq"
+            case ModelProviderName.ollama:
+                return "Ollama"
+            case ModelProviderName.openai:
+                return "OpenAI"
+            case _:
+                # triggers pyright warning if I miss a case
+                raise_exhaustive_error(enum_id)
+
+    return "Unknown provider: " + id
+
+
+def raise_exhaustive_error(value: NoReturn) -> NoReturn:
+    raise ValueError(f"Unhandled enum value: {value}")
 
 
 @dataclass

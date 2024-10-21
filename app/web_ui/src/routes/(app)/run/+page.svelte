@@ -8,7 +8,7 @@
   import Run from "./run.svelte"
   import { client } from "$lib/api_client"
   import type { TaskRun } from "$lib/types"
-
+  import AvailableModelsDropdown from "./available_models_dropdown.svelte"
   // TODO: implement checking input content
   let warn_before_unload = false
   // TODO UI for errors
@@ -96,49 +96,7 @@
             ["many_shot", "Multi Shot"],
           ]}
         />
-        <FormElement
-          label="Model"
-          bind:value={model}
-          id="model"
-          inputType="select"
-          select_options_grouped={[
-            [
-              "OpenAI",
-              [
-                ["openai/gpt_4o", "GPT 4o"],
-                ["openai/gpt_4o_mini", "GPT 4o Mini"],
-              ],
-            ],
-            [
-              "OpenRouter",
-              [
-                ["openrouter/gpt_4o", "GPT 4o"],
-                ["openrouter/gpt_4o_mini", "GPT 4o Mini"],
-              ],
-            ],
-            [
-              "Groq",
-              [
-                ["groq/llama_3_1_8b", "Llama 3.1 8b"],
-                ["groq/llama_3_1_70b", "Llama 3.1 70b"],
-              ],
-            ],
-            [
-              "Ollama",
-              [
-                ["ollama/llama_3_1_8b", "Llama 3.1 8b"],
-                ["ollama/llama_3_1_70b", "Llama 3.1 70b"],
-              ],
-            ],
-            [
-              "Amazon Bedrock",
-              [
-                ["amazon_bedrock/llama_3_1_8b", "Llama 3.1 8b"],
-                ["amazon_bedrock/llama_3_1_70b", "Llama 3.1 70b"],
-              ],
-            ],
-          ]}
-        />
+        <AvailableModelsDropdown bind:model />
       </div>
     </div>
     {#if $current_task && !submitting && response != null && $current_project?.id}
