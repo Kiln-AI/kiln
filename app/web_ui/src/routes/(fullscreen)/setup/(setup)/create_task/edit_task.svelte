@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type TaskRequirement } from "$lib/types"
+  import type { Task } from "$lib/types"
   import FormElement from "$lib/utils/form_element.svelte"
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
@@ -7,6 +7,7 @@
   import {
     example_schema_model,
     schema_from_model,
+    model_from_schema,
   } from "$lib/utils/json_schema_editor/json_schema_templates"
   import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
   import { current_project } from "$lib/stores"
@@ -19,22 +20,40 @@
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = "/"
 
-  export let task_name: string = ""
-  export let task_description: string = ""
-  export let task_instructions: string = ""
-  export let task_requirements: TaskRequirement[] = []
-  export let task_input_plaintext = true
-  export let task_input_schema: SchemaModel = example_schema_model()
-  export let task_output_plaintext = true
-  export let task_output_schema: SchemaModel = example_schema_model()
+  export let task: Task = {
+    name: "",
+    description: "",
+    instruction: "",
+    requirements: [],
+    // TODO these 4 should be optional/set by API
+    v: 1,
+    priority: 0,
+    determinism: "flexible",
+    model_type: "task",
+  }
+
+  // These have their own custom VM, which is translated back to the model on save
+  let task_input_plaintext = true
+  let task_output_plaintext = true
+  let task_input_schema: SchemaModel = example_schema_model()
+  let task_output_schema: SchemaModel = example_schema_model()
+  // Load from the existing task, if provided
+  if (task.input_json_schema) {
+    task_input_plaintext = false
+    task_input_schema = model_from_schema(JSON.parse(task.input_json_schema))
+  }
+  if (task.output_json_schema) {
+    task_output_plaintext = false
+    task_output_schema = model_from_schema(JSON.parse(task.output_json_schema))
+  }
 
   let error: KilnError | null = null
   let submitting = false
 
   // Warn before unload if there's any user input
   $: warn_before_unload =
-    [task_name, task_description, task_instructions].some((value) => !!value) ||
-    task_requirements.some((req) => !!req.name || !!req.instruction)
+    [task.name, task.description, task.instruction].some((value) => !!value) ||
+    task.requirements.some((req) => !!req.name || !!req.instruction)
 
   export let target_project_id: string | null = null
   if (!target_project_id) {
@@ -62,10 +81,10 @@
         return
       }
       let body: Record<string, unknown> = {
-        name: task_name,
-        description: task_description,
-        instruction: task_instructions,
-        requirements: task_requirements,
+        name: task.name,
+        description: task.description,
+        instruction: task.instruction,
+        requirements: task.requirements,
       }
       if (!task_input_plaintext) {
         body["input_json_schema"] = JSON.stringify(
@@ -115,13 +134,13 @@
   }
 
   export function has_edits(): boolean {
-    let has_edited_requirements = task_requirements.some(
+    let has_edited_requirements = task.requirements.some(
       (req) => !!req.name || !!req.instruction,
     )
     return (
-      !!task_name ||
-      !!task_description ||
-      !!task_instructions ||
+      !!task.name ||
+      !!task.description ||
+      !!task.instruction ||
       has_edited_requirements ||
       (!task_input_plaintext && task_input_schema.properties.length > 0) ||
       (!task_output_plaintext && task_output_schema.properties.length > 0)
@@ -137,32 +156,41 @@
       }
     }
 
-    task_name = "Joke Generator"
-    task_description = "An example task from the KilnAI team."
-    task_instructions =
-      "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. The output should include a setup and punchline."
-    task_requirements = [
-      {
-        name: "Keep on topic",
-        instruction:
-          "Keep the joke on topic. If the user specifies a theme, the joke must be related to that theme.",
-        priority: 1,
-      },
-      {
-        name: "Keep it clean",
-        instruction:
-          "Avoid any jokes that are offensive or inappropriate. Keep the joke clean and appropriate for all audiences.",
-        priority: 2,
-      },
-      {
-        name: "Be funny",
-        instruction:
-          "Make the joke funny and engaging. It should be something that someone would want to tell to their friends. Something clever, not just a simple pun.",
-        priority: 1,
-      },
-    ]
     task_input_plaintext = true
     task_output_plaintext = false
+    task = {
+      name: "Joke Generator",
+      // TODO these 4 should be optional/set by API
+      v: 1,
+      model_type: "task",
+      priority: 0,
+      determinism: "flexible",
+      description: "An example task from the KilnAI team.",
+      instruction:
+        "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. The output should include a setup and punchline.",
+      requirements: [
+        {
+          name: "Keep on topic",
+          instruction:
+            "Keep the joke on topic. If the user specifies a theme, the joke must be related to that theme.",
+          priority: 1,
+        },
+        {
+          name: "Keep it clean",
+          instruction:
+            "Avoid any jokes that are offensive or inappropriate. Keep the joke clean and appropriate for all audiences.",
+          priority: 2,
+        },
+        {
+          name: "Be funny",
+          instruction:
+            "Make the joke funny and engaging. It should be something that someone would want to tell to their friends. Something clever, not just a simple pun.",
+          priority: 1,
+        },
+      ],
+      input_json_schema: null,
+      output_json_schema: null, // Set using VM below
+    }
     task_output_schema = {
       properties: [
         {
@@ -184,7 +212,7 @@
 
 <div class="flex flex-col gap-2 w-full">
   <FormContainer
-    submit_label="Create Task"
+    submit_label={task.id ? "Save Task" : "Create Task"}
     on:submit={create_task}
     bind:warn_before_unload
     bind:error
@@ -203,7 +231,7 @@
       label="Task Name"
       id="task_name"
       description="A description for you and your team, not used by the model."
-      bind:value={task_name}
+      bind:value={task.name}
       max_length={120}
     />
 
@@ -213,7 +241,7 @@
       id="task_description"
       description="A description for you and your team, not used by the model."
       optional={true}
-      bind:value={task_description}
+      bind:value={task.description}
     />
 
     <FormElement
@@ -221,7 +249,7 @@
       inputType="textarea"
       id="task_instructions"
       description="This will form the basis of the model's prompt. Keep this high level, and define any details in the 'Requirements' section below."
-      bind:value={task_instructions}
+      bind:value={task.instruction}
     />
 
     <div class="text-sm font-medium text-left pt-6 flex flex-col gap-1">
@@ -236,7 +264,7 @@
 
     <!-- Requirements Section -->
     <FormList
-      content={task_requirements}
+      content={task.requirements}
       content_label="Requirement"
       start_with_one={true}
       empty_content={{
@@ -254,7 +282,7 @@
               label="Requirement Name"
               id="requirement_name_{item_index}"
               light_label={true}
-              bind:value={task_requirements[item_index].name}
+              bind:value={task.requirements[item_index].name}
               max_length={20}
             />
           </div>
@@ -270,7 +298,7 @@
                 [2, "P2 - Medium"],
                 [3, "P3 - Low"],
               ]}
-              bind:value={task_requirements[item_index].priority}
+              bind:value={task.requirements[item_index].priority}
             />
           </div>
         </div>
@@ -280,7 +308,7 @@
             inputType="textarea"
             id="requirement_instructions_{item_index}"
             light_label={true}
-            bind:value={task_requirements[item_index].instruction}
+            bind:value={task.requirements[item_index].instruction}
           />
         </div>
       </div>

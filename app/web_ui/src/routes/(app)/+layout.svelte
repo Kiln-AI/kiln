@@ -10,6 +10,7 @@
     SettingsProviders,
     SettingsManageProjects,
     SettingsEditProject,
+    SettingsEditTask,
     Run,
     None,
   }
@@ -19,6 +20,7 @@
     Section.SettingsProviders,
     Section.SettingsManageProjects,
     Section.SettingsEditProject,
+    Section.SettingsEditTask,
   ]
 
   function path_start(root: string, pathname: string): boolean {
@@ -40,6 +42,8 @@
       section = Section.SettingsManageProjects
     } else if (path_start("/settings/edit_project", $page.url.pathname)) {
       section = Section.SettingsEditProject
+    } else if (path_start("/settings/edit_task", $page.url.pathname)) {
+      section = Section.SettingsEditTask
     } else if (path_start("/settings", $page.url.pathname)) {
       section = Section.SettingsMain
     } else if (path_start("/run", $page.url.pathname)) {
@@ -232,7 +236,7 @@
                   : ""}
                 href="/settings/manage_projects"
               >
-                All Projects
+                Projects
               </a>
             </li>
             <li class="menu-nested-sm {$current_project?.id ? '' : 'hidden'}">
@@ -240,7 +244,15 @@
                 class={section == Section.SettingsEditProject ? "active" : ""}
                 href="/settings/edit_project/{$current_project?.id}"
               >
-                Current Project
+                Edit Project
+              </a>
+            </li>
+            <li class="menu-nested-sm {$current_task?.id ? '' : 'hidden'}">
+              <a
+                class={section == Section.SettingsEditTask ? "active" : ""}
+                href="/settings/edit_task"
+              >
+                Edit Task
               </a>
             </li>
           </ul>
