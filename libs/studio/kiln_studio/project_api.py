@@ -48,7 +48,7 @@ def connect_project_api(app: FastAPI):
             )
 
         os.makedirs(project_path)
-        project_file = os.path.join(project_path, "project.json")
+        project_file = os.path.join(project_path, "project.kiln")
         project.path = Path(project_file)
         project.save_to_file()
 

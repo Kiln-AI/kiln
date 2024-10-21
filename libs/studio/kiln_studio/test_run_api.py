@@ -42,7 +42,7 @@ def mock_config():
 
 @pytest.fixture
 def task_run_setup(tmp_path):
-    project_path = tmp_path / "test_project" / "project.json"
+    project_path = tmp_path / "test_project" / "project.kiln"
     project_path.parent.mkdir()
 
     project = Project(name="Test Project", path=str(project_path))
@@ -365,7 +365,7 @@ def test_update_run_method():
 
 @pytest.mark.asyncio
 async def test_update_run(client, tmp_path):
-    project_path = tmp_path / "test_project" / "project.json"
+    project_path = tmp_path / "test_project" / "project.kiln"
     project_path.parent.mkdir()
 
     project = Project(name="Test Project", path=str(project_path))
@@ -491,7 +491,7 @@ async def test_update_run(client, tmp_path):
 
 @pytest.fixture
 def test_run(tmp_path) -> TaskRun:
-    project_path = tmp_path / "test_project" / "project.json"
+    project_path = tmp_path / "test_project" / "project.kiln"
     project_path.parent.mkdir()
     project = Project(name="Test Project", path=str(project_path))
     project.save_to_file()

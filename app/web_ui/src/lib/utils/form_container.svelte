@@ -9,6 +9,7 @@
   export let warn_before_unload: boolean = false
   export let error: KilnError | null = null
   export let submitting = false
+  export let saved = false
 
   async function focus_field(field: string) {
     // Async as the forms validation is also trying to set focus and we want to win
@@ -117,11 +118,13 @@
     {/if}
     <button
       type="submit"
-      class="btn btn-primary"
+      class="btn btn-primary {saved ? 'btn-success' : ''}"
       on:click={validate_and_submit}
       disabled={submitting}
     >
-      {#if !submitting}
+      {#if saved}
+        ✔ Saved
+      {:else if !submitting}
         {submit_label}
       {:else}
         <span class="loading loading-spinner loading-md"></span>

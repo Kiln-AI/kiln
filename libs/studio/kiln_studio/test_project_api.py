@@ -111,7 +111,7 @@ def test_create_and_load_project(client):
 
             # Verify the project file was created
             project_path = os.path.join(temp_dir, "Test Project")
-            project_file = os.path.join(project_path, "project.json")
+            project_file = os.path.join(project_path, "project.kiln")
             assert os.path.exists(project_path)
             assert os.path.isfile(project_file)
 
@@ -180,13 +180,13 @@ def test_import_project_success(client):
     with patch("os.path.exists", return_value=True), patch(
         "kiln_ai.datamodel.Project.load_from_file", return_value=mock_project
     ), patch("libs.studio.kiln_studio.project_api.add_project_to_config") as mock_add:
-        response = client.post("/api/import_project?project_path=/path/to/project.json")
+        response = client.post("/api/import_project?project_path=/path/to/project.kiln")
 
     assert response.status_code == 200
     result = response.json()
     assert result["name"] == "Imported Project"
     assert result["description"] == "An imported project"
-    mock_add.assert_called_once_with("/path/to/project.json")
+    mock_add.assert_called_once_with("/path/to/project.kiln")
 
 
 def test_import_project_not_found(client):
@@ -206,7 +206,7 @@ def test_import_project_load_error(client):
         "kiln_ai.datamodel.Project.load_from_file",
         side_effect=Exception("Load error"),
     ):
-        response = client.post("/api/import_project?project_path=/path/to/project.json")
+        response = client.post("/api/import_project?project_path=/path/to/project.kiln")
 
     assert response.status_code == 500
     assert response.json() == {
@@ -313,7 +313,7 @@ def test_project_from_id_config_projects_none(patched_config):
 
 
 def test_project_from_id_load_exception(patched_config, mock_config):
-    mock_config.projects = ["/path/to/project.json"]
+    mock_config.projects = ["/path/to/project.kiln"]
     with patch(
         "kiln_ai.datamodel.Project.load_from_file",
         side_effect=Exception("Load error"),
@@ -359,14 +359,14 @@ def test_get_projects_with_one_exception(client, mock_projects):
 
 
 def test_delete_project_success(client):
-    mock_project = MagicMock(path="/path/to/project.json")
+    mock_project = MagicMock(path="/path/to/project.kiln")
     with patch(
         "libs.studio.kiln_studio.project_api.project_from_id",
         return_value=mock_project,
     ), patch.object(Config, "shared") as mock_config:
         mock_config.return_value.projects = [
-            "/path/to/project.json",
-            "/path/to/other_project.json",
+            "/path/to/project.kiln",
+            "/path/to/other_project.kiln",
         ]
         mock_config.return_value.save_setting = MagicMock()
 
@@ -375,7 +375,7 @@ def test_delete_project_success(client):
     assert response.status_code == 200
     assert response.json() == {"message": "Project removed. ID: test-id"}
     mock_config.return_value.save_setting.assert_called_once_with(
-        "projects", ["/path/to/other_project.json"]
+        "projects", ["/path/to/other_project.kiln"]
     )
 
 
@@ -391,7 +391,7 @@ def test_delete_project_not_found(client):
 
 
 def test_update_project_success(client, tmp_path):
-    project_path = tmp_path / "update_test" / "project.json"
+    project_path = tmp_path / "update_test" / "project.kiln"
     original_project = Project(
         name="Original Name",
         description="Original Description",
@@ -423,7 +423,7 @@ def test_update_project_success(client, tmp_path):
 
 
 def test_update_project_partial(client, tmp_path):
-    project_path = tmp_path / "update_test" / "project.json"
+    project_path = tmp_path / "update_test" / "project.kiln"
     original_project = Project(
         name="Original Name",
         description="Original Description",
@@ -462,7 +462,7 @@ def test_update_project_not_found(client):
 
 
 def test_update_project_invalid_data(client, tmp_path):
-    project_path = tmp_path / "update_test" / "project.json"
+    project_path = tmp_path / "update_test" / "project.kiln"
     original_project = Project(
         name="Original Name",
         description="Original Description",

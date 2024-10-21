@@ -42,7 +42,7 @@ def data_source():
 
 @pytest.fixture
 def improvement_task(tmp_path) -> Task:
-    project_path = tmp_path / "test_project" / "project.json"
+    project_path = tmp_path / "test_project" / "project.kiln"
     project_path.parent.mkdir()
 
     project = Project(name="Test Project", path=str(project_path))

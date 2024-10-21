@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 @pytest.fixture
 def test_project_file(tmp_path):
-    test_file_path = tmp_path / "project.json"
+    test_file_path = tmp_path / "project.kiln"
     data = {"v": 1, "name": "Test Project", "model_type": "project"}
 
     with open(test_file_path, "w") as file:

@@ -165,7 +165,7 @@
       >
         <FormElement
           label="Existing Project Path"
-          description="The path to the project on your local machine. For example, /Users/username/Kiln Projects/my_project/project.json"
+          description="The path to the project on your local machine. For example, /Users/username/Kiln Projects/my_project/project.kiln"
           id="import_project_path"
           inputType="input"
           bind:value={import_project_path}

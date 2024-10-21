@@ -4,12 +4,6 @@
   import FormList from "$lib/utils/form_list.svelte"
   import FormContainer from "$lib/utils/form_container.svelte"
   import SchemaSection from "./schema_section.svelte"
-  import {
-    example_schema_model,
-    schema_from_model,
-    model_from_schema,
-  } from "$lib/utils/json_schema_editor/json_schema_templates"
-  import type { SchemaModel } from "$lib/utils/json_schema_editor/json_schema_templates"
   import { current_project } from "$lib/stores"
   import { goto } from "$app/navigation"
   import { KilnError, createKilnError } from "$lib/utils/error_handlers"
@@ -20,35 +14,21 @@
   // Prevents flash of complete UI if we're going to redirect
   export let redirect_on_created: string | null = "/"
 
+  // @ts-expect-error This is a partial task, which is fine.
   export let task: Task = {
     name: "",
     description: "",
     instruction: "",
     requirements: [],
-    // TODO these 4 should be optional/set by API
-    v: 1,
-    priority: 0,
-    determinism: "flexible",
-    model_type: "task",
   }
 
   // These have their own custom VM, which is translated back to the model on save
-  let task_input_plaintext = true
-  let task_output_plaintext = true
-  let task_input_schema: SchemaModel = example_schema_model()
-  let task_output_schema: SchemaModel = example_schema_model()
-  // Load from the existing task, if provided
-  if (task.input_json_schema) {
-    task_input_plaintext = false
-    task_input_schema = model_from_schema(JSON.parse(task.input_json_schema))
-  }
-  if (task.output_json_schema) {
-    task_output_plaintext = false
-    task_output_schema = model_from_schema(JSON.parse(task.output_json_schema))
-  }
+  let outputSchemaSection: SchemaSection
+  let inputSchemaSection: SchemaSection
 
   let error: KilnError | null = null
   let submitting = false
+  let saved: boolean = false
 
   // Warn before unload if there's any user input
   $: warn_before_unload =
@@ -73,6 +53,8 @@
 
   async function create_task() {
     try {
+      const creating = !task.id
+      saved = false
       if (!target_project_id) {
         error = new KilnError(
           "You must create a project before creating a task",
@@ -86,34 +68,51 @@
         instruction: task.instruction,
         requirements: task.requirements,
       }
-      if (!task_input_plaintext) {
-        body["input_json_schema"] = JSON.stringify(
-          schema_from_model(task_input_schema),
-        )
-      }
-      if (!task_output_plaintext) {
-        body["output_json_schema"] = JSON.stringify(
-          schema_from_model(task_output_schema),
-        )
+      // Can only set schemas when creating a new task
+      if (creating) {
+        body.input_json_schema = inputSchemaSection.get_schema_string()
+        body.output_json_schema = outputSchemaSection.get_schema_string()
       }
       const project_id = target_project_id
       if (!project_id) {
         throw new KilnError("Current project not found", null)
       }
-      const { data, error: post_error } = await client.POST(
-        "/api/projects/{project_id}/task",
-        {
-          params: {
-            path: {
-              project_id,
+      let data: Task | undefined
+      let network_error: unknown | null = null
+      if (creating) {
+        const { data: post_data, error: post_error } = await client.POST(
+          "/api/projects/{project_id}/task",
+          {
+            params: {
+              path: {
+                project_id,
+              },
             },
+            // @ts-expect-error This API is not typed
+            body: body,
           },
-          // @ts-expect-error This API is not typed
-          body: body,
-        },
-      )
-      if (post_error) {
-        throw post_error
+        )
+        data = post_data
+        network_error = post_error
+      } else {
+        const { data: patch_data, error: patch_error } = await client.PATCH(
+          "/api/projects/{project_id}/task/{task_id}",
+          {
+            params: {
+              path: {
+                project_id,
+                task_id: task.id || "",
+              },
+            },
+            // @ts-expect-error This API is not typed
+            body: body,
+          },
+        )
+        data = patch_data
+        network_error = patch_error
+      }
+      if (network_error || !data) {
+        throw network_error
       }
 
       error = null
@@ -126,6 +125,10 @@
       if (redirect_on_created) {
         goto(redirect_on_created)
       }
+      saved = true
+      setTimeout(() => {
+        saved = false
+      }, 2000)
     } catch (e) {
       error = createKilnError(e)
     } finally {
@@ -142,8 +145,8 @@
       !!task.description ||
       !!task.instruction ||
       has_edited_requirements ||
-      (!task_input_plaintext && task_input_schema.properties.length > 0) ||
-      (!task_output_plaintext && task_output_schema.properties.length > 0)
+      !!inputSchemaSection.get_schema_string() ||
+      !!outputSchemaSection.get_schema_string()
     )
   }
 
@@ -156,15 +159,9 @@
       }
     }
 
-    task_input_plaintext = true
-    task_output_plaintext = false
+    // @ts-expect-error This is a partial task, which is fine.
     task = {
       name: "Joke Generator",
-      // TODO these 4 should be optional/set by API
-      v: 1,
-      model_type: "task",
-      priority: 0,
-      determinism: "flexible",
       description: "An example task from the KilnAI team.",
       instruction:
         "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. The output should include a setup and punchline.",
@@ -189,23 +186,22 @@
         },
       ],
       input_json_schema: null,
-      output_json_schema: null, // Set using VM below
-    }
-    task_output_schema = {
-      properties: [
-        {
-          title: "Setup",
-          description: "The setup to the joke",
-          type: "string",
-          required: true,
+      output_json_schema: JSON.stringify({
+        type: "object",
+        properties: {
+          setup: {
+            title: "setup",
+            type: "string",
+            description: "The setup to the joke",
+          },
+          punchline: {
+            title: "punchline",
+            type: "string",
+            description: "The punchline to the joke",
+          },
         },
-        {
-          title: "Punchline",
-          description: "The punchline to the joke",
-          type: "string",
-          required: true,
-        },
-      ],
+        required: ["setup", "punchline"],
+      }),
     }
   }
 </script>
@@ -217,15 +213,18 @@
     bind:warn_before_unload
     bind:error
     bind:submitting
+    bind:saved
   >
     <div>
       <div class="text-xl font-bold">Part 1: Overview</div>
-      <h3 class="text-sm mt-1">
-        Just exploring?
-        <button class="link text-primary" on:click={example_task}
-          >Try an example.</button
-        >
-      </h3>
+      {#if !task.id}
+        <h3 class="text-sm mt-1">
+          Just exploring?
+          <button class="link text-primary" on:click={example_task}
+            >Try an example.</button
+          >
+        </h3>
+      {/if}
     </div>
     <FormElement
       label="Task Name"
@@ -323,10 +322,25 @@
       </div>
     </div>
 
-    <SchemaSection
-      bind:schema_model={task_input_schema}
-      bind:plaintext={task_input_plaintext}
-    />
+    <div>
+      {#if task.id}
+        <div>
+          You can't edit a task's input format after creating it. It would
+          invalidate all past data.
+          <pre
+            class="bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words text-xs mt-2 text-gray-500">Current Schema: {JSON.stringify(
+              JSON.parse(task.input_json_schema || '"plaintext"'),
+              null,
+              2,
+            )}</pre>
+        </div>
+      {:else}
+        <SchemaSection
+          bind:this={inputSchemaSection}
+          bind:schema_string={task.input_json_schema}
+        />
+      {/if}
+    </div>
 
     <div class="text-sm font-medium text-left pt-6 flex flex-col gap-1">
       <div class="text-xl font-bold" id="requirements_part">
@@ -337,9 +351,24 @@
       </div>
     </div>
 
-    <SchemaSection
-      bind:schema_model={task_output_schema}
-      bind:plaintext={task_output_plaintext}
-    />
+    <div>
+      {#if task.id}
+        <div>
+          You can't edit a task's output format after creating it. It would
+          invalidate all past data.
+          <pre
+            class="bg-base-200 p-4 rounded-lg whitespace-pre-wrap break-words text-xs mt-2 text-gray-500">Current Schema: {JSON.stringify(
+              JSON.parse(task.output_json_schema || '"plaintext"'),
+              null,
+              2,
+            )}</pre>
+        </div>
+      {:else}
+        <SchemaSection
+          bind:this={outputSchemaSection}
+          bind:schema_string={task.output_json_schema}
+        />
+      {/if}
+    </div>
   </FormContainer>
 </div>

@@ -27,7 +27,10 @@
   error = createKilnError("Task not found ASDF")
 </script>
 
-<AppPage title="Edit Task" subtitle={task?.name}>
+<AppPage
+  title="Edit Task"
+  subtitle={task?.id ? `Task ID: ${task.id}` : undefined}
+>
   {#if error}
     <div class="text-red-500">{error.getMessage()}</div>
   {:else if loading}
@@ -35,7 +38,7 @@
       <div class="loading loading-spinner loading-lg"></div>
     </div>
   {:else if task}
-    <EditTask {task} />
+    <EditTask {task} redirect_on_created={null} />
   {:else}
     <div class="text-gray-500 text-lg">Task not found</div>
   {/if}
