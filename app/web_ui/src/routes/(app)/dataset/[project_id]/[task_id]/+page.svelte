@@ -1,11 +1,12 @@
 <script lang="ts">
-  import AppPage from "../app_page.svelte"
+  import AppPage from "../../../app_page.svelte"
   import { client } from "$lib/api_client"
   import type { TaskRun, ProviderModels } from "$lib/types"
   import { type KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { onMount } from "svelte"
-  import { ui_state, model_info, load_model_info } from "$lib/stores"
+  import { model_info, load_model_info } from "$lib/stores"
   import { goto } from "$app/navigation"
+  import { page } from "$app/stores"
 
   let runs: TaskRun[] | null = null
   let error: KilnError | null = null
@@ -17,6 +18,9 @@
     | "outputPreview"
     | "repairState" = "created_at"
   let sortDirection: "asc" | "desc" = "asc"
+
+  $: project_id = $page.params.project_id
+  $: task_id = $page.params.task_id
 
   const columns = [
     { key: "rating", label: "Rating" },
@@ -35,7 +39,7 @@
     try {
       load_model_info()
       loading = true
-      if (!$ui_state.current_project_id || !$ui_state.current_task_id) {
+      if (!project_id || !task_id) {
         throw new Error("Project or task ID not set.")
       }
       const { data: runs_response, error: get_error } = await client.GET(
@@ -43,8 +47,8 @@
         {
           params: {
             path: {
-              project_id: $ui_state.current_project_id,
-              task_id: $ui_state.current_task_id,
+              project_id,
+              task_id,
             },
           },
         },
@@ -208,7 +212,7 @@
             <tr
               class="hover cursor-pointer"
               on:click={() => {
-                goto(`/dataset/run/${run.id}`)
+                goto(`/dataset/${project_id}/${task_id}/${run.id}/run`)
               }}
             >
               <td>

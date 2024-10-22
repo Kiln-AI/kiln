@@ -1,7 +1,7 @@
 <script lang="ts">
-  import AppPage from "../../../app_page.svelte"
-  import Run from "../../../run/run.svelte"
-  import { ui_state, current_task } from "$lib/stores"
+  import AppPage from "../../../../../app_page.svelte"
+  import Run from "../../../../../run/run.svelte"
+  import { current_task } from "$lib/stores"
   import { page } from "$app/stores"
   import { onMount } from "svelte"
   import { client } from "$lib/api_client"
@@ -9,8 +9,8 @@
   import type { TaskRun } from "$lib/types"
 
   $: run_id = $page.params.run_id
-  $: task_id = $ui_state.current_task_id || "unknown"
-  $: project_id = $ui_state.current_project_id || "unknown"
+  $: task_id = $page.params.task_id
+  $: project_id = $page.params.project_id
 
   // TODO: we need to remove task_id from the URL, or load it by ID. $current_task is a lie
   let run: TaskRun | null = null

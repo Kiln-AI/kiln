@@ -3,6 +3,7 @@
   import { current_project, current_task } from "$lib/stores"
   import SelectTasksMenu from "./select_tasks_menu.svelte"
   import { page } from "$app/stores"
+  import { ui_state } from "$lib/stores"
 
   enum Section {
     Dataset,
@@ -150,7 +151,10 @@
         >
       </li>
       <li class="menu-lg">
-        <a href="/dataset" class={section == Section.Dataset ? "active" : ""}>
+        <a
+          href={`/dataset/${$ui_state.current_project_id}/${$ui_state.current_task_id}`}
+          class={section == Section.Dataset ? "active" : ""}
+        >
           <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools. Attribution: https://www.svgrepo.com/svg/524492/database -->
           <svg
             class="w-6 h-6 mr-2"
