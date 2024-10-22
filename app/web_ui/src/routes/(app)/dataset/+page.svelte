@@ -5,6 +5,7 @@
   import { type KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { onMount } from "svelte"
   import { ui_state } from "$lib/stores"
+  import { goto } from "$app/navigation"
 
   let runs: TaskRun[] | null = null
   let error: KilnError | null = null
@@ -192,7 +193,12 @@
         </thead>
         <tbody>
           {#each runs as run}
-            <tr class="hover cursor-pointer">
+            <tr
+              class="hover cursor-pointer"
+              on:click={() => {
+                goto(`/dataset/run/${run.id}`)
+              }}
+            >
               <td>{run.id}</td>
               <td>
                 {run.output.rating && run.output.rating.value
