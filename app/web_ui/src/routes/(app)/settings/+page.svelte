@@ -18,8 +18,14 @@
     {
       name: "Current Project",
       description: "Edit the currently selected project.",
-      button_text: "Current Project",
+      button_text: "Edit Project",
       href: "/settings/edit_project/" + $ui_state.current_project_id,
+    },
+    {
+      name: "Current Task",
+      description: "Edit the currently selected task.",
+      button_text: "Edit Task",
+      href: "/settings/edit_task/",
     },
   ]
 </script>
