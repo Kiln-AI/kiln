@@ -44,7 +44,7 @@
     !run?.repaired_output?.output && // model already repaired
     !repair_run // repair generated, should show repair evaluation instead
   $: repair_review_available = !!repair_run && !run?.repaired_output
-  // $: repair_complete = !!run?.repaired_output?.output
+  $: repair_complete = !!run?.repaired_output?.output
 
   // Use for some animations on first mount
   let mounted = false
@@ -201,6 +201,52 @@
       }, 100)
     }
   }
+
+  let accept_repair_error: KilnError | null = null
+  let accept_repair_submitting = false
+  async function accept_repair() {
+    try {
+      accept_repair_error = null
+      accept_repair_submitting = true
+      if (!repair_run) {
+        throw new KilnError("No repair to accept", null)
+      }
+      if (!task.id || !run?.id) {
+        throw new KilnError(
+          "This task run isn't saved. Enable Auto-save. You can't accept repairs for unsaved runs.",
+          null,
+        )
+      }
+      const {
+        data, // only present if 2XX response
+        error: fetch_error, // only present if 4XX or 5XX response
+      } = await client.POST(
+        "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair",
+        {
+          params: {
+            path: {
+              project_id: project_id,
+              task_id: task.id,
+              run_id: run?.id,
+            },
+          },
+          body: {
+            repair_run: repair_run,
+            evaluator_feedback: repair_instructions || "",
+          },
+        },
+      )
+      if (fetch_error) {
+        throw fetch_error
+      }
+      updated_run = data
+      repair_run = null
+    } catch (err) {
+      accept_repair_error = createKilnError(err)
+    } finally {
+      accept_repair_submitting = false
+    }
+  }
 </script>
 
 <div>
@@ -320,7 +366,7 @@
     </div>
   </div>
 
-  {#if should_offer_repair || repair_review_available}
+  {#if should_offer_repair || repair_review_available || repair_complete}
     <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-24">
       <div class="grow">
         <div class="text-xl font-bold mb-2">Repair</div>
@@ -357,13 +403,45 @@
                 "No instruction provided"}&quot;
             </div>
           </div>
+        {:else if repair_complete}
+          <p class="text-sm text-gray-500 mb-4">
+            The model has fixed the output given your instructions.
+          </p>
+          <Output
+            structured={!!task.output_json_schema}
+            raw_output={run?.repaired_output?.output || ""}
+          />
+          <div>
+            <div class="mt-2 text-sm text-gray-500">
+              Based on the repair instructions: &quot;{repair_instructions ||
+                "No instruction provided"}&quot;
+            </div>
+          </div>
         {/if}
       </div>
       <div class="w-72 2xl:w-96 flex-none">
         {#if repair_review_available}
           <div class="text-xl font-bold mb-2">Evaluate Repair</div>
           <div class="flex flex-col gap-4 mt-12">
-            <button class="btn btn-primary">Accept Repair (5 Stars)</button>
+            <button
+              class="btn btn-primary"
+              on:click={accept_repair}
+              disabled={accept_repair_submitting}
+            >
+              {#if accept_repair_submitting}
+                <span class="loading loading-spinner loading-sm"></span>
+              {:else}
+                Accept Repair (5 Stars)
+              {/if}
+            </button>
+            {#if accept_repair_error}
+              <p class="text-error font-medium text-sm">
+                Error Accepting Repair<br />
+                <span class="text-error text-xs font-normal">
+                  {accept_repair_error.getMessage()}</span
+                >
+              </p>
+            {/if}
             <button class="btn" on:click={() => (repair_run = null)}
               >Retry Repair</button
             >
