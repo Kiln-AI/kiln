@@ -2,7 +2,7 @@
   import AppPage from "../../../app_page.svelte"
   import { client } from "$lib/api_client"
   import type { TaskRun, ProviderModels } from "$lib/types"
-  import { type KilnError, createKilnError } from "$lib/utils/error_handlers"
+  import { KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { onMount } from "svelte"
   import { model_info, load_model_info } from "$lib/stores"
   import { goto } from "$app/navigation"
@@ -59,7 +59,14 @@
       runs = runs_response
       sortRuns()
     } catch (e) {
-      error = createKilnError(e)
+      if (e instanceof Error && e.message.includes("Load failed")) {
+        error = new KilnError(
+          "Could not load dataset. It may belong to a project you don't have access to.",
+          null,
+        )
+      } else {
+        error = createKilnError(e)
+      }
     } finally {
       loading = false
     }
@@ -242,7 +249,7 @@
       class="w-full min-h-[50vh] flex flex-col justify-center items-center gap-2"
     >
       <div class="font-medium">Error Loading Dataset</div>
-      <div class="text-gray-500 text-sm">
+      <div class="text-error text-sm">
         {error.getMessage() || "An unknown error occurred"}
       </div>
     </div>

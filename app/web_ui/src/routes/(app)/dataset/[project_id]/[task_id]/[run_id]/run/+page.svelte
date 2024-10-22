@@ -32,7 +32,14 @@
       }
       run = data
     } catch (error) {
-      load_error = createKilnError(error)
+      if (error instanceof Error && error.message.includes("Load failed")) {
+        load_error = new KilnError(
+          "Could not load run. It may belong to a project you don't have access to.",
+          null,
+        )
+      } else {
+        load_error = createKilnError(error)
+      }
     } finally {
       loading = false
     }
