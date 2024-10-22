@@ -26,6 +26,8 @@
     afterNavigate(() => posthog.capture("$pageview"))
   }
 
+  // Our (app) routes expect a current project and task.
+  // This function checks if we have them, and redirects to the setup flow if not.
   const check_needs_setup = async () => {
     try {
       await load_projects()
@@ -43,10 +45,11 @@
         goto("/setup/select_task")
         return
       }
-      // we have a current project, but no current task. Go to setup to create one
+      // we have a current project, but no current task.
+      // Go to setup to create one (or select one)
       await load_current_task($current_project)
       if (!$current_task) {
-        goto("/setup/create_task/" + ($current_project?.id ?? ""))
+        goto("/setup/select_task")
         return
       }
     } catch (e: unknown) {
