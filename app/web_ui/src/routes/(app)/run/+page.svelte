@@ -75,13 +75,13 @@
   }
 </script>
 
-<AppPage
-  title="Run"
-  bind:subtitle
-  action_button="Clear All"
-  action_button_action={clear_all}
->
-  <div class="max-w-[1400px]">
+<div class="max-w-[1400px]">
+  <AppPage
+    title="Run"
+    bind:subtitle
+    action_button="Clear All"
+    action_button_action={clear_all}
+  >
     <div class="flex flex-col xl:flex-row gap-8 xl:gap-16">
       <div class="grow">
         <div class="text-xl font-bold mb-4">Input</div>
@@ -129,16 +129,16 @@
         />
       </div>
     {/if}
-  </div>
-  {#if run_complete}
-    <div class="flex flex-col md:flex-row gap-6 place-content-center mt-10">
-      <p class="text-lg text-gray-500 mt-5">🎉 Ready for your next task?</p>
-      <button
-        class="btn btn-primary mt-2 min-w-48"
-        on:click={() => next_task_run()}
-      >
-        Next Run
-      </button>
-    </div>
-  {/if}
-</AppPage>
+    {#if run_complete}
+      <div class="flex flex-col md:flex-row gap-6 place-content-center mt-10">
+        <p class="text-lg text-gray-500 mt-5">🎉 Ready for your next task?</p>
+        <button
+          class="btn btn-primary mt-2 min-w-48"
+          on:click={() => next_task_run()}
+        >
+          Next Run
+        </button>
+      </div>
+    {/if}
+  </AppPage>
+</div>
