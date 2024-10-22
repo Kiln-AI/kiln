@@ -1,10 +1,10 @@
 <script lang="ts">
   import AppPage from "../app_page.svelte"
   import { client } from "$lib/api_client"
-  import type { TaskRun } from "$lib/types"
+  import type { TaskRun, ProviderModels } from "$lib/types"
   import { type KilnError, createKilnError } from "$lib/utils/error_handlers"
   import { onMount } from "svelte"
-  import { ui_state } from "$lib/stores"
+  import { ui_state, model_info, load_model_info } from "$lib/stores"
   import { goto } from "$app/navigation"
 
   let runs: TaskRun[] | null = null
@@ -19,9 +19,9 @@
   let sortDirection: "asc" | "desc" = "asc"
 
   const columns = [
-    { key: "id", label: "ID" },
     { key: "rating", label: "Rating" },
     { key: "repairState", label: "Repair State" },
+    { key: "model", label: "Model" },
     { key: "created_at", label: "Created At" },
     { key: "inputPreview", label: "Input Preview" },
     { key: "outputPreview", label: "Output Preview" },
@@ -33,6 +33,7 @@
 
   async function get_runs() {
     try {
+      load_model_info()
       loading = true
       if (!$ui_state.current_project_id || !$ui_state.current_task_id) {
         throw new Error("Project or task ID not set.")
@@ -161,6 +162,17 @@
   function sortRuns() {
     runs = runs ? [...runs].sort(sortFunction) : null
   }
+
+  function formatModelName(
+    model_id: string,
+    provider_models: ProviderModels | null,
+  ): string {
+    if (!model_id) {
+      return "Unknown"
+    }
+    const model = provider_models?.models[model_id]
+    return model?.name || model_id
+  }
 </script>
 
 <AppPage
@@ -199,7 +211,6 @@
                 goto(`/dataset/run/${run.id}`)
               }}
             >
-              <td>{run.id}</td>
               <td>
                 {run.output.rating && run.output.rating.value
                   ? run.output.rating.type === "five_star"
@@ -208,6 +219,12 @@
                   : "Unrated"}
               </td>
               <td>{formatRepairState(run)}</td>
+              <td>
+                {formatModelName(
+                  "" + run.output?.source?.properties["model_name"],
+                  $model_info,
+                )}
+              </td>
               <td>{formatDate(run.created_at)}</td>
               <td>{previewText(run.input) || "No input"}</td>
               <td>{previewText(run.output?.output) || "No output"}</td>

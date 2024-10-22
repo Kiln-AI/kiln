@@ -1,6 +1,6 @@
 import { writable, get } from "svelte/store"
 import { dev } from "$app/environment"
-import type { Project, Task, AvailableModels } from "./types"
+import type { Project, Task, AvailableModels, ProviderModels } from "./types"
 import { client } from "./api_client"
 import { createKilnError } from "$lib/utils/error_handlers"
 
@@ -165,5 +165,24 @@ export async function load_available_models() {
   } catch (error: unknown) {
     console.error(createKilnError(error).getMessage())
     available_models.set([])
+  }
+}
+
+// Model Info
+export const model_info = writable<ProviderModels | null>(null)
+
+export async function load_model_info() {
+  try {
+    if (get(model_info)) {
+      return
+    }
+    const { data, error } = await client.GET("/api/providers/models")
+    if (error) {
+      throw error
+    }
+    model_info.set(data)
+  } catch (error: unknown) {
+    console.error(createKilnError(error).getMessage())
+    model_info.set(null)
   }
 }

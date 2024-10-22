@@ -107,6 +107,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/providers/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Providers Models */
+        get: operations["get_providers_models_api_providers_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/available_models": {
         parameters: {
             query?: never;
@@ -390,6 +407,11 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * ModelName
+         * @enum {string}
+         */
+        ModelName: "llama_3_1_8b" | "llama_3_1_70b" | "llama_3_1_405b" | "gpt_4o_mini" | "gpt_4o" | "phi_3_5" | "mistral_large" | "mistral_nemo" | "gemma_2_2b" | "gemma_2_9b" | "gemma_2_27b";
         /** OllamaConnection */
         OllamaConnection: {
             /** Message */
@@ -455,6 +477,20 @@ export interface components {
             description?: string | null;
             /** Model Type */
             readonly model_type: string;
+        };
+        /** ProviderModel */
+        ProviderModel: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** ProviderModels */
+        ProviderModels: {
+            /** Models */
+            models: {
+                [key: string]: components["schemas"]["ProviderModel"];
+            };
         };
         /** RepairRunPost */
         RepairRunPost: {
@@ -994,6 +1030,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_providers_models_api_providers_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderModels"];
                 };
             };
         };

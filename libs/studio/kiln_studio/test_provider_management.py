@@ -9,7 +9,9 @@ from fastapi.testclient import TestClient
 from kiln_ai.adapters.ml_model_list import (
     KilnModel,
     KilnModelProvider,
+    ModelName,
     ModelProviderName,
+    built_in_models,
 )
 from kiln_ai.utils.config import Config
 
@@ -424,3 +426,24 @@ async def test_get_available_models_ollama_exception(app, client):
             "models": [{"id": "model1", "name": "Model 1"}],
         },
     ]
+
+
+def test_get_providers_models(client):
+    response = client.get("/api/providers/models")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "models" in data
+
+    # Check if all built-in models are present in the response
+    for model in built_in_models:
+        assert model.name in data["models"]
+        assert data["models"][model.name]["id"] == model.name
+        assert data["models"][model.name]["name"] == model.friendly_name
+
+    # Check if the number of models in the response matches the number of built-in models
+    assert len(data["models"]) == len(built_in_models)
+
+    if ModelName.llama_3_1_8b in data["models"]:
+        assert data["models"][ModelName.llama_3_1_8b]["id"] == ModelName.llama_3_1_8b
+        assert data["models"][ModelName.llama_3_1_8b]["name"] == "Llama 3.1 8B"

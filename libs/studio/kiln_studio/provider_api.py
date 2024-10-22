@@ -5,6 +5,7 @@ import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from kiln_ai.adapters.ml_model_list import (
+    ModelName,
     ModelProviderName,
     built_in_models,
     provider_name_from_id,
@@ -77,7 +78,23 @@ class AvailableModels(BaseModel):
     models: List[ModelDetails]
 
 
+class ProviderModel(BaseModel):
+    id: str
+    name: str
+
+
+class ProviderModels(BaseModel):
+    models: Dict[ModelName, ProviderModel]
+
+
 def connect_provider_api(app: FastAPI):
+    @app.get("/api/providers/models")
+    async def get_providers_models() -> ProviderModels:
+        models = {}
+        for model in built_in_models:
+            models[model.name] = ProviderModel(id=model.name, name=model.friendly_name)
+        return ProviderModels(models=models)
+
     # returns map, of provider name to list of model names
     @app.get("/api/available_models")
     async def get_available_models() -> List[AvailableModels]:
