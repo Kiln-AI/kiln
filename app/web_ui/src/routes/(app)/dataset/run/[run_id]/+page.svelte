@@ -9,7 +9,7 @@
   import type { TaskRun } from "$lib/types"
 
   $: run_id = $page.params.run_id
-  $: task_id = $current_task?.id || "unknown"
+  $: task_id = $ui_state.current_task_id || "unknown"
   $: project_id = $ui_state.current_project_id || "unknown"
 
   // TODO: we need to remove task_id from the URL, or load it by ID. $current_task is a lie
