@@ -278,6 +278,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/run_repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Repair */
+        post: operations["run_repair_api_projects__project_id__tasks__task_id__runs__run_id__run_repair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair": {
         parameters: {
             query?: never;
@@ -287,8 +304,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Repair Run */
-        post: operations["repair_run_api_projects__project_id__tasks__task_id__runs__run_id__repair_post"];
+        /** Post Repair Run */
+        post: operations["post_repair_run_api_projects__project_id__tasks__task_id__runs__run_id__repair_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -439,6 +456,12 @@ export interface components {
             /** Model Type */
             readonly model_type: string;
         };
+        /** RepairRunPost */
+        RepairRunPost: {
+            repair_run: components["schemas"]["TaskRun-Input"];
+            /** Evaluator Feedback */
+            evaluator_feedback: string;
+        };
         /** RepairTaskApiInput */
         RepairTaskApiInput: {
             /**
@@ -520,7 +543,7 @@ export interface components {
          * TaskOutput
          * @description An output for a specific task run.
          */
-        TaskOutput: {
+        "TaskOutput-Input": {
             /**
              * V
              * @default 1
@@ -545,7 +568,38 @@ export interface components {
             /** @description The source of the output: human or synthetic. */
             source: components["schemas"]["DataSource"];
             /** @description The rating of the output */
-            rating?: components["schemas"]["TaskOutputRating"] | null;
+            rating?: components["schemas"]["TaskOutputRating-Input"] | null;
+        };
+        /**
+         * TaskOutput
+         * @description An output for a specific task run.
+         */
+        "TaskOutput-Output": {
+            /**
+             * V
+             * @default 1
+             */
+            v: number;
+            /** Id */
+            id?: string | null;
+            /** Path */
+            path?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Created By */
+            created_by?: string;
+            /**
+             * Output
+             * @description The output of the task. JSON formatted for structured output, plaintext for unstructured output.
+             */
+            output: string;
+            /** @description The source of the output: human or synthetic. */
+            source: components["schemas"]["DataSource"];
+            /** @description The rating of the output */
+            rating?: components["schemas"]["TaskOutputRating-Output"] | null;
             /** Model Type */
             readonly model_type: string;
         };
@@ -555,7 +609,46 @@ export interface components {
          *
          *     Only supports five star ratings for now, but extensible for custom values.
          */
-        TaskOutputRating: {
+        "TaskOutputRating-Input": {
+            /**
+             * V
+             * @default 1
+             */
+            v: number;
+            /** Id */
+            id?: string | null;
+            /** Path */
+            path?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Created By */
+            created_by?: string;
+            /** @default five_star */
+            type: components["schemas"]["TaskOutputRatingType"];
+            /**
+             * Value
+             * @description The overall rating value (typically 1-5 stars).
+             */
+            value?: number | null;
+            /**
+             * Requirement Ratings
+             * @description The ratings of the requirements of the task. The keys are the ids of the requirements. The values are the ratings (typically 1-5 stars).
+             * @default {}
+             */
+            requirement_ratings: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * TaskOutputRating
+         * @description A rating for a task output, including an overall rating and ratings for each requirement.
+         *
+         *     Only supports five star ratings for now, but extensible for custom values.
+         */
+        "TaskOutputRating-Output": {
             /**
              * V
              * @default 1
@@ -612,7 +705,7 @@ export interface components {
          * TaskRun
          * @description An run of a specific Task, including the input and output.
          */
-        TaskRun: {
+        "TaskRun-Input": {
             /**
              * V
              * @default 1
@@ -637,14 +730,52 @@ export interface components {
             /** @description The source of the input: human or synthetic. */
             input_source: components["schemas"]["DataSource"];
             /** @description The output of the task run. */
-            output: components["schemas"]["TaskOutput"];
+            output: components["schemas"]["TaskOutput-Input"];
             /**
              * Repair Instructions
              * @description Instructions for fixing the output. Should define what is wrong, and how to fix it. Will be used by models for both generating a fixed output, and evaluating future models.
              */
             repair_instructions?: string | null;
             /** @description An version of the output with issues fixed. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field. */
-            repaired_output?: components["schemas"]["TaskOutput"] | null;
+            repaired_output?: components["schemas"]["TaskOutput-Input"] | null;
+        };
+        /**
+         * TaskRun
+         * @description An run of a specific Task, including the input and output.
+         */
+        "TaskRun-Output": {
+            /**
+             * V
+             * @default 1
+             */
+            v: number;
+            /** Id */
+            id?: string | null;
+            /** Path */
+            path?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Created By */
+            created_by?: string;
+            /**
+             * Input
+             * @description The inputs to the task. JSON formatted for structured input, plaintext for unstructured input.
+             */
+            input: string;
+            /** @description The source of the input: human or synthetic. */
+            input_source: components["schemas"]["DataSource"];
+            /** @description The output of the task run. */
+            output: components["schemas"]["TaskOutput-Output"];
+            /**
+             * Repair Instructions
+             * @description Instructions for fixing the output. Should define what is wrong, and how to fix it. Will be used by models for both generating a fixed output, and evaluating future models.
+             */
+            repair_instructions?: string | null;
+            /** @description An version of the output with issues fixed. This must be a 'fixed' version of the existing output, and not an entirely new output. If you wish to generate an ideal curatorial output for this task unrelated to this output, generate a new TaskOutput with type 'human' instead of using this field. */
+            repaired_output?: components["schemas"]["TaskOutput-Output"] | null;
             /** Model Type */
             readonly model_type: string;
         };
@@ -1093,7 +1224,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskRun"];
+                    "application/json": components["schemas"]["TaskRun-Output"];
                 };
             };
             /** @description Validation Error */
@@ -1130,7 +1261,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskRun"];
+                    "application/json": components["schemas"]["TaskRun-Output"];
                 };
             };
             /** @description Validation Error */
@@ -1162,7 +1293,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskRun"][];
+                    "application/json": components["schemas"]["TaskRun-Output"][];
                 };
             };
             /** @description Validation Error */
@@ -1198,7 +1329,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskRun"];
+                    "application/json": components["schemas"]["TaskRun-Output"];
                 };
             };
             /** @description Validation Error */
@@ -1212,7 +1343,7 @@ export interface operations {
             };
         };
     };
-    repair_run_api_projects__project_id__tasks__task_id__runs__run_id__repair_post: {
+    run_repair_api_projects__project_id__tasks__task_id__runs__run_id__run_repair_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1235,7 +1366,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskRun"];
+                    "application/json": components["schemas"]["TaskRun-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_repair_run_api_projects__project_id__tasks__task_id__runs__run_id__repair_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                task_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepairRunPost"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskRun-Output"];
                 };
             };
             /** @description Validation Error */

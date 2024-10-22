@@ -24,9 +24,14 @@ class RepairTaskApiInput(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
 
+class RepairRunPost(BaseModel):
+    repair_run: TaskRun
+    evaluator_feedback: str
+
+
 def connect_repair_api(app: FastAPI):
-    @app.post("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair")
-    async def repair_run(
+    @app.post("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/run_repair")
+    async def run_repair(
         project_id: str, task_id: str, run_id: str, input: RepairTaskApiInput
     ) -> TaskRun:
         task, run = task_and_run_from_id(project_id, task_id, run_id)
@@ -55,16 +60,22 @@ def connect_repair_api(app: FastAPI):
         )
 
         repair_run = await adapter.invoke(repair_task_input.model_dump())
+        return repair_run
 
-        # Update the run object atomically, as validation will fail for both fields being updated one at a time.
+    @app.post("/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair")
+    async def post_repair_run(
+        project_id: str, task_id: str, run_id: str, input: RepairRunPost
+    ) -> TaskRun:
+        task, run = task_and_run_from_id(project_id, task_id, run_id)
+        # Update the run object atomically, as validation will fail setting one at a time.
         updated_data = run.model_dump()
         updated_data.update(
             {
                 "repair_instructions": input.evaluator_feedback,
-                "repaired_output": repair_run.output,
+                "repaired_output": input.repair_run.output,
             }
         )
-        updated_run = run.model_validate(updated_data)
+        updated_run = TaskRun.model_validate(updated_data)
         updated_run.path = run.path
 
         # Save the updated run

@@ -1,3 +1,4 @@
+import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -12,7 +13,11 @@ from libs.core.kiln_ai.datamodel import (
     TaskOutput,
     TaskRun,
 )
-from libs.studio.kiln_studio.repair_api import RepairTaskApiInput, connect_repair_api
+from libs.studio.kiln_studio.repair_api import (
+    RepairRunPost,
+    RepairTaskApiInput,
+    connect_repair_api,
+)
 
 
 @pytest.fixture
@@ -67,7 +72,7 @@ def improvement_task_run(data_source, improvement_task):
 
 
 @pytest.fixture
-def mock_repair_task_run(improvement_task_run, data_source):
+def mock_repair_task_run(improvement_task, data_source):
     return TaskRun(
         output=TaskOutput(
             output="Test Output",
@@ -109,17 +114,44 @@ def test_repair_run_success(
 
     # Act
     response = client.post(
-        "/api/projects/proj-ID/tasks/task-ID/runs/run-ID/repair",
+        "/api/projects/proj-ID/tasks/task-ID/runs/run-ID/run_repair",
         json=input_data.model_dump(),
     )
 
     # Assert
     assert response.status_code == 200
     res = response.json()
-    assert res["repair_instructions"] == "Fix this issue"
-    repaired_output = res["repaired_output"]
+    repaired_output = res["output"]
     assert TaskOutput.model_validate(repaired_output) == mock_repair_task_run.output
     mock_langchain_adapter.invoke.assert_awaited_once()
+
+
+def test_save_repair_success(
+    mock_run_and_task,
+    mock_langchain_adapter,
+    client,
+    improvement_task,
+    mock_repair_task_run,
+):
+    # Arrange
+    input_data = RepairRunPost(
+        repair_run=mock_repair_task_run.model_dump(),
+        evaluator_feedback="Fix this issue",
+    )
+
+    # Act
+    response = client.post(
+        "/api/projects/proj-ID/tasks/task-ID/runs/run-ID/repair",
+        json=json.loads(input_data.model_dump_json()),
+    )
+
+    # Assert
+    res = response.json()
+    assert response.status_code == 200
+    repaired_output = res["repaired_output"]
+    assert TaskOutput.model_validate(repaired_output) == mock_repair_task_run.output
+    assert res["repair_instructions"] == "Fix this issue"
+    assert res["input"] == "Test Input"
 
     # Verify that the run was updated in the file system
     updated_run = improvement_task.runs()[0]
@@ -141,7 +173,7 @@ def test_repair_run_missing_model_info(
 
     # Act
     response = client.post(
-        "/api/projects/proj-ID/tasks/task-ID/runs/run-ID/repair",
+        "/api/projects/proj-ID/tasks/task-ID/runs/run-ID/run_repair",
         json=input_data.model_dump(),
     )
 

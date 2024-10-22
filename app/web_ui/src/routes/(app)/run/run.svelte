@@ -19,9 +19,12 @@
   export let model_name: string | null = null
   export let provider: string | null = null
   export let run_complete: boolean = false
+  // note: this run is NOT the main run, but a repair run TaskRun
+  let repair_run: TaskRun | null = null
 
   $: rate_focus = run && overall_rating === null
-  $: run_complete = overall_rating === 5 // TODO+ || Repair done
+  // True if this "Run" has everything we want: a rating and a repaired output (or 5-star rating and no repair is needed)
+  $: run_complete = overall_rating === 5 || !!run?.repaired_output?.output
 
   let show_raw_data = false
 
@@ -34,12 +37,14 @@
   let requirement_ratings: FiveStarRating[] = []
 
   // Repair is available if the run has an overall rating but it's not 5 stars, and it doesn't yet have a repaired output
-  $: repair_available =
+  $: should_offer_repair =
     run &&
     overall_rating !== null &&
     overall_rating !== 5 &&
-    !run?.repaired_output?.output
-  $: repair_review_available = run?.repaired_output?.output
+    !run?.repaired_output?.output && // model already repaired
+    !repair_run // repair generated, should show repair evaluation instead
+  $: repair_review_available = !!repair_run && !run?.repaired_output
+  // $: repair_complete = !!run?.repaired_output?.output
 
   // Use for some animations on first mount
   let mounted = false
@@ -131,7 +136,7 @@
         data: repair_data, // only present if 2XX response
         error: fetch_error, // only present if 4XX or 5XX response
       } = await client.POST(
-        "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/repair",
+        "/api/projects/{project_id}/tasks/{task_id}/runs/{run_id}/run_repair",
         {
           params: {
             path: {
@@ -155,7 +160,7 @@
       if (fetch_error) {
         throw fetch_error
       }
-      updated_run = repair_data
+      repair_run = repair_data
       repair_error = null
     } catch (err) {
       repair_error = createKilnError(err)
@@ -315,11 +320,11 @@
     </div>
   </div>
 
-  {#if repair_available || repair_review_available}
+  {#if should_offer_repair || repair_review_available}
     <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-24">
       <div class="grow">
         <div class="text-xl font-bold mb-2">Repair</div>
-        {#if repair_available}
+        {#if should_offer_repair}
           <p class="text-sm text-gray-500 mb-4">
             Since the output isn't 5-star, provide instructions for the model on
             how to fix it.
@@ -344,7 +349,7 @@
           </p>
           <Output
             structured={!!task.output_json_schema}
-            raw_output={run.repaired_output?.output || ""}
+            raw_output={repair_run?.output.output || ""}
           />
           <div>
             <div class="mt-2 text-sm text-gray-500">
@@ -358,29 +363,11 @@
         {#if repair_review_available}
           <div class="text-xl font-bold mb-2">Evaluate Repair</div>
           <div class="flex flex-col gap-4 mt-12">
-            <button class="btn btn-primary">Accept (5 Stars)</button>
-            <button class="btn">Retry Repair</button>
+            <button class="btn btn-primary">Accept Repair (5 Stars)</button>
+            <button class="btn" on:click={() => (repair_run = null)}
+              >Retry Repair</button
+            >
           </div>
-        {/if}
-      </div>
-    </div>
-  {/if}
-  {#if repair_available && false}
-    <div class="flex flex-col xl:flex-row gap-8 xl:gap-16 mt-10 xl:mt-16">
-      {#if run?.repaired_output?.output}
-        <div class="grow">
-          <div class="text-xl font-bold mt-10 mb-4">Repair Result</div>
-        </div>
-      {/if}
-      <div class="w-72 2xl:w-96 flex-none">
-        <div class="text-xl font-bold mt-10 mb-4">Repair Output</div>
-        {#if overall_rating === 5}
-          <p>Repair not needed for a 5-star output.</p>
-          <p class="pt-1 text-sm">
-            If the response can be improved, reduce the overall rating.
-          </p>
-        {:else if overall_rating == null}
-          <p>You must set an overall rating before repairing.</p>
         {/if}
       </div>
     </div>
