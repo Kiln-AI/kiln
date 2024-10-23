@@ -164,7 +164,7 @@
       name: "Joke Generator",
       description: "An example task from the KilnAI team.",
       instruction:
-        "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. The output should include a setup and punchline.",
+        "Generate a joke, given a theme. The theme will be provided as a word or phrase as the input to the model. The assistant should output a joke that is funny and relevant to the theme. If a style is provided, the joke should be in that style. The output should include a setup and punchline.",
       requirements: [
         {
           name: "Keep on topic",
@@ -185,7 +185,23 @@
           priority: 1,
         },
       ],
-      input_json_schema: null,
+      input_json_schema: JSON.stringify({
+        type: "object",
+        properties: {
+          joke_topic: {
+            title: "Joke Topic",
+            type: "string",
+            description: "The topic of the joke.",
+          },
+          joke_style: {
+            title: "Joke Style",
+            type: "string",
+            description:
+              "The style of the joke, such as 'dad joke' or 'kids joke'.",
+          },
+        },
+        required: ["joke_topic"],
+      }),
       output_json_schema: JSON.stringify({
         type: "object",
         properties: {
