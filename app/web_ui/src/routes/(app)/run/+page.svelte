@@ -9,6 +9,8 @@
   import { client } from "$lib/api_client"
   import type { TaskRun } from "$lib/types"
   import AvailableModelsDropdown from "./available_models_dropdown.svelte"
+  import RunInputForm from "./run_input_form.svelte"
+
   // TODO: implement checking input content
   let warn_before_unload = false
   // TODO UI for errors
@@ -16,8 +18,7 @@
   let submitting = false
   let run_complete = false
 
-  // TODO: also structured input
-  let plaintext_input = ""
+  let input_form: RunInputForm
 
   // TODO: real values for adapters and models
   let prompt_method = "basic"
@@ -30,6 +31,7 @@
   $: run_focus = !response
 
   $: subtitle = $current_task ? "Task: " + $current_task.name : ""
+  $: input_schema = $current_task?.input_json_schema
 
   async function run_task() {
     try {
@@ -49,7 +51,9 @@
         body: {
           model_name: model_name,
           provider: provider,
-          plaintext_input: plaintext_input,
+          plaintext_input: input_form.get_plaintext_input_data(),
+          // @ts-expect-error openapi-fetch generates the wrong type for this: Record<string, never>
+          structured_input: input_form.get_structured_input_data(),
         },
       })
       if (fetch_error) {
@@ -64,7 +68,7 @@
   }
 
   function clear_all() {
-    plaintext_input = ""
+    input_form.clear_input()
     response = null
   }
 
@@ -93,12 +97,7 @@
           bind:submitting
           bind:primary={run_focus}
         >
-          <FormElement
-            label="Plaintext Input"
-            inputType="textarea"
-            bind:value={plaintext_input}
-            id="plaintext_input"
-          />
+          <RunInputForm bind:input_schema bind:this={input_form} />
         </FormContainer>
       </div>
       <div class="w-72 2xl:w-96 flex-none flex flex-col gap-4">

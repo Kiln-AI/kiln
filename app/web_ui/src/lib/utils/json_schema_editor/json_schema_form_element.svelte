@@ -10,6 +10,7 @@
 
   async function add_property() {
     schema_model.properties.push({
+      id: "",
       title: "",
       description: "",
       type: "string",
@@ -86,7 +87,7 @@
         <div class="flex flex-row gap-3">
           <div class="grow">
             <FormElement
-              id={"property_{name}_title"}
+              id={"property_" + property.id + "_title"}
               label="Property Name"
               inputType="input"
               bind:value={schema_model.properties[index].title}
@@ -94,7 +95,7 @@
             />
           </div>
           <FormElement
-            id={"property_{name}_type"}
+            id={"property_" + property.id + "_type"}
             label="Type"
             inputType="select"
             bind:value={schema_model.properties[index].type}
@@ -107,7 +108,7 @@
             light_label={true}
           />
           <FormElement
-            id={"property_{name}_required"}
+            id={"property_" + property.id + "_required"}
             label="Required"
             inputType="select"
             bind:value={schema_model.properties[index].required}
@@ -119,7 +120,7 @@
           />
         </div>
         <FormElement
-          id={"property_{name}_description"}
+          id={"property_" + property.id + "_description"}
           label="Description"
           inputType="input"
           bind:value={schema_model.properties[index].description}

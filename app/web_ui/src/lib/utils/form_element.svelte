@@ -11,6 +11,7 @@
   export let select_options: [unknown, string][] = []
   export let select_options_grouped: [string, [unknown, string][]][] = []
   export let disabled: boolean = false
+  export let info_msg: string | null = null
 
   function is_empty(value: unknown): boolean {
     if (value === null || value === undefined) {
@@ -74,7 +75,7 @@
         >{label}</span
       >
       <span class="pl-1 text-xs text-gray-500 flex-none"
-        >{optional ? "Optional" : ""}</span
+        >{info_msg || (optional ? "Optional" : "")}</span
       >
     </div>
     {#if description}
