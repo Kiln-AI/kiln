@@ -14,7 +14,7 @@
       image_path: "/images/data_driven.png",
     },
     {
-      title: "Colaborate with Your Team",
+      title: "Collaborate with Your Team",
       promos: [
         "Kiln's data format is designed for Git collaboration. Add your project, and invite your team.",
         "Friendly UI makes it easy for non-technical team members to contribute.",
@@ -27,6 +27,7 @@
       promos: [
         "Try over a dozen different foundation models, on a range of providers.",
         "Bring your own keys, or run locally with Ollama.",
+        "Compare performance and costs to optimize your workflow.",
       ],
       image_path: "/images/logo_grid.png",
     },
