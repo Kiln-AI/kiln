@@ -20,12 +20,11 @@
 
   let input_form: RunInputForm
 
-  // TODO: real values for adapters and models
   let prompt_method = "basic"
   let model: string = $ui_state.selected_model
 
-  $: model_name = model.split("/")[1]
-  $: provider = model.split("/")[0]
+  $: model_name = model ? model.split("/")[1] : ""
+  $: provider = model ? model.split("/")[0] : ""
 
   let response: TaskRun | null = null
   $: run_focus = !response
