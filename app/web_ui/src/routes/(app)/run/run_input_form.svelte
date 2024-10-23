@@ -74,7 +74,7 @@
     <FormElement
       id={id + "_" + property.id}
       label={property.title}
-      inputType="textarea"
+      inputType={property.type === "string" ? "textarea" : "input"}
       info_msg={describe_type(property)}
       description={property.description}
       optional={!property.required}
