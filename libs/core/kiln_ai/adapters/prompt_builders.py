@@ -102,22 +102,10 @@ class FewShotPromptBuilder(MultiShotPromptBuilder):
         return 4
 
 
-class ChainOfThoughtPromptBuilder(MultiShotPromptBuilder):
-    @classmethod
-    def example_count(cls) -> int:
-        return 10
-
-    def build_prompt(self) -> str:
-        base_prompt = super().build_prompt()
-        base_prompt += "\n\n# Chain of Thought\n\nYou should reply with two messages. The first should be plaintext, thinking step by step about the following instructions and examples. The second should be the final output of the task."
-        return base_prompt
-
-
 prompt_builder_registry = {
     "simple_prompt_builder": SimplePromptBuilder,
     "multi_shot_prompt_builder": MultiShotPromptBuilder,
     "few_shot_prompt_builder": FewShotPromptBuilder,
-    "chain_of_thought_prompt_builder": ChainOfThoughtPromptBuilder,
 }
 
 
@@ -130,7 +118,5 @@ def prompt_builder_from_ui_name(ui_name: str) -> type[BasePromptBuilder]:
             return FewShotPromptBuilder
         case "many_shot":
             return MultiShotPromptBuilder
-        case "chain_of_thought":
-            return ChainOfThoughtPromptBuilder
         case _:
             raise ValueError(f"Unknown prompt builder: {ui_name}")

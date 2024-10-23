@@ -71,15 +71,12 @@ class LangChainPromptAdapter(BaseAdapter):
 
     async def _run(self, input: Dict | str) -> Dict | str:
         prompt = self.build_prompt()
-        print("PROMPT", prompt)
         user_msg = self.prompt_builder.build_user_message(input)
-        print("USER MSG", user_msg)
         messages = [
             SystemMessage(content=prompt),
             HumanMessage(content=user_msg),
         ]
         response = self.model.invoke(messages)
-        print("RESPONSE", response)
         if self.has_structured_output():
             if (
                 not isinstance(response, dict)
