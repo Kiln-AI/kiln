@@ -240,7 +240,11 @@
               </td>
               <td>{formatDate(run.created_at)}</td>
               <td>{previewText(run.input) || "No input"}</td>
-              <td>{previewText(run.output?.output) || "No output"}</td>
+              <td>
+                {previewText(
+                  run.repaired_output?.output || run.output?.output,
+                ) || "No output"}
+              </td>
             </tr>
           {/each}
         </tbody>
