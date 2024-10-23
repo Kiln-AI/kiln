@@ -1,7 +1,13 @@
 import json
 
+import pytest
 from kiln_ai.adapters.base_adapter import AdapterInfo, BaseAdapter
-from kiln_ai.adapters.prompt_builders import MultiShotPromptBuilder, SimplePromptBuilder
+from kiln_ai.adapters.prompt_builders import (
+    FewShotPromptBuilder,
+    MultiShotPromptBuilder,
+    SimplePromptBuilder,
+    prompt_builder_from_ui_name,
+)
 from kiln_ai.adapters.test_prompt_adaptors import build_test_task
 from kiln_ai.adapters.test_structured_output import build_structured_output_test_task
 from kiln_ai.datamodel import (
@@ -155,3 +161,17 @@ def check_example_outputs(task: Task, count: int):
 def test_prompt_builder_name():
     assert SimplePromptBuilder.prompt_builder_name() == "simple_prompt_builder"
     assert MultiShotPromptBuilder.prompt_builder_name() == "multi_shot_prompt_builder"
+
+
+def test_prompt_builder_from_ui_name():
+    assert prompt_builder_from_ui_name("basic") == SimplePromptBuilder
+    assert prompt_builder_from_ui_name("few_shot") == FewShotPromptBuilder
+    assert prompt_builder_from_ui_name("many_shot") == MultiShotPromptBuilder
+
+    with pytest.raises(ValueError, match="Unknown prompt builder: invalid_name"):
+        prompt_builder_from_ui_name("invalid_name")
+
+
+def test_example_count():
+    assert FewShotPromptBuilder.example_count() == 4
+    assert MultiShotPromptBuilder.example_count() == 25

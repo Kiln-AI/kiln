@@ -23,6 +23,10 @@ class SimplePromptBuilder(BasePromptBuilder):
 
 
 class MultiShotPromptBuilder(BasePromptBuilder):
+    @classmethod
+    def example_count(cls) -> int:
+        return 25
+
     def build_prompt(self) -> str:
         base_prompt = f"# Instruction\n\n{ self.task.instruction }\n\n"
 
@@ -42,7 +46,7 @@ class MultiShotPromptBuilder(BasePromptBuilder):
                 valid_output = run.output.output
             if valid_output is not None:
                 valid_examples.append((run.input, valid_output))
-                if len(valid_examples) >= 10:
+                if len(valid_examples) >= self.__class__.example_count():
                     break
 
         if len(valid_examples) > 0:
@@ -60,7 +64,27 @@ class MultiShotPromptBuilder(BasePromptBuilder):
         return base_prompt
 
 
+class FewShotPromptBuilder(MultiShotPromptBuilder):
+    @classmethod
+    def example_count(cls) -> int:
+        return 4
+
+
 prompt_builder_registry = {
     "simple_prompt_builder": SimplePromptBuilder,
     "multi_shot_prompt_builder": MultiShotPromptBuilder,
+    "few_shot_prompt_builder": FewShotPromptBuilder,
 }
+
+
+# Our UI has some names that are not the same as the class names, which also hint parameters.
+def prompt_builder_from_ui_name(ui_name: str) -> type[BasePromptBuilder]:
+    match ui_name:
+        case "basic":
+            return SimplePromptBuilder
+        case "few_shot":
+            return FewShotPromptBuilder
+        case "many_shot":
+            return MultiShotPromptBuilder
+        case _:
+            raise ValueError(f"Unknown prompt builder: {ui_name}")

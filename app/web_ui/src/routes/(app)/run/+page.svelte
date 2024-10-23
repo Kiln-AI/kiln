@@ -3,7 +3,7 @@
   import { current_task, current_project, ui_state } from "$lib/stores"
   import { createKilnError } from "$lib/utils/error_handlers"
   import FormContainer from "$lib/utils/form_container.svelte"
-  import FormElement from "$lib/utils/form_element.svelte"
+  import PromptTypeSelector from "./prompt_type_selector.svelte"
   import { KilnError } from "$lib/utils/error_handlers"
   import Run from "./run.svelte"
   import { client } from "$lib/api_client"
@@ -102,17 +102,7 @@
       </div>
       <div class="w-72 2xl:w-96 flex-none flex flex-col gap-4">
         <div class="text-xl font-bold">Options</div>
-        <FormElement
-          label="Prompt Method"
-          inputType="select"
-          bind:value={prompt_method}
-          id="prompt_method"
-          select_options={[
-            ["basic", "Basic Prompt (Zero Shot)"],
-            ["few_shot", "Few Shot"],
-            ["many_shot", "Multi Shot"],
-          ]}
-        />
+        <PromptTypeSelector bind:prompt_method />
         <AvailableModelsDropdown bind:model />
       </div>
     </div>

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .custom_errors import connect_custom_errors
 from .project_api import connect_project_api
+from .prompt_api import connect_prompt_api
 from .provider_api import connect_provider_api
 from .repair_api import connect_repair_api
 from .run_api import connect_run_api
@@ -35,6 +36,7 @@ def make_app():
     connect_task_api(app)
     connect_run_api(app)
     connect_repair_api(app)
+    connect_prompt_api(app)
     connect_settings(app)
     connect_custom_errors(app)
 

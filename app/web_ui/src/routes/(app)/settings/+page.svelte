@@ -25,7 +25,7 @@
       name: "Current Task",
       description: "Edit the currently selected task.",
       button_text: "Edit Task",
-      href: "/settings/edit_task/",
+      href: `/settings/edit_task/${$ui_state?.current_project_id}/${$ui_state?.current_task_id}`,
     },
   ]
 </script>
