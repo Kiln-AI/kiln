@@ -126,6 +126,34 @@ def test_multi_shot_prompt_builder(tmp_path):
     # Now that it's highly rated, it should be included
     check_example_outputs(task, 1)
 
+    # Test with repaired output (highest priority)
+    e1 = TaskRun(
+        input='{"subject": "Cows"}',
+        input_source=DataSource(
+            type=DataSourceType.human,
+            properties={"created_by": "john_doe"},
+        ),
+        parent=task,
+        output=TaskOutput(
+            output='{"joke": "Moo I am a cow joke."}',
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"created_by": "john_doe"},
+            ),
+        ),
+        repair_instructions="Fix the joke",
+        repaired_output=TaskOutput(
+            output='{"joke": "Why did the cow cross the road? To get to the udder side!"}',
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"created_by": "jane_doe"},
+            ),
+        ),
+    )
+    e1.save_to_file()
+    check_example_outputs(task, 1)
+
+    # Test with high-quality output (second priority)
     e2 = TaskRun(
         input='{"subject": "Dogs"}',
         input_source=DataSource(
@@ -134,16 +162,126 @@ def test_multi_shot_prompt_builder(tmp_path):
         ),
         parent=task,
         output=TaskOutput(
-            output='{"joke": "This is a ruff joke."}',
+            output='{"joke": "Why did the dog get a job? He wanted to be a collar-ary!"}',
             source=DataSource(
                 type=DataSourceType.human,
                 properties={"created_by": "john_doe"},
             ),
-            rating=TaskOutputRating(value=4, reason="Bark"),
+            rating=TaskOutputRating(value=4, reason="Good pun"),
         ),
     )
     e2.save_to_file()
     check_example_outputs(task, 2)
+
+    # Test sorting by rating value
+    e3 = TaskRun(
+        input='{"subject": "Cats"}',
+        input_source=DataSource(
+            type=DataSourceType.human,
+            properties={"created_by": "john_doe"},
+        ),
+        parent=task,
+        output=TaskOutput(
+            output='{"joke": "Why don\'t cats play poker in the jungle? Too many cheetahs!"}',
+            source=DataSource(
+                type=DataSourceType.human,
+                properties={"created_by": "john_doe"},
+            ),
+            rating=TaskOutputRating(value=5, reason="Excellent joke"),
+        ),
+    )
+    e3.save_to_file()
+    check_example_outputs(task, 3)
+
+    # Verify the order of examples
+    prompt_builder = MultiShotPromptBuilder(task=task)
+    prompt = prompt_builder.build_prompt()
+    assert "Why did the cow cross the road?" in prompt
+    assert prompt.index("Why did the cow cross the road?") < prompt.index(
+        "Why don't cats play poker in the jungle?"
+    )
+    assert prompt.index("Why don't cats play poker in the jungle?") < prompt.index(
+        "Why did the dog get a job?"
+    )
+
+
+# Add a new test for the FewShotPromptBuilder
+def test_few_shot_prompt_builder(tmp_path):
+    # Create a project and task hierarchy (similar to test_multi_shot_prompt_builder)
+    project = Project(name="Test Project", path=(tmp_path / "test_project.kiln"))
+    project.save_to_file()
+    task = Task(
+        name="Test Task",
+        instruction="You are an assistant which tells a joke, given a subject.",
+        parent=project,
+        input_json_schema=json.dumps(
+            {
+                "type": "object",
+                "properties": {
+                    "subject": {"type": "string"},
+                },
+                "required": ["subject"],
+            }
+        ),
+        output_json_schema=json.dumps(
+            {
+                "type": "object",
+                "properties": {"joke": {"type": "string"}},
+                "required": ["joke"],
+            }
+        ),
+    )
+    task.save_to_file()
+
+    # Create 6 examples (2 repaired, 4 high-quality)
+    for i in range(6):
+        run = TaskRun(
+            input=f'{{"subject": "Subject {i+1}"}}',
+            input_source=DataSource(
+                type=DataSourceType.human,
+                properties={"created_by": "john_doe"},
+            ),
+            parent=task,
+            output=TaskOutput(
+                output=f'{{"joke": "Joke Initial Output {i+1}"}}',
+                source=DataSource(
+                    type=DataSourceType.human,
+                    properties={"created_by": "john_doe"},
+                ),
+                rating=TaskOutputRating(value=4 + (i % 2), reason="Good joke"),
+            ),
+        )
+        print("RATING", "Joke Initial Output ", i + 1, " - RATED:", 4 + (i % 2), "\n")
+        if i < 2:
+            run = run.model_copy(
+                update={
+                    "repair_instructions": "Fix the joke",
+                    "repaired_output": TaskOutput(
+                        output=f'{{"joke": "Repaired Joke {i+1}"}}',
+                        source=DataSource(
+                            type=DataSourceType.human,
+                            properties={"created_by": "jane_doe"},
+                        ),
+                    ),
+                }
+            )
+        run.save_to_file()
+
+    # Check that only 4 examples are included
+    prompt_builder = FewShotPromptBuilder(task=task)
+    prompt = prompt_builder.build_prompt()
+    assert prompt.count("## Example") == 4
+
+    print("PROMPT", prompt)
+    # Verify the order of examples (2 repaired, then 2 highest-rated)
+    assert "Repaired Joke 1" in prompt
+    assert "Repaired Joke 2" in prompt
+    assert "Joke Initial Output 6" in prompt  # Rating 5
+    assert "Joke Initial Output 4" in prompt  # Rating 5
+    assert "Joke Initial Output 5" not in prompt  # Rating 4, not included
+    assert "Joke Initial Output 3" not in prompt  # Rating 4, not included
+    assert "Joke Initial Output 1" not in prompt  # Repaired, so using that
+    assert "Joke Initial Output 2" not in prompt  # Repaired, so using that
 
 
 def check_example_outputs(task: Task, count: int):

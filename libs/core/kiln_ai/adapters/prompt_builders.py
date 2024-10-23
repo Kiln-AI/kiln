@@ -36,18 +36,34 @@ class MultiShotPromptBuilder(BasePromptBuilder):
                 base_prompt += f"{i+1}) {requirement.instruction}\n"
             base_prompt += "\n"
 
-        # TODO: tons to do on selection here. This is just a quick version
         valid_examples: list[tuple[str, str]] = []
-        for run in self.task.runs():
-            valid_output = None
+        runs = self.task.runs()
+
+        # first pass, we look for repaired outputs. These are the best examples.
+        for run in runs:
+            if len(valid_examples) >= self.__class__.example_count():
+                break
             if run.repaired_output is not None:
-                valid_output = run.repaired_output.output
-            elif run.output.rating is not None and run.output.rating.is_high_quality():
-                valid_output = run.output.output
-            if valid_output is not None:
-                valid_examples.append((run.input, valid_output))
-                if len(valid_examples) >= self.__class__.example_count():
-                    break
+                valid_examples.append((run.input, run.repaired_output.output))
+
+        # second pass, we look for high quality outputs (rating based)
+        # Minimum is "high_quality" (4 star in star rating scale), then sort by rating
+        # exclude repaired outputs as they were used above
+        runs_with_rating = [
+            run
+            for run in runs
+            if run.output.rating is not None
+            and run.output.rating.value is not None
+            and run.output.rating.is_high_quality()
+            and run.repaired_output is None
+        ]
+        runs_with_rating.sort(
+            key=lambda x: (x.output.rating and x.output.rating.value) or 0, reverse=True
+        )
+        for run in runs_with_rating:
+            if len(valid_examples) >= self.__class__.example_count():
+                break
+            valid_examples.append((run.input, run.output.output))
 
         if len(valid_examples) > 0:
             base_prompt += "# Example Outputs\n\n"
