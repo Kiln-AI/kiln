@@ -6,9 +6,8 @@
   <h2 class="text-lg lg:text-xl font-medium mt-2 flex-none">
     The AI studio for everyone
   </h2>
-  <a
-    href="/setup/connect_providers"
-    class="btn btn-primary btn-wide mt-12 flex-none">Get Started</a
+  <a href="/setup/intro" class="btn btn-primary btn-wide mt-12 flex-none"
+    >Get Started</a
   >
   <div class="grow-[1.5]"></div>
 </div>
