@@ -16,8 +16,8 @@
     {
       title: "Collaborate with Your Team",
       promos: [
-        "Kiln's data format is designed for Git collaboration. Add your project, and invite your team.",
-        "Friendly UI makes it easy for non-technical team members to contribute.",
+        "Our data format is designed for Git. Work with your team, with tools you know.",
+        "Our easy-to-use app makes it easy for non-technical team members to contribute.",
         "Completely private: we don't see your dataset, period.",
       ],
       image_path: "/images/collaborate.png",
@@ -25,17 +25,17 @@
     {
       title: "Find the best way to run your task",
       promos: [
-        "Try over a dozen different foundation models, on a range of providers.",
+        "Try over a dozen different foundation models.",
         "Bring your own keys, or run locally with Ollama.",
-        "Compare performance and costs to optimize your workflow.",
+        "Optimize performance and costs for your task.",
       ],
       image_path: "/images/logo_grid.png",
     },
     {
       title: "Library and API",
       promos: [
-        "Our python library makes it easy to integrate with your existing workflows.",
-        "Our REST API makes it easy to use Kiln in your own applications.",
+        "Our open-source python library makes it easy to extend Kiln.",
+        "Use our REST API to integrate Kiln with your own applications.",
       ],
       image_path: "/images/developers.png",
     },

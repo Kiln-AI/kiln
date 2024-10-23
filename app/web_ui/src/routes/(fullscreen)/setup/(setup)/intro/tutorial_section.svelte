@@ -5,11 +5,11 @@
 </script>
 
 <div class="flex flex-col gap-4">
-  <h3 class="text-2xl font-medium text-center mb-8">{title}</h3>
+  <h3 class="text-2xl font-medium text-center mb-1">{title}</h3>
   <div class="flex flex-col md:flex-row gap-12">
-    <div class="flex-1 flex flex-col gap-12 place-self-center">
+    <div class="flex-1 flex flex-col gap-8 place-self-center">
       {#each promos as promo}
-        <p class="text-gray-500 font-light">{promo}</p>
+        <p class="text-gray-500">{promo}</p>
       {/each}
     </div>
     <div class="flex-1">
