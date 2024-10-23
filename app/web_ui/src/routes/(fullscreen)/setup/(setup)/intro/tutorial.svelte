@@ -9,7 +9,7 @@
       promos: [
         "As you use your models, Kiln automatically creates a rich dataset.",
         "Prompts improve themselves, using past results and ratings.",
-        "Repair issues with LLM guidance, to improve dataset and eval tools.",
+        "Handle structured input and output with ease.",
       ],
       image_path: "/images/data_driven.png",
     },
