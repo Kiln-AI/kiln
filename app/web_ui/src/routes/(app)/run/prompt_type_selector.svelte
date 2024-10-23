@@ -13,5 +13,6 @@
     ["basic", "Basic Prompt (Zero Shot)"],
     ["few_shot", "Few Shot"],
     ["many_shot", "Many Shot"],
+    ["chain_of_thought", "Chain of Thought"],
   ]}
 />

@@ -12,7 +12,8 @@ from kiln_ai.datamodel import (
 )
 from kiln_ai.datamodel.json_schema import validate_schema
 from kiln_ai.utils.config import Config
-from kiln_ai.utils.formatting import snake_case
+
+from .prompt_builders import BasePromptBuilder, SimplePromptBuilder
 
 
 @dataclass
@@ -24,7 +25,10 @@ class AdapterInfo:
 
 
 class BaseAdapter(metaclass=ABCMeta):
-    def __init__(self, kiln_task: Task):
+    def __init__(
+        self, kiln_task: Task, prompt_builder: BasePromptBuilder | None = None
+    ):
+        self.prompt_builder = prompt_builder or SimplePromptBuilder(kiln_task)
         self.kiln_task = kiln_task
         self.output_schema = self.kiln_task.output_json_schema
         self.input_schema = self.kiln_task.input_json_schema
@@ -87,6 +91,13 @@ class BaseAdapter(metaclass=ABCMeta):
     @abstractmethod
     async def _run(self, input: Dict | str) -> Dict | str:
         pass
+
+    def build_prompt(self) -> str:
+        prompt = self.prompt_builder.build_prompt()
+        adapter_instructions = self.adapter_specific_instructions()
+        if adapter_instructions is not None:
+            prompt += f"# Format Instructions\n\n{adapter_instructions}\n\n"
+        return prompt
 
     # override for adapter specific instructions (e.g. tool calling, json format, etc)
     def adapter_specific_instructions(self) -> str | None:
@@ -155,25 +166,3 @@ class BaseAdapter(metaclass=ABCMeta):
         props["prompt_builder_name"] = adapter_info.prompt_builder_name
 
         return props
-
-
-class BasePromptBuilder(metaclass=ABCMeta):
-    def __init__(self, task: Task, adapter: BaseAdapter | None = None):
-        self.task = task
-        self.adapter = adapter
-
-    @abstractmethod
-    def build_prompt(self) -> str:
-        pass
-
-    # override to change the name of the prompt builder (if changing class names)
-    @classmethod
-    def prompt_builder_name(cls) -> str:
-        return snake_case(cls.__name__)
-
-    # Can be overridden to add more information to the user message
-    def build_user_message(self, input: Dict | str) -> str:
-        if isinstance(input, Dict):
-            return f"The input is:\n{json.dumps(input, indent=2)}"
-
-        return f"The input is:\n{input}"

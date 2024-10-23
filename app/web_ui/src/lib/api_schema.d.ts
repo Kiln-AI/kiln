@@ -552,6 +552,8 @@ export interface components {
             plaintext_input?: string | null;
             /** Structured Input */
             structured_input?: Record<string, never> | null;
+            /** Ui Prompt Method */
+            ui_prompt_method?: string | null;
         };
         /** Task */
         Task: {

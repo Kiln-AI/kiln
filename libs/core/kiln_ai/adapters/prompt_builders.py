@@ -1,4 +1,30 @@
-from kiln_ai.adapters.base_adapter import BasePromptBuilder
+import json
+from abc import ABCMeta, abstractmethod
+from typing import Dict
+
+from kiln_ai.datamodel import Task
+from kiln_ai.utils.formatting import snake_case
+
+
+class BasePromptBuilder(metaclass=ABCMeta):
+    def __init__(self, task: Task):
+        self.task = task
+
+    @abstractmethod
+    def build_prompt(self) -> str:
+        pass
+
+    # override to change the name of the prompt builder (if changing class names)
+    @classmethod
+    def prompt_builder_name(cls) -> str:
+        return snake_case(cls.__name__)
+
+    # Can be overridden to add more information to the user message
+    def build_user_message(self, input: Dict | str) -> str:
+        if isinstance(input, Dict):
+            return f"The input is:\n{json.dumps(input, indent=2)}"
+
+        return f"The input is:\n{input}"
 
 
 class SimplePromptBuilder(BasePromptBuilder):
@@ -13,11 +39,6 @@ class SimplePromptBuilder(BasePromptBuilder):
             # iterate requirements, formatting them in numbereed list like 1) task.instruction\n2)...
             for i, requirement in enumerate(self.task.requirements):
                 base_prompt += f"{i+1}) {requirement.instruction}\n"
-
-        if self.adapter is not None:
-            adapter_instructions = self.adapter.adapter_specific_instructions()
-            if adapter_instructions is not None:
-                base_prompt += f"\n\n{adapter_instructions}"
 
         return base_prompt
 
@@ -72,11 +93,6 @@ class MultiShotPromptBuilder(BasePromptBuilder):
                     f"## Example {i+1}\n\nInput: {example[0]}\nOutput: {example[1]}\n\n"
                 )
 
-        if self.adapter is not None:
-            adapter_instructions = self.adapter.adapter_specific_instructions()
-            if adapter_instructions is not None:
-                base_prompt += f"# Format Instructions\n\n{adapter_instructions}\n\n"
-
         return base_prompt
 
 
@@ -86,10 +102,22 @@ class FewShotPromptBuilder(MultiShotPromptBuilder):
         return 4
 
 
+class ChainOfThoughtPromptBuilder(MultiShotPromptBuilder):
+    @classmethod
+    def example_count(cls) -> int:
+        return 10
+
+    def build_prompt(self) -> str:
+        base_prompt = super().build_prompt()
+        base_prompt += "\n\n# Chain of Thought\n\nYou should reply with two messages. The first should be plaintext, thinking step by step about the following instructions and examples. The second should be the final output of the task."
+        return base_prompt
+
+
 prompt_builder_registry = {
     "simple_prompt_builder": SimplePromptBuilder,
     "multi_shot_prompt_builder": MultiShotPromptBuilder,
     "few_shot_prompt_builder": FewShotPromptBuilder,
+    "chain_of_thought_prompt_builder": ChainOfThoughtPromptBuilder,
 }
 
 
@@ -102,5 +130,7 @@ def prompt_builder_from_ui_name(ui_name: str) -> type[BasePromptBuilder]:
             return FewShotPromptBuilder
         case "many_shot":
             return MultiShotPromptBuilder
+        case "chain_of_thought":
+            return ChainOfThoughtPromptBuilder
         case _:
             raise ValueError(f"Unknown prompt builder: {ui_name}")

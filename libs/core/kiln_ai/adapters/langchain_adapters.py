@@ -19,7 +19,7 @@ class LangChainPromptAdapter(BaseAdapter):
         provider: str | None = None,
         prompt_builder: BasePromptBuilder | None = None,
     ):
-        super().__init__(kiln_task)
+        super().__init__(kiln_task, prompt_builder=prompt_builder)
         if custom_model is not None:
             self.model = custom_model
 
@@ -62,11 +62,6 @@ class LangChainPromptAdapter(BaseAdapter):
             self.model = self.model.with_structured_output(
                 output_schema, include_raw=True
             )
-        if prompt_builder is None:
-            self.prompt_builder = SimplePromptBuilder(task=kiln_task, adapter=self)
-        else:
-            prompt_builder.adapter = self
-            self.prompt_builder = prompt_builder
 
     def adapter_specific_instructions(self) -> str | None:
         # TODO: would be better to explicitly use bind_tools:tool_choice="task_response" here
@@ -75,13 +70,16 @@ class LangChainPromptAdapter(BaseAdapter):
         return None
 
     async def _run(self, input: Dict | str) -> Dict | str:
-        prompt = self.prompt_builder.build_prompt()
+        prompt = self.build_prompt()
+        print("PROMPT", prompt)
         user_msg = self.prompt_builder.build_user_message(input)
+        print("USER MSG", user_msg)
         messages = [
             SystemMessage(content=prompt),
             HumanMessage(content=user_msg),
         ]
         response = self.model.invoke(messages)
+        print("RESPONSE", response)
         if self.has_structured_output():
             if (
                 not isinstance(response, dict)

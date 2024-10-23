@@ -6,6 +6,7 @@ from kiln_ai.adapters.langchain_adapters import LangChainPromptAdapter
 from kiln_ai.datamodel import Task, TaskRun
 from pydantic import BaseModel, ConfigDict
 
+from libs.core.kiln_ai.adapters.prompt_builders import prompt_builder_from_ui_name
 from libs.studio.kiln_studio.project_api import project_from_id
 from libs.studio.kiln_studio.task_api import task_from_id
 
@@ -35,6 +36,7 @@ class RunTaskRequest(BaseModel):
     provider: str
     plaintext_input: str | None = None
     structured_input: Dict[str, Any] | None = None
+    ui_prompt_method: str | None = None
 
     # Allows use of the model_name field (usually pydantic will reserve model_*)
     model_config = ConfigDict(protected_namespaces=())
@@ -83,8 +85,21 @@ def connect_run_api(app: FastAPI):
                 detail=f"Task not found. ID: {task_id}",
             )
 
+        prompt_builder_class = prompt_builder_from_ui_name(
+            request.ui_prompt_method or "basic"
+        )
+        if prompt_builder_class is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown prompt method: {request.ui_prompt_method}",
+            )
+        prompt_builder = prompt_builder_class(task)
+        print("PROMPT BUILDER", prompt_builder)
         adapter = LangChainPromptAdapter(
-            task, model_name=request.model_name, provider=request.provider
+            task,
+            model_name=request.model_name,
+            provider=request.provider,
+            prompt_builder=prompt_builder,
         )
 
         input = request.plaintext_input
