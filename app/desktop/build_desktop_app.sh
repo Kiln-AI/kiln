@@ -40,14 +40,14 @@ fi
 pyinstaller $(printf %s "$PLATFORM_OPTS") --icon="./icon.png" \
   --add-data "./taskbar.png:." --add-data "../../web_ui/build:./web_ui/build" \
   --noconfirm --distpath=./desktop/build/dist --workpath=./desktop/build/work \
-  -n kiln --specpath=./desktop/build \
+  -n Kiln --specpath=./desktop/build \
   --paths=. ./desktop/desktop.py
 
 # MacOS apps have symlinks, and GitHub artifact upload zip will break them. Tar instead.
 if [[ $* == *--compress-mac-app* && "$(uname)" == "Darwin" ]]; then
   echo "Compressing MacOS app"
   cd ./desktop/build/dist
-  tar czpvf kiln.app.tgz kiln.app
-  rm -r kiln.app
+  tar czpvf Kiln.app.tgz Kiln.app
+  rm -r Kiln.app
   cd ../../..
 fi
