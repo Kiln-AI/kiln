@@ -88,7 +88,7 @@
       </div>
     </div>
 
-    <div class="flex-grow rounded-t-3xl bg-base-100 shadow-lg px-12 py-8">
+    <div class="flex-grow rounded-3xl bg-base-100 shadow-lg px-12 py-8 mb-4">
       <slot />
     </div>
   </div>
