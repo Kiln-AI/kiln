@@ -280,7 +280,7 @@
             <li class="menu-nested-sm {$current_task?.id ? '' : 'hidden'}">
               <a
                 class={section == Section.SettingsEditTask ? "active" : ""}
-                href="/settings/edit_task"
+                href={`/settings/edit_task/${$ui_state.current_project_id}/${$ui_state.current_task_id}`}
               >
                 Edit Task
               </a>
