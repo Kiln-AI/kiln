@@ -27,6 +27,12 @@
       button_text: "Edit Task",
       href: `/settings/edit_task/${$ui_state?.current_project_id}/${$ui_state?.current_task_id}`,
     },
+    {
+      name: "Replay Introduction",
+      description: "Watch the introduction again.",
+      href: "/settings/intro",
+      button_text: "Introduction",
+    },
   ]
 </script>
 
