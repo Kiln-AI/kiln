@@ -1,5 +1,5 @@
+import getpass
 import os
-import pwd
 from unittest.mock import patch
 
 import pytest
@@ -103,32 +103,20 @@ def test_default_lambda(config_with_yaml):
 
 
 def test_get_user_id_none(monkeypatch):
-    def mock_getpwuid(_):
-        class MockPwnam:
-            pw_name = None
-
-        return MockPwnam()
-
-    monkeypatch.setattr(pwd, "getpwuid", mock_getpwuid)
+    monkeypatch.setattr(getpass, "getuser", lambda: None)
     assert _get_user_id() == "unknown_user"
 
 
 def test_get_user_id_exception(monkeypatch):
-    def mock_getpwuid(_):
+    def mock_getuser():
         raise Exception("Test exception")
 
-    monkeypatch.setattr(pwd, "getpwuid", mock_getpwuid)
+    monkeypatch.setattr(getpass, "getuser", mock_getuser)
     assert _get_user_id() == "unknown_user"
 
 
 def test_get_user_id_valid(monkeypatch):
-    def mock_getpwuid(_):
-        class MockPwnam:
-            pw_name = "test_user"
-
-        return MockPwnam()
-
-    monkeypatch.setattr(pwd, "getpwuid", mock_getpwuid)
+    monkeypatch.setattr(getpass, "getuser", lambda: "test_user")
     assert _get_user_id() == "test_user"
 
 

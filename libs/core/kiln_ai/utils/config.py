@@ -1,5 +1,5 @@
+import getpass
 import os
-import pwd
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
@@ -165,6 +165,6 @@ class Config:
 
 def _get_user_id():
     try:
-        return pwd.getpwuid(os.getuid()).pw_name or "unknown_user"
+        return getpass.getuser() or "unknown_user"
     except Exception:
         return "unknown_user"
