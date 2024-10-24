@@ -23,6 +23,17 @@ Kiln includes:
 - An open-source Python library and REST API for data scientists and engineers to deeply integrate where needed.
 - Completely private: Kiln runs locally, and we never have access to your dataset. Bring your own keys, or run locally with Ollama.
 
+<kbd>
+<img width="200" alt="Run Screen" src="https://github.com/user-attachments/assets/158efb43-4991-4c19-9e3a-28f61c919892">
+</kbd>
+<kbd>
+<img width="200" alt="Connect Providers Screen" src="https://github.com/user-attachments/assets/b7b5a3b6-0142-4db2-af2d-3310fc583ea9">
+</kbd><kbd>
+<img width="200" alt="Dataset Screen" src="https://github.com/user-attachments/assets/c5f15c88-9a27-4d7b-81e6-b6350b3cb92c">
+</kbd><kbd>
+<img width="200" alt="Prompts screen" src="https://github.com/user-attachments/assets/70544362-8420-4a49-9e9f-34a046c837dd">
+</kbd>
+
 ## Download Now
 
 #### MacOS and Windows
